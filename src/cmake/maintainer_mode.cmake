@@ -49,5 +49,5 @@ endif( CMAKE_BUILD_TYPE STREQUAL "" )
 list(FIND ALLOWED_BUILD_TYPES ${CMAKE_BUILD_TYPE} BUILD_TYPE_INDEX)
 
 if (BUILD_TYPE_INDEX EQUAL -1)
-	message(SEND_ERROR "${CMAKE_BUILD_TYPE} is not a valid build type.")
+	message(WARNING "${CMAKE_BUILD_TYPE} is not a valid build type.")
 endif()
