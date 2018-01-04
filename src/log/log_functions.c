@@ -25,36 +25,38 @@
  * All the display functions and error handling.
  *
  */
-#include "config.h"
+#include "../include/config.h"
+#include "../include/log.h"
+#include "../include/gsh_list.h"
+#include "../include/gsh_rpc.h"
+#include "../include/common_utils.h"
+#include "../include/abstract_mem.h"
+#include "../include/nfs_core.h"
+#include "../include/config_parsing.h"
 
 #include <pthread.h>
 #include <stdio.h>
-#include <stdarg.h>
+//#include <stdarg.h>
 #include <unistd.h>
 #include <fcntl.h>
 #include <time.h>
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/stat.h>
-#include <errno.h>
+//#include <errno.h>
 #include <string.h>
 #include <signal.h>
 #include <libgen.h>
-#include <sys/resource.h>
+#include <rpc/rpc.h>
 
-#include "log.h"
-#include "gsh_list.h"
-#include "rpc/rpc.h"
-#include "gsh_rpc.h"
-#include "common_utils.h"
-#include "abstract_mem.h"
+//#include <sys/resource.h>
+
 
 #ifdef USE_DBUS
 #include "gsh_dbus.h"
 #endif
 
-#include "nfs_core.h"
-#include "config_parsing.h"
+
 
 #ifdef USE_LTTNG
 #include "gsh_lttng/logger.h"
