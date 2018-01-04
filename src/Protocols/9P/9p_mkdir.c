@@ -32,16 +32,17 @@
  *
  */
 
-#include "config.h"
+#include "../../include/config.h"
+#include "../../include/nfs_core.h"
+#include "../../include/nfs_exports.h"
+#include "../../include/log.h"
+//#include "../../include/fsal.h"
+#include "../../include/9p.h"
 #include <stdio.h>
 #include <string.h>
 #include <pthread.h>
 #include <sys/stat.h>
-#include "nfs_core.h"
-#include "nfs_exports.h"
-#include "log.h"
-#include "fsal.h"
-#include "9p.h"
+
 
 int _9p_mkdir(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 {

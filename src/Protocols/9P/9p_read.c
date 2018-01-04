@@ -32,143 +32,155 @@
  *
  */
 
-#include "config.h"
+#include "../../include/config.h"
+#include "../../include/nfs_core.h"
+#include "../../include/log.h"
+//#include "../../include/fsal.h"
+#include "../../include/9p.h"
+#include "../../include/server_stats.h"
+#include "../../include/client_mgr.h"
+
 #include <stdio.h>
 #include <string.h>
 #include <pthread.h>
 #include <sys/stat.h>
-#include "nfs_core.h"
-#include "log.h"
-#include "fsal.h"
-#include "9p.h"
-#include "server_stats.h"
-#include "client_mgr.h"
 
-int _9p_read(struct _9p_request_data *req9p, u32 *plenout, char *preply)
+
+int _9p_read(struct _9p_request_data* req9p, u32* plenout, char* preply)
 {
-	char *cursor = req9p->_9pmsg + _9P_HDR_SIZE + _9P_TYPE_SIZE;
-	char *databuffer;
+    char* cursor = req9p->_9pmsg + _9P_HDR_SIZE + _9P_TYPE_SIZE;
+    char* databuffer;
 
-	u16 *msgtag = NULL;
-	u32 *fid = NULL;
-	u64 *offset = NULL;
-	u32 *count = NULL;
-	u32 outcount = 0;
+    u16* msgtag = NULL;
+    u32* fid = NULL;
+    u64* offset = NULL;
+    u32* count = NULL;
+    u32 outcount = 0;
 
-	struct _9p_fid *pfid = NULL;
+    struct _9p_fid* pfid = NULL;
 
-	size_t read_size = 0;
-	bool eof_met;
-	fsal_status_t fsal_status;
-	/* uint64_t stable_flag = CACHE_INODE_SAFE_WRITE_TO_FS; */
-	bool sync = false;
+    size_t read_size = 0;
+    bool eof_met;
+    fsal_status_t fsal_status;
+    /* uint64_t stable_flag = CACHE_INODE_SAFE_WRITE_TO_FS; */
+    bool sync = false;
 
-	/* Get data */
-	_9p_getptr(cursor, msgtag, u16);
-	_9p_getptr(cursor, fid, u32);
-	_9p_getptr(cursor, offset, u64);
-	_9p_getptr(cursor, count, u32);
+    /* Get data */
+    _9p_getptr(cursor, msgtag, u16);
+    _9p_getptr(cursor, fid, u32);
+    _9p_getptr(cursor, offset, u64);
+    _9p_getptr(cursor, count, u32);
 
-	LogDebug(COMPONENT_9P, "TREAD: tag=%u fid=%u offset=%llu count=%u",
-		 (u32) *msgtag, *fid, (unsigned long long)*offset, *count);
+    LogDebug(COMPONENT_9P, "TREAD: tag=%u fid=%u offset=%llu count=%u",
+        (u32) *msgtag, *fid, (unsigned long long)*offset, *count);
 
-	if (*fid >= _9P_FID_PER_CONN)
-		return _9p_rerror(req9p, msgtag, ERANGE, plenout, preply);
+    if(*fid >= _9P_FID_PER_CONN)
+        return _9p_rerror(req9p, msgtag, ERANGE, plenout, preply);
 
-	pfid = req9p->pconn->fids[*fid];
+    pfid = req9p->pconn->fids[*fid];
 
-	/* Make sure the requested amount of data respects negotiated msize */
-	if (*count + _9P_ROOM_RREAD > req9p->pconn->msize)
-		return _9p_rerror(req9p, msgtag, ERANGE, plenout, preply);
+    /* Make sure the requested amount of data respects negotiated msize */
+    if(*count + _9P_ROOM_RREAD > req9p->pconn->msize)
+        return _9p_rerror(req9p, msgtag, ERANGE, plenout, preply);
 
-	/* Check that it is a valid fid */
-	if (pfid == NULL || pfid->pentry == NULL) {
-		LogDebug(COMPONENT_9P, "request on invalid fid=%u", *fid);
-		return _9p_rerror(req9p, msgtag, EIO, plenout, preply);
-	}
+    /* Check that it is a valid fid */
+    if(pfid == NULL || pfid->pentry == NULL)
+    {
+        LogDebug(COMPONENT_9P, "request on invalid fid=%u", *fid);
+        return _9p_rerror(req9p, msgtag, EIO, plenout, preply);
+    }
 
-	_9p_init_opctx(pfid, req9p);
+    _9p_init_opctx(pfid, req9p);
 
-	/* Start building the reply already
-	 * So we don't need to use an intermediate data buffer
-	 */
-	_9p_setinitptr(cursor, preply, _9P_RREAD);
-	_9p_setptr(cursor, msgtag, u16);
-	databuffer = _9p_getbuffertofill(cursor);
+    /* Start building the reply already
+     * So we don't need to use an intermediate data buffer
+     */
+    _9p_setinitptr(cursor, preply, _9P_RREAD);
+    _9p_setptr(cursor, msgtag, u16);
+    databuffer = _9p_getbuffertofill(cursor);
 
-	/* Do the job */
-	if (pfid->xattr != NULL) {
-		/* Copy the value cached during xattrwalk */
-		if (*offset > pfid->xattr->xattr_size)
-			return _9p_rerror(req9p, msgtag, EINVAL, plenout,
-					  preply);
-		if (pfid->xattr->xattr_write != _9P_XATTR_READ_ONLY)
-			return _9p_rerror(req9p, msgtag, EINVAL, plenout,
-					  preply);
+    /* Do the job */
+    if(pfid->xattr != NULL)
+    {
+        /* Copy the value cached during xattrwalk */
+        if(*offset > pfid->xattr->xattr_size)
+            return _9p_rerror(req9p, msgtag, EINVAL, plenout,
+                              preply);
+        if(pfid->xattr->xattr_write != _9P_XATTR_READ_ONLY)
+            return _9p_rerror(req9p, msgtag, EINVAL, plenout,
+                              preply);
 
-		read_size = MIN(*count,
-				pfid->xattr->xattr_size - *offset);
-		memcpy(databuffer,
-		       pfid->xattr->xattr_content + *offset,
-		       read_size);
+        read_size = MIN(*count,
+            pfid->xattr->xattr_size - *offset);
+        memcpy(databuffer,
+               pfid->xattr->xattr_content + *offset,
+               read_size);
 
-		outcount = read_size;
-	} else {
-		if (pfid->pentry->fsal->m_ops.support_ex(pfid->pentry)) {
-			/* Call the new fsal_read */
-			fsal_status = fsal_read2(pfid->pentry,
-						false,
-						pfid->state,
-						*offset,
-						*count,
-						&read_size,
-						databuffer,
-						&eof_met,
-						NULL);
-		} else {
-			/* Call legacy fsal_rdwr */
-			fsal_status = fsal_rdwr(pfid->pentry,
-						 FSAL_IO_READ,
-						 *offset,
-						 *count,
-						 &read_size,
-						 databuffer,
-						 &eof_met,
-						 &sync,
-						 NULL);
-		}
+        outcount = read_size;
+    }
+    else
+    {
+        if(pfid->pentry->fsal->m_ops.support_ex(pfid->pentry))
+        {
+            /* Call the new fsal_read */
+            fsal_status = fsal_read2(pfid->pentry,
+                                     false,
+                                     pfid->state,
+                                     *offset,
+                                     *count,
+                                     &read_size,
+                                     databuffer,
+                                     &eof_met,
+                                     NULL);
+        }
+        else
+        {
+            /* Call legacy fsal_rdwr */
+            fsal_status = fsal_rdwr(pfid->pentry,
+                                    FSAL_IO_READ,
+                                    *offset,
+                                    *count,
+                                    &read_size,
+                                    databuffer,
+                                    &eof_met,
+                                    &sync,
+                                    NULL);
+        }
 
-		/* Get the handle, for stats */
-		struct gsh_client *client = req9p->pconn->client;
+        /* Get the handle, for stats */
+        struct gsh_client* client = req9p->pconn->client;
 
-		if (client == NULL) {
-			LogDebug(COMPONENT_9P,
-				 "Cannot get client block for 9P request");
-		} else {
-			op_ctx->client = client;
+        if(client == NULL)
+        {
+            LogDebug(COMPONENT_9P,
+                "Cannot get client block for 9P request");
+        }
+        else
+        {
+            op_ctx->client = client;
 
-			server_stats_io_done(*count, read_size,
-					     FSAL_IS_ERROR(fsal_status), false);
-		}
+            server_stats_io_done(*count, read_size,
+                                 FSAL_IS_ERROR(fsal_status), false);
+        }
 
-		if (FSAL_IS_ERROR(fsal_status))
-			return _9p_rerror(req9p, msgtag,
-					  _9p_tools_errno(fsal_status),
-					  plenout, preply);
+        if(FSAL_IS_ERROR(fsal_status))
+            return _9p_rerror(req9p, msgtag,
+                              _9p_tools_errno(fsal_status),
+                              plenout, preply);
 
-		outcount = (u32) read_size;
-	}
-	_9p_setfilledbuffer(cursor, outcount);
+        outcount = (u32)read_size;
+    }
+    _9p_setfilledbuffer(cursor, outcount);
 
-	_9p_setendptr(cursor, preply);
-	_9p_checkbound(cursor, preply, plenout);
+    _9p_setendptr(cursor, preply);
+    _9p_checkbound(cursor, preply, plenout);
 
-	LogDebug(COMPONENT_9P, "RREAD: tag=%u fid=%u offset=%llu count=%u",
-		 (u32) *msgtag, *fid, (unsigned long long)*offset, *count);
+    LogDebug(COMPONENT_9P, "RREAD: tag=%u fid=%u offset=%llu count=%u",
+        (u32) *msgtag, *fid, (unsigned long long)*offset, *count);
 
-/**
- * @todo read statistics accounting goes here
- * modeled on nfs I/O statistics
- */
-	return 1;
+    /**
+     * @todo read statistics accounting goes here
+     * modeled on nfs I/O statistics
+     */
+    return 1;
 }
