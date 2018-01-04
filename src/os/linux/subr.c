@@ -26,13 +26,15 @@
  *
  */
 
-#include "fsal.h"
+#include "../../include/fsal.h"
+#include "../../include/os/subr.h"
+
 #include <stddef.h>
 #include <string.h>
 #include <unistd.h>
 #include <sys/fsuid.h>
 #include <sys/syscall.h>
-#include "os/subr.h"
+
 
 /**
  * @brief Read system directory entries into the buffer
@@ -42,14 +44,16 @@
  * @param[in]     bcount Buffer size
  * @param[in,out] basepp Offset into "file" after this read
  */
-int vfs_readents(int fd, char *buf, unsigned int bcount, off_t *basepp)
+int vfs_readents(int fd, char* buf, unsigned int bcount, off_t* basepp)
 {
-	int retval = 0;
+    int retval = 0;
 
-	retval = syscall(SYS_getdents64, fd, buf, bcount);
-	if (retval >= 0)
-		*basepp += retval;
-	return retval;
+    retval = syscall(SYS_getdents64, fd, buf, bcount);
+    if(retval >= 0)
+    {
+        *basepp += retval;
+    }
+    return retval;
 }
 
 /**
@@ -63,18 +67,18 @@ int vfs_readents(int fd, char *buf, unsigned int bcount, off_t *basepp)
  * @return true. Linux entries are never empty.
  */
 
-bool to_vfs_dirent(char *buf, int bpos, struct vfs_dirent *vd, off_t base)
+bool to_vfs_dirent(char* buf, int bpos, struct vfs_dirent* vd, off_t base)
 {
-	struct dirent64 *dp = (struct dirent64 *)(buf + bpos);
-	char type;
+    struct dirent64* dp = (struct dirent64 *)(buf + bpos);
+    char type;
 
-	vd->vd_ino = dp->d_ino;
-	vd->vd_reclen = dp->d_reclen;
-	type = buf[dp->d_reclen - 1];
-	vd->vd_type = type;
-	vd->vd_offset = dp->d_off;
-	vd->vd_name = dp->d_name;
-	return true;
+    vd->vd_ino    = dp->d_ino;
+    vd->vd_reclen = dp->d_reclen;
+    type          = buf[dp->d_reclen - 1];
+    vd->vd_type   = type;
+    vd->vd_offset = dp->d_off;
+    vd->vd_name   = dp->d_name;
+    return true;
 }
 
 /**
@@ -87,10 +91,10 @@ bool to_vfs_dirent(char *buf, int bpos, struct vfs_dirent *vd, off_t base)
  *
  * @return 0 on success, -1 on error (errno set to indicate the error).
  */
-int vfs_utimesat(int fd, const char *path, const struct timespec ts[2],
-		 int flags)
+int vfs_utimesat(int fd, const char* path, const struct timespec ts[2],
+                 int flags)
 {
-	return utimensat(fd, path, ts, flags);
+    return utimensat(fd, path, ts, flags);
 }
 
 /**
@@ -101,32 +105,36 @@ int vfs_utimesat(int fd, const char *path, const struct timespec ts[2],
  *
  * @return 0 on success, -1 on error (errno set to indicate the error).
  */
-int vfs_utimes(int fd, const struct timespec *ts)
+int vfs_utimes(int fd, const struct timespec* ts)
 {
-	return futimens(fd, ts);
+    return futimens(fd, ts);
 }
 
 uid_t setuser(uid_t uid)
 {
-	uid_t orig_uid = setfsuid(uid);
+    uid_t orig_uid = setfsuid(uid);
 
-	if (uid != setfsuid(uid))
-		LogCrit(COMPONENT_FSAL, "Could not set user identity");
+    if(uid != setfsuid(uid))
+    {
+        LogCrit(COMPONENT_FSAL, "Could not set user identity");
+    }
 
-	return orig_uid;
+    return orig_uid;
 }
 
 gid_t setgroup(gid_t gid)
 {
-	gid_t orig_gid = setfsgid(gid);
+    gid_t orig_gid = setfsgid(gid);
 
-	if (gid != setfsgid(gid))
-		LogCrit(COMPONENT_FSAL, "Could not set group identity");
+    if(gid != setfsgid(gid))
+    {
+        LogCrit(COMPONENT_FSAL, "Could not set group identity");
+    }
 
-	return orig_gid;
+    return orig_gid;
 }
 
-int set_threadgroups(size_t size, const gid_t *list)
+int set_threadgroups(size_t size, const gid_t* list)
 {
-	return syscall(__NR_setgroups, size, list);
+    return syscall(__NR_setgroups, size, list);
 }

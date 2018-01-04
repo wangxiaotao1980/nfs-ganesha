@@ -30,39 +30,42 @@
 
 #define EXTATTR_MAXNAMELEN 255
 
-ssize_t fgetxattr(int fd, const char *name, void *value, size_t size)
+ssize_t fgetxattr(int fd, const char* name, void* value, size_t size)
 {
-	return extattr_get_fd(fd, EXTATTR_NAMESPACE_SYSTEM, name, value, size);
+    return extattr_get_fd(fd, EXTATTR_NAMESPACE_SYSTEM, name, value, size);
 }
 
-ssize_t fsetxattr(int fd, const char *name, void *value, size_t size, int flags)
+ssize_t fsetxattr(int fd, const char* name, void* value, size_t size, int flags)
 {
-	char buff[EXTATTR_MAXNAMELEN];
-	ssize_t attr_size = 0;
+    char buff[EXTATTR_MAXNAMELEN];
+    ssize_t attr_size = 0;
 
-	errno = 0;
+    errno = 0;
 
-	attr_size =
-	    extattr_get_fd(fd, EXTATTR_NAMESPACE_SYSTEM, name, buff, size);
-	if (attr_size != size && errno == ENOATTR) {
-		/* attr we are trying to set doesn't exist. check if
-		 * XATTR_REPLACE was set */
-		if (flags & XATTR_REPLACE)
-			return ENOATTR;
-	} else {
-		if (flags & XATTR_CREATE)
-			return EEXIST;
-	}
-	return extattr_set_fd(fd, EXTATTR_NAMESPACE_SYSTEM, name, value, size);
+    attr_size =
+            extattr_get_fd(fd, EXTATTR_NAMESPACE_SYSTEM, name, buff, size);
+    if(attr_size != size && errno == ENOATTR)
+    {
+        /* attr we are trying to set doesn't exist. check if
+         * XATTR_REPLACE was set */
+        if(flags & XATTR_REPLACE)
+            return ENOATTR;
+    }
+    else
+    {
+        if(flags & XATTR_CREATE)
+            return EEXIST;
+    }
+    return extattr_set_fd(fd, EXTATTR_NAMESPACE_SYSTEM, name, value, size);
 }
 
-ssize_t flistxattr(int fd, const char *list, size_t size)
+ssize_t flistxattr(int fd, const char* list, size_t size)
 {
-	return extattr_list_fd(fd, EXTATTR_NAMESPACE_SYSTEM, (void *)list,
-			       size);
+    return extattr_list_fd(fd, EXTATTR_NAMESPACE_SYSTEM, (void *)list,
+                           size);
 }
 
-ssize_t fremovexattr(int fd, const char *name)
+ssize_t fremovexattr(int fd, const char* name)
 {
-	return extattr_delete_fd(fd, EXTATTR_NAMESPACE_SYSTEM, name);
+    return extattr_delete_fd(fd, EXTATTR_NAMESPACE_SYSTEM, name);
 }

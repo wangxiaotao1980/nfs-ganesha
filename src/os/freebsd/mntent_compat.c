@@ -50,132 +50,160 @@
 
 static int pos = -1;
 static int mntsize = -1;
-static struct statfs *_mntbuf;
+static struct statfs* _mntbuf;
 static struct mntent _mntent;
 
-struct {
-	int m_flag;
-	const char *m_option;
+struct
+{
+    int m_flag;
+    const char* m_option;
 } mntoptions[] = {
-	{
-	MNT_ASYNC, "async"}, {
-	MNT_NOATIME, "noatime"}, {
-	MNT_NOEXEC, "noexec"}, {
-	MNT_NOSUID, "nosuid"}, {
-	MNT_NOSYMFOLLOW, "nosymfollow"}, {
-	MNT_SYNCHRONOUS, "sync"}, {
-	MNT_UNION, "union"}, {
-	MNT_NOCLUSTERR, "noclusterr"}, {
-	MNT_NOCLUSTERW, "noclusterw"}, {
-	MNT_SUIDDIR, "suiddir"},
+    {
+        MNT_ASYNC, "async"
+    },
+    {
+        MNT_NOATIME, "noatime"
+    },
+    {
+        MNT_NOEXEC, "noexec"
+    },
+    {
+        MNT_NOSUID, "nosuid"
+    },
+    {
+        MNT_NOSYMFOLLOW, "nosymfollow"
+    },
+    {
+        MNT_SYNCHRONOUS, "sync"
+    },
+    {
+        MNT_UNION, "union"
+    },
+    {
+        MNT_NOCLUSTERR, "noclusterr"
+    },
+    {
+        MNT_NOCLUSTERW, "noclusterw"
+    },
+    {
+        MNT_SUIDDIR, "suiddir"
+    },
 #ifdef MNT_SNAPSHOT
-	{
-	MNT_SNAPSHOT, "snapshot"},
+    {
+    MNT_SNAPSHOT, "snapshot"},
 #endif
 #ifdef MNT_MULTILABEL
-	{
-	MNT_MULTILABEL, "multilabel"},
+    {
+    MNT_MULTILABEL, "multilabel"},
 #endif
 #ifdef MNT_ACLS
-	{
-	MNT_ACLS, "acls"},
+    {
+    MNT_ACLS, "acls"},
 #endif
 #ifdef MNT_NODEV
-	{
-	MNT_NODEV, "nodev"},
+    {
+    MNT_NODEV, "nodev"},
 #endif
 };
 
 #define N_OPTS (sizeof(mntoptions) / sizeof(*mntoptions))
 
-char *hasmntopt(const struct mntent *mnt, const char *option)
+char* hasmntopt(const struct mntent* mnt, const char* option)
 {
-	int found;
-	char *opt, *optbuf;
+    int found;
+    char* opt, * optbuf;
 
-	optbuf = gsh_strdup(mnt->mnt_opts);
-	found = 0;
-	for (opt = optbuf; (opt = strtok(opt, " ")) != NULL; opt = NULL) {
-		if (!strcasecmp(opt, option)) {
-			opt = opt - optbuf + mnt->mnt_opts;
-			gsh_free(optbuf);
-			return opt;
-		}
-	}
-	gsh_free(optbuf);
-	return NULL;
+    optbuf = gsh_strdup(mnt->mnt_opts);
+    found = 0;
+    for(opt = optbuf; (opt = strtok(opt, " ")) != NULL; opt = NULL)
+    {
+        if(!strcasecmp(opt, option))
+        {
+            opt = opt - optbuf + mnt->mnt_opts;
+            gsh_free(optbuf);
+            return opt;
+        }
+    }
+    gsh_free(optbuf);
+    return NULL;
 }
 
-static char *catopt(char *s0, const char *s1)
+static char* catopt(char* s0, const char* s1)
 {
-	size_t newlen;
-	char *cp;
+    size_t newlen;
+    char* cp;
 
-	if (s1 == NULL || *s1 == '\0')
-		return s0;
+    if(s1 == NULL || *s1 == '\0')
+        return s0;
 
-	if (s0 != NULL) {
-		newlen = strlen(s0) + strlen(s1) + 1 + 1;
-		cp = gsh_realloc(s0, newlen);
+    if(s0 != NULL)
+    {
+        newlen = strlen(s0) + strlen(s1) + 1 + 1;
+        cp = gsh_realloc(s0, newlen);
 
-		strcat(cp, " ");
-		strcat(cp, s1);
-	} else
-		cp = gsh_strdup(s1);
+        strcat(cp, " ");
+        strcat(cp, s1);
+    }
+    else
+        cp = gsh_strdup(s1);
 
-	return cp;
+    return cp;
 }
 
-static char *flags2opts(int flags)
+static char* flags2opts(int flags)
 {
-	char *res = NULL;
-	int i;
+    char* res = NULL;
+    int i;
 
-	res = catopt(res, (flags & MNT_RDONLY) ? "ro" : "rw");
+    res = catopt(res, (flags & MNT_RDONLY) ? "ro" : "rw");
 
-	for (i = 0; i < N_OPTS; i++)
-		if (flags & mntoptions[i].m_flag)
-			res = catopt(res, mntoptions[i].m_option);
-	return res;
+    for(i = 0; i < N_OPTS; i++)
+        if(flags & mntoptions[i].m_flag)
+            res = catopt(res, mntoptions[i].m_option);
+    return res;
 }
 
-static struct mntent *statfs_to_mntent(struct statfs *mntbuf)
+static struct mntent* statfs_to_mntent(struct statfs* mntbuf)
 {
-	static char opts_buf[40], *tmp;
+    static char opts_buf[40], * tmp;
 
-	_mntent.mnt_fsname = mntbuf->f_mntfromname;
-	_mntent.mnt_dir = mntbuf->f_mntonname;
-	_mntent.mnt_type = mntbuf->f_fstypename;
-	tmp = flags2opts(mntbuf->f_flags);
-	if (tmp) {
-		opts_buf[sizeof(opts_buf) - 1] = '\0';
-		strncpy(opts_buf, tmp, sizeof(opts_buf) - 1);
-		gsh_free(tmp);
-	} else {
-		*opts_buf = '\0';
-	}
-	_mntent.mnt_opts = opts_buf;
-	_mntent.mnt_freq = _mntent.mnt_passno = 0;
-	return &_mntent;
+    _mntent.mnt_fsname = mntbuf->f_mntfromname;
+    _mntent.mnt_dir = mntbuf->f_mntonname;
+    _mntent.mnt_type = mntbuf->f_fstypename;
+    tmp = flags2opts(mntbuf->f_flags);
+    if(tmp)
+    {
+        opts_buf[sizeof(opts_buf) - 1] = '\0';
+        strncpy(opts_buf, tmp, sizeof(opts_buf) - 1);
+        gsh_free(tmp);
+    }
+    else
+    {
+        *opts_buf = '\0';
+    }
+    _mntent.mnt_opts = opts_buf;
+    _mntent.mnt_freq = _mntent.mnt_passno = 0;
+    return &_mntent;
 }
 
-struct mntent *getmntent(FILE *fp)
+struct mntent* getmntent(FILE* fp)
 {
-	int i;
+    int i;
 
-	if (pos == -1 || mntsize == -1)
-		mntsize = getmntinfo(&_mntbuf, MNT_WAIT);
+    if(pos == -1 || mntsize == -1)
+        mntsize = getmntinfo(&_mntbuf, MNT_WAIT);
 
-	for (i = 0; i < mntsize; i++)
-		LogFullDebug(COMPONENT_FSAL,
-			     "%s", _mntbuf[i].f_mntfromname);
+    for(i = 0; i < mntsize; i++)
+        LogFullDebug(COMPONENT_FSAL,
+                     "%s", _mntbuf[i].f_mntfromname);
 
-	++pos;
+    ++pos;
 
-	if (pos == mntsize) {
-		pos = mntsize = -1;
-		return NULL;
-	}
+    if(pos == mntsize)
+    {
+        pos = mntsize = -1;
+        return NULL;
+    }
 
-	return statfs_to_mntent(&_mntbuf[pos]);
+    return statfs_to_mntent(&_mntbuf[pos]);
 }
