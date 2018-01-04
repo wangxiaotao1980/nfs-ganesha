@@ -1,35 +1,35 @@
 /*
  * Various libcidr memory-related functions
  */
-#include "config.h"
+//#include "../include/config.h"
+#include "../include/abstract_mem.h"
+#include "../include/cidr.h"
 
-#include <errno.h>
-#include <stdlib.h>
+//#include <errno.h>
+//#include <stdlib.h>
 #include <string.h>
 
-#include "abstract_mem.h"
-#include "cidr.h"
 
 /* Allocate a struct cidr_addr */
-CIDR *cidr_alloc(void)
+CIDR* cidr_alloc(void)
 {
-	return gsh_calloc(1, sizeof(CIDR));
+    return gsh_calloc(1, sizeof(CIDR));
 }
 
 /* Duplicate a CIDR */
-CIDR *cidr_dup(const CIDR * src)
+CIDR* cidr_dup(const CIDR* src)
 {
-	CIDR *toret;
+    CIDR* toret;
 
-	toret = cidr_alloc();
+    toret = cidr_alloc();
 
-	memcpy(toret, src, sizeof(CIDR));
+    memcpy(toret, src, sizeof(CIDR));
 
-	return (toret);
+    return (toret);
 }
 
 /* Free a struct cidr_addr */
-void cidr_free(CIDR * tofree)
+void cidr_free(CIDR* tofree)
 {
-	gsh_free(tofree);
+    gsh_free(tofree);
 }
