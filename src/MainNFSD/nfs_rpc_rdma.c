@@ -38,8 +38,8 @@
 #include "solaris_port.h"
 #endif
 
-#include "gsh_rpc.h"
-#include "nfs_init.h"
+#include "../include/gsh_rpc.h"
+#include "../include/nfs_init.h"
 
 /**
  * rpc_rdma_disconnect_callback: placeholder
@@ -47,9 +47,7 @@
  * @param[inout] xprt	must be init first
  */
 static void
-rpc_rdma_disconnect_callback(SVCXPRT *xprt)
-{
-}
+rpc_rdma_disconnect_callback(SVCXPRT* xprt) {}
 
 /**
  * rpc_rdma_dispatcher_thread: setup NFS/RDMA engine
@@ -64,56 +62,59 @@ rpc_rdma_disconnect_callback(SVCXPRT *xprt)
  *
  * @return NULL
  */
-void *
-nfs_rdma_dispatcher_thread(void *nullarg)
+void*
+nfs_rdma_dispatcher_thread(void* nullarg)
 {
-	struct rpc_rdma_attr xa = {
-		.statistics_prefix = NULL,
-		.node = "::",
-		.port = "20049",
-		.disconnect_cb = rpc_rdma_disconnect_callback,
-		.request_cb = thr_decode_rpc_request,
-		.sq_depth = 32,			/* default was 50 */
-		.max_send_sge = 32,		/* minimum 2 */
-		.rq_depth = 32,			/* default was 50 */
-		.max_recv_sge = 31,		/* minimum 1 */
-		.backlog = 10,			/* minimum 2 */
-		.credits = 30,			/* default 10 */
-		.destroy_on_disconnect = true,
-		.use_srq = false,
-	};
-	SVCXPRT *l_xprt = rpc_rdma_create(&xa);
+    struct rpc_rdma_attr xa = {
+        .statistics_prefix     = NULL,
+        .node                  = "::",
+        .port                  = "20049",
+        .disconnect_cb         = rpc_rdma_disconnect_callback,
+        .request_cb            = thr_decode_rpc_request,
+        .sq_depth              = 32, /* default was 50 */
+        .max_send_sge          = 32, /* minimum 2 */
+        .rq_depth              = 32, /* default was 50 */
+        .max_recv_sge          = 31, /* minimum 1 */
+        .backlog               = 10, /* minimum 2 */
+        .credits               = 30, /* default 10 */
+        .destroy_on_disconnect = true,
+        .use_srq               = false,
+    };
+    SVCXPRT* l_xprt = rpc_rdma_create(&xa);
 
-	if (!l_xprt) {
-		LogCrit(COMPONENT_DISPATCH,
-			"NFS/RDMA dispatcher could not start engine");
-		return NULL;
-	}
-	LogEvent(COMPONENT_DISPATCH,
-		"NFS/RDMA engine initialized");
+    if(!l_xprt)
+    {
+        LogCrit(COMPONENT_DISPATCH,
+            "NFS/RDMA dispatcher could not start engine");
+        return NULL;
+    }
+    LogEvent(COMPONENT_DISPATCH,
+        "NFS/RDMA engine initialized");
 
-	/* All clones and large allocations are done in this loop,
-	 * avoiding contention in the heap(s), serialized by the
-	 * connection_requests queue.
-	 */
-	while (l_xprt->xp_refs > 0) {
-		/* values used in Mooshika were 8*1024, 4*8*1024;
-		 * should be configurable.
-		 */
-		SVCXPRT *c_xprt = svc_rdma_create(l_xprt, 4*1024, 4*1024,
-							SVC_XPRT_FLAG_NONE);
-		if (!c_xprt) {
-			/* message already logged */
-			continue;
-		}
+    /* All clones and large allocations are done in this loop,
+     * avoiding contention in the heap(s), serialized by the
+     * connection_requests queue.
+     */
+    while(l_xprt->xp_refs > 0)
+    {
+        /* values used in Mooshika were 8*1024, 4*8*1024;
+         * should be configurable.
+         */
+        SVCXPRT* c_xprt = svc_rdma_create(l_xprt, 4 * 1024, 4 * 1024,
+                                          SVC_XPRT_FLAG_NONE);
+        if(!c_xprt)
+        {
+            /* message already logged */
+            continue;
+        }
 
-		LogEvent(COMPONENT_DISPATCH,
-			"cloned (child) transport %p",
-			c_xprt);
-	}
+        LogEvent(COMPONENT_DISPATCH,
+            "cloned (child) transport %p",
+            c_xprt);
+    }
 
-	/* We never get here, xp_refs is always > 0 until destroy */
-	SVC_DESTROY(l_xprt);
+    /* We never get here, xp_refs is always > 0 until destroy */
+    SVC_DESTROY(l_xprt);
 
-	return NULL;
+    return NULL;
 } /* rpc_rdma_dispatcher_thread */

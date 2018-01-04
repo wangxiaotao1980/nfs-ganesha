@@ -32,23 +32,25 @@
  * the related stuff).
  *
  */
-#include "config.h"
-#include <stdio.h>
-#include <string.h>
-#include <pthread.h>
-#include <fcntl.h>
-#include <sys/file.h>		/* for having FNDELAY */
-#include <sys/select.h>
-#include "hashtable.h"
-#include "log.h"
-#include "gsh_rpc.h"
-#include "nfs23.h"
-#include "nfs4.h"
-#include "mount.h"
-#include "nfs_core.h"
-#include "nfs_exports.h"
-#include "nfs_proto_functions.h"
-#include "nfs_file_handle.h"
+//#include "../include/config.h"
+//#include "../include/log.h"
+//#include "../include/gsh_rpc.h"
+//#include "../include/nfs23.h"
+//#include "../include/nfs4.h"
+//#include "../include/mount.h"
+//#include "../include/nfs_core.h"
+//#include "../include/nfs_exports.h"
+//#include "../include/nfs_proto_functions.h"
+//#include "../include/nfs_file_handle.h"
+//#include "../include/hashtable.h"
+//#include <stdio.h>
+//#include <string.h>
+//#include <pthread.h>
+//#include <fcntl.h>
+//#include <sys/file.h>		/* for having FNDELAY */
+//#include <sys/select.h>
+
+
 
 #if 0
 /* XXX This routine was used only in prior revision of the rendezvous_request

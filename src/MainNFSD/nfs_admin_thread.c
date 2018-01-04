@@ -29,19 +29,21 @@
  * @brief The admin_thread and support code.
  */
 
-#include "config.h"
-#include <stdio.h>
+#include "../include/config.h"
+#include "../include/nfs_core.h"
+#include "../include/log.h"
+#include "../include/sal_functions.h"
+#include "../include/sal_data.h"
+#include "../include/idmapper.h"
+#include "../include/delayed_exec.h"
+#include "../include/export_mgr.h"
+//#include "../include/fsal.h"
+//#include "../include/netgroup_cache.h"
+
+//#include <stdio.h>
 #include <string.h>
 #include <pthread.h>
-#include "nfs_core.h"
-#include "log.h"
-#include "sal_functions.h"
-#include "sal_data.h"
-#include "idmapper.h"
-#include "delayed_exec.h"
-#include "export_mgr.h"
-#include "fsal.h"
-#include "netgroup_cache.h"
+
 #ifdef USE_DBUS
 #include "gsh_dbus.h"
 #include "mdcache.h"
@@ -75,40 +77,40 @@ static bool admin_shutdown;
  * @param[out] reply dbus reply message with grace period status
  */
 static bool admin_dbus_get_grace(DBusMessageIter *args,
-				 DBusMessage *reply,
-				 DBusError *error)
+                 DBusMessage *reply,
+                 DBusError *error)
 {
-	char *errormsg = "get grace success";
-	bool success = true;
-	DBusMessageIter iter;
-	dbus_bool_t ingrace;
+    char *errormsg = "get grace success";
+    bool success = true;
+    DBusMessageIter iter;
+    dbus_bool_t ingrace;
 
-	dbus_message_iter_init_append(reply, &iter);
-	if (args != NULL) {
-		errormsg = "Get grace takes no arguments.";
-		success = false;
-		LogWarn(COMPONENT_DBUS, "%s", errormsg);
-		goto out;
-	}
+    dbus_message_iter_init_append(reply, &iter);
+    if (args != NULL) {
+        errormsg = "Get grace takes no arguments.";
+        success = false;
+        LogWarn(COMPONENT_DBUS, "%s", errormsg);
+        goto out;
+    }
 
-	ingrace = nfs_in_grace();
-	dbus_message_iter_append_basic(&iter, DBUS_TYPE_BOOLEAN, &ingrace);
+    ingrace = nfs_in_grace();
+    dbus_message_iter_append_basic(&iter, DBUS_TYPE_BOOLEAN, &ingrace);
 
  out:
-	dbus_status_reply(&iter, success, errormsg);
-	return success;
+    dbus_status_reply(&iter, success, errormsg);
+    return success;
 }
 
 static struct gsh_dbus_method method_get_grace = {
-	.name = "get_grace",
-	.method = admin_dbus_get_grace,
-	.args = {
-		 {.name = "isgrace",
-		  .type = "b",
-		  .direction = "out",
-		 },
-		 STATUS_REPLY,
-		 END_ARG_LIST}
+    .name = "get_grace",
+    .method = admin_dbus_get_grace,
+    .args = {
+         {.name = "isgrace",
+          .type = "b",
+          .direction = "out",
+         },
+         STATUS_REPLY,
+         END_ARG_LIST}
 };
 
 /**
@@ -119,62 +121,62 @@ static struct gsh_dbus_method method_get_grace = {
  */
 
 static bool admin_dbus_grace(DBusMessageIter *args,
-			     DBusMessage *reply,
-			     DBusError *error)
+                 DBusMessage *reply,
+                 DBusError *error)
 {
-	char *errormsg = "Started grace period";
-	bool success = true;
-	DBusMessageIter iter;
-	nfs_grace_start_t gsp;
-	char *input = NULL;
-	char *ip;
+    char *errormsg = "Started grace period";
+    bool success = true;
+    DBusMessageIter iter;
+    nfs_grace_start_t gsp;
+    char *input = NULL;
+    char *ip;
 
-	dbus_message_iter_init_append(reply, &iter);
-	if (args == NULL) {
-		errormsg = "Grace period take 1 arguments: event:IP-address.";
-		LogWarn(COMPONENT_DBUS, "%s", errormsg);
-		success = false;
-		goto out;
-	}
-	if (DBUS_TYPE_STRING != dbus_message_iter_get_arg_type(args)) {
-		errormsg = "Grace period arg 1 not a string.";
-		success = false;
-		LogWarn(COMPONENT_DBUS, "%s", errormsg);
-		goto out;
-	}
-	dbus_message_iter_get_basic(args, &input);
+    dbus_message_iter_init_append(reply, &iter);
+    if (args == NULL) {
+        errormsg = "Grace period take 1 arguments: event:IP-address.";
+        LogWarn(COMPONENT_DBUS, "%s", errormsg);
+        success = false;
+        goto out;
+    }
+    if (DBUS_TYPE_STRING != dbus_message_iter_get_arg_type(args)) {
+        errormsg = "Grace period arg 1 not a string.";
+        success = false;
+        LogWarn(COMPONENT_DBUS, "%s", errormsg);
+        goto out;
+    }
+    dbus_message_iter_get_basic(args, &input);
 
-	gsp.nodeid = -1;
-	gsp.event = EVENT_TAKE_IP;
+    gsp.nodeid = -1;
+    gsp.event = EVENT_TAKE_IP;
 
-	ip = index(input, ':');
-	if (ip == NULL)
-		gsp.ipaddr = input;	/* no event specified */
-	else {
-		char *buf = alloca(strlen(input) + 1);
+    ip = index(input, ':');
+    if (ip == NULL)
+        gsp.ipaddr = input;	/* no event specified */
+    else {
+        char *buf = alloca(strlen(input) + 1);
 
-		gsp.ipaddr = ip + 1;	/* point at the ip passed the : */
-		strcpy(buf, input);
-		ip = strstr(buf, ":");
-		if (ip != NULL) {
-			*ip = '\0';	/* replace ":" with null */
-			gsp.event = atoi(buf);
-		}
-		if (gsp.event == EVENT_TAKE_NODEID)
-			gsp.nodeid = atoi(gsp.ipaddr);
-	}
-	nfs4_start_grace(&gsp);
+        gsp.ipaddr = ip + 1;	/* point at the ip passed the : */
+        strcpy(buf, input);
+        ip = strstr(buf, ":");
+        if (ip != NULL) {
+            *ip = '\0';	/* replace ":" with null */
+            gsp.event = atoi(buf);
+        }
+        if (gsp.event == EVENT_TAKE_NODEID)
+            gsp.nodeid = atoi(gsp.ipaddr);
+    }
+    nfs4_start_grace(&gsp);
  out:
-	dbus_status_reply(&iter, success, errormsg);
-	return success;
+    dbus_status_reply(&iter, success, errormsg);
+    return success;
 }
 
 static struct gsh_dbus_method method_grace_period = {
-	.name = "grace",
-	.method = admin_dbus_grace,
-	.args = {IPADDR_ARG,
-		 STATUS_REPLY,
-		 END_ARG_LIST}
+    .name = "grace",
+    .method = admin_dbus_grace,
+    .args = {IPADDR_ARG,
+         STATUS_REPLY,
+         END_ARG_LIST}
 };
 
 /**
@@ -185,33 +187,33 @@ static struct gsh_dbus_method method_grace_period = {
  */
 
 static bool admin_dbus_shutdown(DBusMessageIter *args,
-				DBusMessage *reply,
-				DBusError *error)
+                DBusMessage *reply,
+                DBusError *error)
 {
-	char *errormsg = "Server shut down";
-	bool success = true;
-	DBusMessageIter iter;
+    char *errormsg = "Server shut down";
+    bool success = true;
+    DBusMessageIter iter;
 
-	dbus_message_iter_init_append(reply, &iter);
-	if (args != NULL) {
-		errormsg = "Shutdown takes no arguments.";
-		success = false;
-		LogWarn(COMPONENT_DBUS, "%s", errormsg);
-		goto out;
-	}
+    dbus_message_iter_init_append(reply, &iter);
+    if (args != NULL) {
+        errormsg = "Shutdown takes no arguments.";
+        success = false;
+        LogWarn(COMPONENT_DBUS, "%s", errormsg);
+        goto out;
+    }
 
-	admin_halt();
+    admin_halt();
 
  out:
-	dbus_status_reply(&iter, success, errormsg);
-	return success;
+    dbus_status_reply(&iter, success, errormsg);
+    return success;
 }
 
 static struct gsh_dbus_method method_shutdown = {
-	.name = "shutdown",
-	.method = admin_dbus_shutdown,
-	.args = {STATUS_REPLY,
-		 END_ARG_LIST}
+    .name = "shutdown",
+    .method = admin_dbus_shutdown,
+    .args = {STATUS_REPLY,
+         END_ARG_LIST}
 };
 
 /**
@@ -221,33 +223,33 @@ static struct gsh_dbus_method method_shutdown = {
  * @param[out] reply
  */
 static bool admin_dbus_purge_gids(DBusMessageIter *args,
-				  DBusMessage *reply,
-				  DBusError *error)
+                  DBusMessage *reply,
+                  DBusError *error)
 {
-	char *errormsg = "Purge gids cache";
-	bool success = true;
-	DBusMessageIter iter;
+    char *errormsg = "Purge gids cache";
+    bool success = true;
+    DBusMessageIter iter;
 
-	dbus_message_iter_init_append(reply, &iter);
-	if (args != NULL) {
-		errormsg = "Purge gids takes no arguments.";
-		success = false;
-		LogWarn(COMPONENT_DBUS, "%s", errormsg);
-		goto out;
-	}
+    dbus_message_iter_init_append(reply, &iter);
+    if (args != NULL) {
+        errormsg = "Purge gids takes no arguments.";
+        success = false;
+        LogWarn(COMPONENT_DBUS, "%s", errormsg);
+        goto out;
+    }
 
-	uid2grp_clear_cache();
+    uid2grp_clear_cache();
 
  out:
-	dbus_status_reply(&iter, success, errormsg);
-	return success;
+    dbus_status_reply(&iter, success, errormsg);
+    return success;
 }
 
 static struct gsh_dbus_method method_purge_gids = {
-	.name = "purge_gids",
-	.method = admin_dbus_purge_gids,
-	.args = {STATUS_REPLY,
-		 END_ARG_LIST}
+    .name = "purge_gids",
+    .method = admin_dbus_purge_gids,
+    .args = {STATUS_REPLY,
+         END_ARG_LIST}
 };
 
 /**
@@ -257,33 +259,33 @@ static struct gsh_dbus_method method_purge_gids = {
  * @param[out] reply
  */
 static bool admin_dbus_purge_netgroups(DBusMessageIter *args,
-				       DBusMessage *reply,
-				       DBusError *error)
+                       DBusMessage *reply,
+                       DBusError *error)
 {
-	char *errormsg = "Purge netgroup cache";
-	bool success = true;
-	DBusMessageIter iter;
+    char *errormsg = "Purge netgroup cache";
+    bool success = true;
+    DBusMessageIter iter;
 
-	dbus_message_iter_init_append(reply, &iter);
-	if (args != NULL) {
-		errormsg = "Purge netgroup takes no arguments.";
-		success = false;
-		LogWarn(COMPONENT_DBUS, "%s", errormsg);
-		goto out;
-	}
+    dbus_message_iter_init_append(reply, &iter);
+    if (args != NULL) {
+        errormsg = "Purge netgroup takes no arguments.";
+        success = false;
+        LogWarn(COMPONENT_DBUS, "%s", errormsg);
+        goto out;
+    }
 
-	ng_clear_cache();
+    ng_clear_cache();
 
  out:
-	dbus_status_reply(&iter, success, errormsg);
-	return success;
+    dbus_status_reply(&iter, success, errormsg);
+    return success;
 }
 
 static struct gsh_dbus_method method_purge_netgroups = {
-	.name = "purge_netgroups",
-	.method = admin_dbus_purge_netgroups,
-	.args = {STATUS_REPLY,
-		 END_ARG_LIST}
+    .name = "purge_netgroups",
+    .method = admin_dbus_purge_netgroups,
+    .args = {STATUS_REPLY,
+         END_ARG_LIST}
 };
 
 /**
@@ -293,69 +295,69 @@ static struct gsh_dbus_method method_purge_netgroups = {
  * @param[out] reply
  */
 static bool admin_dbus_init_fds_limit(DBusMessageIter *args,
-				       DBusMessage *reply,
-				       DBusError *error)
+                       DBusMessage *reply,
+                       DBusError *error)
 {
-	char *errormsg = "Init fds limit";
-	bool success = true;
-	DBusMessageIter iter;
+    char *errormsg = "Init fds limit";
+    bool success = true;
+    DBusMessageIter iter;
 
-	dbus_message_iter_init_append(reply, &iter);
-	if (args != NULL) {
-		errormsg = "Init fds limit takes no arguments.";
-		success = false;
-		LogWarn(COMPONENT_DBUS, "%s", errormsg);
-		goto out;
-	}
+    dbus_message_iter_init_append(reply, &iter);
+    if (args != NULL) {
+        errormsg = "Init fds limit takes no arguments.";
+        success = false;
+        LogWarn(COMPONENT_DBUS, "%s", errormsg);
+        goto out;
+    }
 
-	init_fds_limit();
+    init_fds_limit();
 
  out:
-	dbus_status_reply(&iter, success, errormsg);
-	return success;
+    dbus_status_reply(&iter, success, errormsg);
+    return success;
 }
 
 static struct gsh_dbus_method method_init_fds_limit = {
-	.name = "init_fds_limit",
-	.method = admin_dbus_init_fds_limit,
-	.args = {STATUS_REPLY,
-		 END_ARG_LIST}
+    .name = "init_fds_limit",
+    .method = admin_dbus_init_fds_limit,
+    .args = {STATUS_REPLY,
+         END_ARG_LIST}
 };
 
 
 static struct gsh_dbus_method *admin_methods[] = {
-	&method_shutdown,
-	&method_grace_period,
-	&method_get_grace,
-	&method_purge_gids,
-	&method_purge_netgroups,
-	&method_init_fds_limit,
-	NULL
+    &method_shutdown,
+    &method_grace_period,
+    &method_get_grace,
+    &method_purge_gids,
+    &method_purge_netgroups,
+    &method_init_fds_limit,
+    NULL
 };
 
 static struct gsh_dbus_signal heartbeat_signal = {
-	.name = HEARTBEAT_NAME,
-	.signal = NULL,
-	.args = {HEARTBEAT_ARG,
-		 END_ARG_LIST}
+    .name = HEARTBEAT_NAME,
+    .signal = NULL,
+    .args = {HEARTBEAT_ARG,
+         END_ARG_LIST}
 };
 
 static struct gsh_dbus_signal *admin_signals[] = {
-	&heartbeat_signal,
-	NULL
+    &heartbeat_signal,
+    NULL
 };
 
 static struct gsh_dbus_interface admin_interface = {
-	.name = DBUS_ADMIN_IFACE,
-	.props = NULL,
-	.methods = admin_methods,
-	.signals = admin_signals
+    .name = DBUS_ADMIN_IFACE,
+    .props = NULL,
+    .methods = admin_methods,
+    .signals = admin_signals
 };
 
 static struct gsh_dbus_interface *admin_interfaces[] = {
-	&admin_interface,
-	&log_interface,
-	NULL
+    &admin_interface,
+    &log_interface,
+    NULL
 };
 
 #endif				/* USE_DBUS */
@@ -367,9 +369,9 @@ static struct gsh_dbus_interface *admin_interfaces[] = {
 void nfs_Init_admin_thread(void)
 {
 #ifdef USE_DBUS
-	gsh_dbus_register_path("admin", admin_interfaces);
+    gsh_dbus_register_path("admin", admin_interfaces);
 #endif				/* USE_DBUS */
-	LogEvent(COMPONENT_NFS_CB, "Admin thread initialized");
+    LogEvent(COMPONENT_NFS_CB, "Admin thread initialized");
 }
 
 /**
@@ -378,133 +380,154 @@ void nfs_Init_admin_thread(void)
 
 void admin_halt(void)
 {
-	PTHREAD_MUTEX_lock(&admin_control_mtx);
+    PTHREAD_MUTEX_lock(&admin_control_mtx);
 
-	if (!admin_shutdown) {
-		admin_shutdown = true;
-		pthread_cond_broadcast(&admin_control_cv);
-	}
+    if(!admin_shutdown)
+    {
+        admin_shutdown = true;
+        pthread_cond_broadcast(&admin_control_cv);
+    }
 
-	PTHREAD_MUTEX_unlock(&admin_control_mtx);
+    PTHREAD_MUTEX_unlock(&admin_control_mtx);
 }
 
 static void do_shutdown(void)
 {
-	int rc = 0;
-	bool disorderly = false;
+    int rc = 0;
+    bool disorderly = false;
 
-	LogEvent(COMPONENT_MAIN, "NFS EXIT: stopping NFS service");
+    LogEvent(COMPONENT_MAIN, "NFS EXIT: stopping NFS service");
 
 #ifdef USE_DBUS
-	/* DBUS shutdown */
-	gsh_dbus_pkgshutdown();
+    /* DBUS shutdown */
+    gsh_dbus_pkgshutdown();
 #endif
 
-	LogEvent(COMPONENT_MAIN, "Stopping delayed executor.");
-	delayed_shutdown();
-	LogEvent(COMPONENT_MAIN, "Delayed executor stopped.");
+    LogEvent(COMPONENT_MAIN, "Stopping delayed executor.");
+    delayed_shutdown();
+    LogEvent(COMPONENT_MAIN, "Delayed executor stopped.");
 
-	LogEvent(COMPONENT_MAIN, "Stopping state asynchronous request thread");
-	rc = state_async_shutdown();
-	if (rc != 0) {
-		LogMajor(COMPONENT_THREAD,
-			 "Error shutting down state asynchronous request system: %d",
-			 rc);
-		disorderly = true;
-	} else {
-		LogEvent(COMPONENT_THREAD,
-			 "State asynchronous request system shut down.");
-	}
+    LogEvent(COMPONENT_MAIN, "Stopping state asynchronous request thread");
+    rc = state_async_shutdown();
+    if(rc != 0)
+    {
+        LogMajor(COMPONENT_THREAD,
+            "Error shutting down state asynchronous request system: %d",
+            rc);
+        disorderly = true;
+    }
+    else
+    {
+        LogEvent(COMPONENT_THREAD,
+            "State asynchronous request system shut down.");
+    }
 
-	LogEvent(COMPONENT_MAIN, "Unregistering ports used by NFS service");
-	/* finalize RPC package */
-	Clean_RPC();
+    LogEvent(COMPONENT_MAIN, "Unregistering ports used by NFS service");
+    /* finalize RPC package */
+    Clean_RPC();
 
-	LogEvent(COMPONENT_MAIN, "Stopping request decoder threads");
-	rc = fridgethr_sync_command(req_fridge, fridgethr_comm_stop, 120);
+    LogEvent(COMPONENT_MAIN, "Stopping request decoder threads");
+    rc = fridgethr_sync_command(req_fridge, fridgethr_comm_stop, 120);
 
-	if (rc == ETIMEDOUT) {
-		LogMajor(COMPONENT_THREAD,
-			 "Shutdown timed out, cancelling threads!");
-		fridgethr_cancel(req_fridge);
-		disorderly = true;
-	} else if (rc != 0) {
-		LogMajor(COMPONENT_THREAD,
-			 "Failed to shut down the request thread fridge: %d!",
-			 rc);
-		disorderly = true;
-	} else {
-		LogEvent(COMPONENT_THREAD, "Request threads shut down.");
-	}
+    if(rc == ETIMEDOUT)
+    {
+        LogMajor(COMPONENT_THREAD,
+            "Shutdown timed out, cancelling threads!");
+        fridgethr_cancel(req_fridge);
+        disorderly = true;
+    }
+    else if(rc != 0)
+    {
+        LogMajor(COMPONENT_THREAD,
+            "Failed to shut down the request thread fridge: %d!",
+            rc);
+        disorderly = true;
+    }
+    else
+    {
+        LogEvent(COMPONENT_THREAD, "Request threads shut down.");
+    }
 
-	LogEvent(COMPONENT_MAIN, "Stopping worker threads");
+    LogEvent(COMPONENT_MAIN, "Stopping worker threads");
 
-	rc = worker_shutdown();
+    rc = worker_shutdown();
 
-	if (rc != 0) {
-		LogMajor(COMPONENT_THREAD,
-			 "Unable to shut down worker threads: %d", rc);
-		disorderly = true;
-	} else {
-		LogEvent(COMPONENT_THREAD,
-			 "Worker threads successfully shut down.");
-	}
+    if(rc != 0)
+    {
+        LogMajor(COMPONENT_THREAD,
+            "Unable to shut down worker threads: %d", rc);
+        disorderly = true;
+    }
+    else
+    {
+        LogEvent(COMPONENT_THREAD,
+            "Worker threads successfully shut down.");
+    }
 
-	rc = general_fridge_shutdown();
-	if (rc != 0) {
-		LogMajor(COMPONENT_THREAD,
-			 "Error shutting down general fridge: %d", rc);
-		disorderly = true;
-	} else {
-		LogEvent(COMPONENT_THREAD, "General fridge shut down.");
-	}
+    rc = general_fridge_shutdown();
+    if(rc != 0)
+    {
+        LogMajor(COMPONENT_THREAD,
+            "Error shutting down general fridge: %d", rc);
+        disorderly = true;
+    }
+    else
+    {
+        LogEvent(COMPONENT_THREAD, "General fridge shut down.");
+    }
 
-	rc = reaper_shutdown();
-	if (rc != 0) {
-		LogMajor(COMPONENT_THREAD,
-			 "Error shutting down reaper thread: %d", rc);
-		disorderly = true;
-	} else {
-		LogEvent(COMPONENT_THREAD, "Reaper thread shut down.");
-	}
+    rc = reaper_shutdown();
+    if(rc != 0)
+    {
+        LogMajor(COMPONENT_THREAD,
+            "Error shutting down reaper thread: %d", rc);
+        disorderly = true;
+    }
+    else
+    {
+        LogEvent(COMPONENT_THREAD, "Reaper thread shut down.");
+    }
 
-	LogEvent(COMPONENT_MAIN, "Removing all exports.");
-	remove_all_exports();
+    LogEvent(COMPONENT_MAIN, "Removing all exports.");
+    remove_all_exports();
 
-	(void)svc_shutdown(SVC_SHUTDOWN_FLAG_NONE);
+    (void)svc_shutdown(SVC_SHUTDOWN_FLAG_NONE);
 
-	if (disorderly) {
-		LogMajor(COMPONENT_MAIN,
-			 "Error in shutdown, taking emergency cleanup.");
-		/* We don't attempt to free state, clean the cache,
-		   or unload the FSALs more cleanly, since doing
-		   anything more than this risks hanging up on
-		   potentially invalid locks. */
-		emergency_cleanup_fsals();
-	} else {
+    if(disorderly)
+    {
+        LogMajor(COMPONENT_MAIN,
+            "Error in shutdown, taking emergency cleanup.");
+        /* We don't attempt to free state, clean the cache,
+           or unload the FSALs more cleanly, since doing
+           anything more than this risks hanging up on
+           potentially invalid locks. */
+        emergency_cleanup_fsals();
+    }
+    else
+    {
+        LogEvent(COMPONENT_MAIN, "Destroying the FSAL system.");
+        destroy_fsals();
+        LogEvent(COMPONENT_MAIN, "FSAL system destroyed.");
+    }
 
-		LogEvent(COMPONENT_MAIN, "Destroying the FSAL system.");
-		destroy_fsals();
-		LogEvent(COMPONENT_MAIN, "FSAL system destroyed.");
-	}
-
-	unlink(pidfile_path);
+    unlink(pidfile_path);
 }
 
-void *admin_thread(void *UnusedArg)
+void* admin_thread(void* UnusedArg)
 {
-	SetNameFunction("Admin");
+    SetNameFunction("Admin");
 
-	PTHREAD_MUTEX_lock(&admin_control_mtx);
+    PTHREAD_MUTEX_lock(&admin_control_mtx);
 
-	while (!admin_shutdown) {
-		/* Wait for shutdown indication. */
-		pthread_cond_wait(&admin_control_cv, &admin_control_mtx);
-	}
+    while(!admin_shutdown)
+    {
+        /* Wait for shutdown indication. */
+        pthread_cond_wait(&admin_control_cv, &admin_control_mtx);
+    }
 
-	PTHREAD_MUTEX_unlock(&admin_control_mtx);
+    PTHREAD_MUTEX_unlock(&admin_control_mtx);
 
-	do_shutdown();
+    do_shutdown();
 
-	return NULL;
+    return NULL;
 }
