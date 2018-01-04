@@ -22,12 +22,11 @@
 #ifndef CONF_URL_RADOS_H
 #define CONF_URL_RADOS_H
 
-#include "config.h"
+#include "../include/config.h"
 
 #ifdef RADOS_URLS
-
+#include "../include/gsh_list.h"
 #include <stdio.h>
-#include "gsh_list.h"
 #include <rados/librados.h>
 
 void conf_url_rados_pkginit(void);
