@@ -26,13 +26,14 @@
  * @{
  */
 
-#include "gsh_list.h"
-#include "fsal.h"
-#include "fsal_api.h"
-#include "nfs_exports.h"
-#include "nfs_core.h"
+#include "../include/gsh_list.h"
+#include "../include/fsal.h"
+#include "../include/fsal_api.h"
+#include "../include/nfs_exports.h"
+#include "../include/nfs_core.h"
+#include "../include/FSAL/fsal_commonlib.h"
+
 #include "fsal_private.h"
-#include "FSAL/fsal_commonlib.h"
 
 /**
  * @file fsal_destroyer.c

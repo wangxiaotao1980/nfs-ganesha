@@ -27,25 +27,27 @@
  * @{
  */
 
-#include "config.h"
+#include "../include/config.h"
+#include "../include/log.h"
+#include "../include/fsal.h"
+#include "../include/fsal_pnfs.h"
+#include "../include/pnfs_utils.h"
+#include "../include/nfs4.h"
+#include "../include/nfs_exports.h"
+#include "../include/nfs_file_handle.h"
+#include "../include/nfs_proto_functions.h"
+
 
 #include <sys/types.h>
 #include <stdint.h>
 #include <stddef.h>
 #include <stdlib.h>
-#include <errno.h>
+//#include <errno.h>
 #include <string.h>
 #include <pthread.h>
-#include "log.h"
-#include "fsal.h"
-#include "fsal_pnfs.h"
-#include "pnfs_utils.h"
-#include "nfs4.h"
-#include "nfs_exports.h"
-#include "nfs_file_handle.h"
-#include "nfs_proto_functions.h"
 
-struct fsal_module *pnfs_fsal[FSAL_ID_COUNT];
+
+struct fsal_module* pnfs_fsal[FSAL_ID_COUNT];
 
 /**
  * @file   common_pnfs.c
@@ -78,11 +80,11 @@ struct fsal_module *pnfs_fsal[FSAL_ID_COUNT];
  * @retval false on failure.
  */
 
-bool xdr_fsal_deviceid(XDR *xdrs, struct pnfs_deviceid *deviceid)
+bool xdr_fsal_deviceid(XDR* xdrs, struct pnfs_deviceid* deviceid)
 {
-	if (!xdr_opaque(xdrs, (char *)deviceid, NFS4_DEVICEID4_SIZE))
-		return false;
-	return true;
+    if(!xdr_opaque(xdrs, (char *)deviceid, NFS4_DEVICEID4_SIZE))
+        return false;
+    return true;
 }
 
 /**
@@ -101,70 +103,75 @@ bool xdr_fsal_deviceid(XDR *xdrs, struct pnfs_deviceid *deviceid)
  * @return NFSv4 status codes.
  */
 
-nfsstat4 FSAL_encode_ipv4_netaddr(XDR *xdrs, uint16_t proto, uint32_t addr,
-				  uint16_t port)
+nfsstat4 FSAL_encode_ipv4_netaddr(XDR* xdrs, uint16_t proto, uint32_t addr,
+                                  uint16_t port)
 {
-	/* The address family mark string */
-	const char *mark = NULL;
-	/* Six groups of up to three digits each, five dots, and a null */
-	const size_t v4_addrbuff_len = 24;
-	/* The buffer to which we output the string form of the address */
-	char addrbuff[v4_addrbuff_len];
-	/* Pointer to the beginning of the buffer, the reference of
-	   which is passed to xdr_string */
-	char *buffptr = &addrbuff[0];
-	/* Return value from snprintf to check for overflow or
-	   error */
-	size_t written_length = 0;
+    /* The address family mark string */
+    const char* mark = NULL;
+    /* Six groups of up to three digits each, five dots, and a null */
+    const size_t v4_addrbuff_len = 24;
+    /* The buffer to which we output the string form of the address */
+    char addrbuff[v4_addrbuff_len];
+    /* Pointer to the beginning of the buffer, the reference of
+       which is passed to xdr_string */
+    char* buffptr = &addrbuff[0];
+    /* Return value from snprintf to check for overflow or
+       error */
+    size_t written_length = 0;
 
-	/* First, we output the correct netid for the protocol */
-	switch (proto) {
-	case 6:
-		mark = "tcp";
-		break;
+    /* First, we output the correct netid for the protocol */
+    switch(proto)
+    {
+        case 6 :
+            mark = "tcp";
+            break;
 
-	case 17:
-		mark = "udp";
-		break;
+        case 17 :
+            mark = "udp";
+            break;
 
-	case 123:
-		mark = "sctp";
-		break;
+        case 123 :
+            mark = "sctp";
+            break;
 
-	default:
-		LogCrit(COMPONENT_FSAL, "Caller supplied invalid protocol %u",
-			proto);
-		return NFS4ERR_SERVERFAULT;
-	}
+        default :
+            LogCrit(COMPONENT_FSAL, "Caller supplied invalid protocol %u",
+                proto);
+            return NFS4ERR_SERVERFAULT;
+    }
 
-	if (!xdr_string(xdrs, (char **)&mark, 5)) {
-		LogCrit(COMPONENT_FSAL, "Unable to encode protocol mark.");
-		return NFS4ERR_SERVERFAULT;
-	}
+    if(!xdr_string(xdrs, (char **)&mark, 5))
+    {
+        LogCrit(COMPONENT_FSAL, "Unable to encode protocol mark.");
+        return NFS4ERR_SERVERFAULT;
+    }
 
-	/* Then we convert the address and port to a string and encode it. */
+    /* Then we convert the address and port to a string and encode it. */
 
-	written_length = snprintf(addrbuff, v4_addrbuff_len,
-				  "%u.%u.%u.%u.%u.%u",
-				  (unsigned int) ((addr & 0xff000000) >> 0x18),
-				  (unsigned int) ((addr & 0x00ff0000) >> 0x10),
-				  (unsigned int) ((addr & 0x0000ff00) >> 0x08),
-				  (unsigned int) (addr & 0x000000ff),
-				  (unsigned int) ((port & 0xff00) >> 0x08),
-				  (unsigned int) (port & 0x00ff));
-	if (written_length >= v4_addrbuff_len) {
-		LogCrit(COMPONENT_FSAL,
-			"Programming error in FSAL_encode_ipv4_netaddr defined in %s:%u %s causing snprintf to overflow address buffer.",
-			__FILE__, __LINE__, __func__);
-		return NFS4ERR_SERVERFAULT;
-	}
+    written_length = snprintf(addrbuff, v4_addrbuff_len,
+                              "%u.%u.%u.%u.%u.%u",
+                              (unsigned int)((addr & 0xff000000) >> 0x18),
+                              (unsigned int)((addr & 0x00ff0000) >> 0x10),
+                              (unsigned int)((addr & 0x0000ff00) >> 0x08),
+                              (unsigned int)(addr & 0x000000ff),
+                              (unsigned int)((port & 0xff00) >> 0x08),
+                              (unsigned int)(port & 0x00ff));
+    if(written_length >= v4_addrbuff_len)
+    {
+        LogCrit(COMPONENT_FSAL,
+            "Programming error in FSAL_encode_ipv4_netaddr defined in %s:%u %s causing snprintf to overflow address buffer."
+            ,
+            __FILE__, __LINE__, __func__);
+        return NFS4ERR_SERVERFAULT;
+    }
 
-	if (!xdr_string(xdrs, &buffptr, v4_addrbuff_len)) {
-		LogCrit(COMPONENT_FSAL, "Unable to encode address.");
-		return NFS4ERR_SERVERFAULT;
-	}
+    if(!xdr_string(xdrs, &buffptr, v4_addrbuff_len))
+    {
+        LogCrit(COMPONENT_FSAL, "Unable to encode address.");
+        return NFS4ERR_SERVERFAULT;
+    }
 
-	return NFS4_OK;
+    return NFS4_OK;
 }
 
 /*
@@ -186,33 +193,34 @@ nfsstat4 FSAL_encode_ipv4_netaddr(XDR *xdrs, uint16_t proto, uint32_t addr,
  *
  * @return NFSv4 error codes
  */
-static nfsstat4 make_file_handle_ds(const struct gsh_buffdesc *fh_desc,
-				    const uint16_t server_id,
-				    nfs_fh4 *wirehandle)
+static nfsstat4 make_file_handle_ds(const struct gsh_buffdesc* fh_desc,
+                                    const uint16_t server_id,
+                                    nfs_fh4* wirehandle)
 {
-	/* The v4_handle being constructed */
-	file_handle_v4_t *v4_handle =
-	    (file_handle_v4_t *) wirehandle->nfs_fh4_val;
+    /* The v4_handle being constructed */
+    file_handle_v4_t* v4_handle =
+            (file_handle_v4_t *)wirehandle->nfs_fh4_val;
 
-	if ((offsetof(struct file_handle_v4, fsopaque) + fh_desc->len) >
-	    wirehandle->nfs_fh4_len) {
-		LogMajor(COMPONENT_PNFS, "DS handle too big to encode!");
-		return NFS4ERR_SERVERFAULT;
-	}
-	wirehandle->nfs_fh4_len =
-	    offsetof(struct file_handle_v4, fsopaque)+fh_desc->len;
+    if((offsetof(struct file_handle_v4, fsopaque) + fh_desc->len) >
+        wirehandle->nfs_fh4_len)
+    {
+        LogMajor(COMPONENT_PNFS, "DS handle too big to encode!");
+        return NFS4ERR_SERVERFAULT;
+    }
+    wirehandle->nfs_fh4_len =
+            offsetof(struct file_handle_v4, fsopaque) + fh_desc->len;
 
-	v4_handle->fhversion = GANESHA_FH_VERSION;
-	v4_handle->fs_len = fh_desc->len;
-	memcpy(v4_handle->fsopaque, fh_desc->addr, fh_desc->len);
-	v4_handle->id.servers = htons(server_id);
+    v4_handle->fhversion = GANESHA_FH_VERSION;
+    v4_handle->fs_len = fh_desc->len;
+    memcpy(v4_handle->fsopaque, fh_desc->addr, fh_desc->len);
+    v4_handle->id.servers = htons(server_id);
 #if (BYTE_ORDER == BIG_ENDIAN)
-	v4_handle->fhflags1 = FILE_HANDLE_V4_FLAG_DS | FH_FSAL_BIG_ENDIAN;
+    v4_handle->fhflags1 = FILE_HANDLE_V4_FLAG_DS | FH_FSAL_BIG_ENDIAN;
 #else
-	v4_handle->fhflags1 = FILE_HANDLE_V4_FLAG_DS;
+    v4_handle->fhflags1 = FILE_HANDLE_V4_FLAG_DS;
 #endif
 
-	return NFS4_OK;
+    return NFS4_OK;
 }
 
 /**
@@ -239,72 +247,80 @@ static nfsstat4 make_file_handle_ds(const struct gsh_buffdesc *fh_desc,
  *                       handles
  * @return NFS status codes.
  */
-nfsstat4 FSAL_encode_file_layout(XDR *xdrs,
-				 const struct pnfs_deviceid *deviceid,
-				 nfl_util4 util, const uint32_t first_idx,
-				 const offset4 ptrn_ofst,
-				 const uint16_t *ds_ids,
-				 const uint32_t num_fhs,
-				 const struct gsh_buffdesc *fhs)
+nfsstat4 FSAL_encode_file_layout(XDR* xdrs,
+                                 const struct pnfs_deviceid* deviceid,
+                                 nfl_util4 util, const uint32_t first_idx,
+                                 const offset4 ptrn_ofst,
+                                 const uint16_t* ds_ids,
+                                 const uint32_t num_fhs,
+                                 const struct gsh_buffdesc* fhs)
 {
-	/* Index for traversing FH array */
-	size_t i = 0;
-	/* NFS status code */
-	nfsstat4 nfs_status = 0;
-	offset4 *p_ofst = (offset4 *) &ptrn_ofst; /* kill compile warnings */
+    /* Index for traversing FH array */
+    size_t i = 0;
+    /* NFS status code */
+    nfsstat4 nfs_status = 0;
+    offset4* p_ofst = (offset4 *)&ptrn_ofst; /* kill compile warnings */
 
-	if (!xdr_fsal_deviceid(xdrs, (struct pnfs_deviceid *)deviceid)) {
-		LogMajor(COMPONENT_PNFS, "Failed encoding deviceid.");
-		return NFS4ERR_SERVERFAULT;
-	}
+    if(!xdr_fsal_deviceid(xdrs, (struct pnfs_deviceid *)deviceid))
+    {
+        LogMajor(COMPONENT_PNFS, "Failed encoding deviceid.");
+        return NFS4ERR_SERVERFAULT;
+    }
 
-	if (!xdr_nfl_util4(xdrs, &util)) {
-		LogMajor(COMPONENT_PNFS, "Failed encoding nfl_util4.");
-		return NFS4ERR_SERVERFAULT;
-	}
+    if(!xdr_nfl_util4(xdrs, &util))
+    {
+        LogMajor(COMPONENT_PNFS, "Failed encoding nfl_util4.");
+        return NFS4ERR_SERVERFAULT;
+    }
 
-	if (!xdr_uint32_t(xdrs, (uint32_t *) &first_idx)) {
-		LogMajor(COMPONENT_PNFS, "Failed encoding first_stripe_index.");
-		return NFS4ERR_SERVERFAULT;
-	}
+    if(!xdr_uint32_t(xdrs, (uint32_t *)&first_idx))
+    {
+        LogMajor(COMPONENT_PNFS, "Failed encoding first_stripe_index.");
+        return NFS4ERR_SERVERFAULT;
+    }
 
-	if (!xdr_offset4(xdrs, p_ofst)) {
-		LogMajor(COMPONENT_PNFS, "Failed encoding pattern_offset.");
-		return NFS4ERR_SERVERFAULT;
-	}
+    if(!xdr_offset4(xdrs, p_ofst))
+    {
+        LogMajor(COMPONENT_PNFS, "Failed encoding pattern_offset.");
+        return NFS4ERR_SERVERFAULT;
+    }
 
-	if (!xdr_uint32_t(xdrs, (int32_t *) &num_fhs)) {
-		LogMajor(COMPONENT_PNFS, "Failed encoding length of FH array.");
-		return NFS4ERR_SERVERFAULT;
-	}
+    if(!xdr_uint32_t(xdrs, (int32_t *)&num_fhs))
+    {
+        LogMajor(COMPONENT_PNFS, "Failed encoding length of FH array.");
+        return NFS4ERR_SERVERFAULT;
+    }
 
-	for (i = 0; i < num_fhs; i++) {
-		nfs_fh4 handle;
-		char buffer[NFS4_FHSIZE];
+    for(i = 0; i < num_fhs; i++)
+    {
+        nfs_fh4 handle;
+        char buffer[NFS4_FHSIZE];
 
-		handle.nfs_fh4_val = buffer;
-		handle.nfs_fh4_len = sizeof(buffer);
-		memset(buffer, 0, sizeof(buffer));
+        handle.nfs_fh4_val = buffer;
+        handle.nfs_fh4_len = sizeof(buffer);
+        memset(buffer, 0, sizeof(buffer));
 
-		nfs_status = make_file_handle_ds(fhs + i,
-						 *(ds_ids + i),
-						 &handle);
-		if (nfs_status != NFS4_OK) {
-			LogMajor(COMPONENT_PNFS, "Failed converting FH %zu.",
-				 i);
-			return nfs_status;
-		}
+        nfs_status = make_file_handle_ds(fhs + i,
+                                         *(ds_ids + i),
+                                         &handle);
+        if(nfs_status != NFS4_OK)
+        {
+            LogMajor(COMPONENT_PNFS, "Failed converting FH %zu.",
+                i);
+            return nfs_status;
+        }
 
-		if (!xdr_bytes(xdrs,
-			       (char **)&handle.nfs_fh4_val,
-			       &handle.nfs_fh4_len,
-			       handle.nfs_fh4_len)) {
-			LogMajor(COMPONENT_PNFS, "Failed encoding FH %zu.", i);
-			return NFS4ERR_SERVERFAULT;
-		}
-	}
+        if(!xdr_bytes(xdrs,
+                      (char **)&handle.nfs_fh4_val,
+                      &handle.nfs_fh4_len,
+                      handle.nfs_fh4_len))
+        {
+            LogMajor(COMPONENT_PNFS, "Failed encoding FH %zu.", i);
+            return NFS4ERR_SERVERFAULT;
+        }
+    }
 
-	return NFS4_OK;
+    return NFS4_OK;
 }
 
 /**
@@ -320,29 +336,31 @@ nfsstat4 FSAL_encode_file_layout(XDR *xdrs,
  * @return NFSv4 Status code
  *
  */
-nfsstat4 FSAL_encode_v4_multipath(XDR *xdrs, const uint32_t num_hosts,
-				  const fsal_multipath_member_t *hosts)
+nfsstat4 FSAL_encode_v4_multipath(XDR* xdrs, const uint32_t num_hosts,
+                                  const fsal_multipath_member_t* hosts)
 {
-	/* Index for traversing host array */
-	size_t i = 0;
-	/* NFS status */
-	nfsstat4 nfs_status = 0;
+    /* Index for traversing host array */
+    size_t i = 0;
+    /* NFS status */
+    nfsstat4 nfs_status = 0;
 
-	if (!xdr_uint32_t(xdrs, (uint32_t *) &num_hosts)) {
-		LogMajor(COMPONENT_PNFS, "Failed encoding length of FH array.");
-		return NFS4ERR_SERVERFAULT;
-	}
+    if(!xdr_uint32_t(xdrs, (uint32_t *)&num_hosts))
+    {
+        LogMajor(COMPONENT_PNFS, "Failed encoding length of FH array.");
+        return NFS4ERR_SERVERFAULT;
+    }
 
-	for (i = 0; i < num_hosts; i++) {
-		nfs_status = FSAL_encode_ipv4_netaddr(xdrs,
-						      hosts[i].proto,
-						      hosts[i].addr,
-						      hosts[i].port);
-		if (nfs_status != NFS4_OK)
-			return nfs_status;
-	}
+    for(i = 0; i < num_hosts; i++)
+    {
+        nfs_status = FSAL_encode_ipv4_netaddr(xdrs,
+                                              hosts[i].proto,
+                                              hosts[i].addr,
+                                              hosts[i].port);
+        if(nfs_status != NFS4_OK)
+            return nfs_status;
+    }
 
-	return NFS4_OK;
+    return NFS4_OK;
 }
 
 /**
@@ -355,80 +373,81 @@ nfsstat4 FSAL_encode_v4_multipath(XDR *xdrs, const uint32_t num_hosts,
  */
 nfsstat4 posix2nfs4_error(const int posix_errorcode)
 {
-	switch (posix_errorcode) {
-	case EPERM:
-		return NFS4ERR_PERM;
+    switch(posix_errorcode)
+    {
+        case EPERM :
+            return NFS4ERR_PERM;
 
-	case ENOENT:
-		return NFS4ERR_NOENT;
+        case ENOENT :
+            return NFS4ERR_NOENT;
 
-	case ECONNREFUSED:
-	case ECONNABORTED:
-	case ECONNRESET:
-	case EIO:
-	case ENFILE:
-	case EMFILE:
-	case EPIPE:
-		return NFS4ERR_IO;
+        case ECONNREFUSED :
+        case ECONNABORTED :
+        case ECONNRESET :
+        case EIO :
+        case ENFILE :
+        case EMFILE :
+        case EPIPE :
+            return NFS4ERR_IO;
 
-	case ENODEV:
-	case ENXIO:
-		return NFS4ERR_NXIO;
+        case ENODEV :
+        case ENXIO :
+            return NFS4ERR_NXIO;
 
-	case EBADF:
-		return NFS4ERR_OPENMODE;
+        case EBADF :
+            return NFS4ERR_OPENMODE;
 
-	case ENOMEM:
-		return NFS4ERR_SERVERFAULT;
+        case ENOMEM :
+            return NFS4ERR_SERVERFAULT;
 
-	case EACCES:
-		return NFS4ERR_ACCESS;
+        case EACCES :
+            return NFS4ERR_ACCESS;
 
-	case EFAULT:
-		return NFS4ERR_SERVERFAULT;
+        case EFAULT :
+            return NFS4ERR_SERVERFAULT;
 
-	case EEXIST:
-		return NFS4ERR_EXIST;
+        case EEXIST :
+            return NFS4ERR_EXIST;
 
-	case EXDEV:
-		return NFS4ERR_XDEV;
+        case EXDEV :
+            return NFS4ERR_XDEV;
 
-	case ENOTDIR:
-		return NFS4ERR_NOTDIR;
+        case ENOTDIR :
+            return NFS4ERR_NOTDIR;
 
-	case EISDIR:
-		return NFS4ERR_ISDIR;
+        case EISDIR :
+            return NFS4ERR_ISDIR;
 
-	case EINVAL:
-		return NFS4ERR_INVAL;
+        case EINVAL :
+            return NFS4ERR_INVAL;
 
-	case EFBIG:
-		return NFS4ERR_FBIG;
+        case EFBIG :
+            return NFS4ERR_FBIG;
 
-	case ENOSPC:
-		return NFS4ERR_NOSPC;
+        case ENOSPC :
+            return NFS4ERR_NOSPC;
 
-	case EMLINK:
-		return NFS4ERR_MLINK;
+        case EMLINK :
+            return NFS4ERR_MLINK;
 
-	case EDQUOT:
-		return NFS4ERR_DQUOT;
+        case EDQUOT :
+            return NFS4ERR_DQUOT;
 
-	case ENAMETOOLONG:
-		return NFS4ERR_NAMETOOLONG;
+        case ENAMETOOLONG :
+            return NFS4ERR_NAMETOOLONG;
 
-	case ENOTEMPTY:
-		return NFS4ERR_NOTEMPTY;
+        case ENOTEMPTY :
+            return NFS4ERR_NOTEMPTY;
 
-	case ESTALE:
-		return NFS4ERR_STALE;
+        case ESTALE :
+            return NFS4ERR_STALE;
 
-	case ENOTSUP:
-		return NFS4ERR_NOTSUPP;
+        case ENOTSUP :
+            return NFS4ERR_NOTSUPP;
 
-	default:
-		return NFS4ERR_SERVERFAULT;
-	}
+        default :
+            return NFS4ERR_SERVERFAULT;
+    }
 }
 
 

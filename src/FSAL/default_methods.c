@@ -37,25 +37,27 @@
  * @brief System wide default FSAL methods
  */
 
-#include "config.h"
+#include "../include/config.h"
+#include "../include/log.h"
+#include "../include/fsal.h"
+#include "../include/nfs_core.h"
+#include "../include/config_parsing.h"
+#include "../include/gsh_types.h"
+#include "../include/FSAL/fsal_commonlib.h"
+#include "../include/pnfs_utils.h"
+#include "../include/nfs_creds.h"
+#include "../include/sal_data.h"
+
+#include "fsal_private.h"
 
 #include <stdint.h>
 #include <stddef.h>
 #include <stdlib.h>
-#include <errno.h>
+//#include <errno.h>
 #include <string.h>
 #include <pthread.h>
 #include <dlfcn.h>
-#include "log.h"
-#include "fsal.h"
-#include "nfs_core.h"
-#include "config_parsing.h"
-#include "gsh_types.h"
-#include "FSAL/fsal_commonlib.h"
-#include "fsal_private.h"
-#include "pnfs_utils.h"
-#include "nfs_creds.h"
-#include "sal_data.h"
+
 
 /** fsal module method defaults and common methods
  */
@@ -80,76 +82,78 @@
  * if it is a static, return EACCES
  */
 
-static int unload_fsal(struct fsal_module *fsal_hdl)
+static int unload_fsal(struct fsal_module* fsal_hdl)
 {
-	int retval = EBUSY;	/* someone still has a reference */
-	int32_t refcount = atomic_fetch_int32_t(&fsal_hdl->refcount);
+    int retval = EBUSY; /* someone still has a reference */
+    int32_t refcount = atomic_fetch_int32_t(&fsal_hdl->refcount);
 
-	LogDebug(COMPONENT_FSAL,
-		 "refcount = %"PRIi32,
-		 refcount);
+    LogDebug(COMPONENT_FSAL,
+        "refcount = %"PRIi32,
+        refcount);
 
-	PTHREAD_MUTEX_lock(&fsal_lock);
+    PTHREAD_MUTEX_lock(&fsal_lock);
 
-	if (refcount != 0 || !glist_empty(&fsal_hdl->exports)) {
-		LogCrit(COMPONENT_FSAL,
-			"Can not unload FSAL %s refcount=%"PRIi32,
-			fsal_hdl->name, refcount);
-		goto err;
-	}
-	if (fsal_hdl->dl_handle == NULL) {
-		LogCrit(COMPONENT_FSAL,
-			"Can not unload static linked FSAL %s",
-			fsal_hdl->name);
-		retval = EACCES;
-		goto err;
-	}
+    if(refcount != 0 || !glist_empty(&fsal_hdl->exports))
+    {
+        LogCrit(COMPONENT_FSAL,
+            "Can not unload FSAL %s refcount=%"PRIi32,
+            fsal_hdl->name, refcount);
+        goto err;
+    }
+    if(fsal_hdl->dl_handle == NULL)
+    {
+        LogCrit(COMPONENT_FSAL,
+            "Can not unload static linked FSAL %s",
+            fsal_hdl->name);
+        retval = EACCES;
+        goto err;
+    }
 
-	glist_del(&fsal_hdl->fsals);
-	PTHREAD_RWLOCK_destroy(&fsal_hdl->lock);
+    glist_del(&fsal_hdl->fsals);
+    PTHREAD_RWLOCK_destroy(&fsal_hdl->lock);
 
-	retval = dlclose(fsal_hdl->dl_handle);
-	PTHREAD_MUTEX_unlock(&fsal_lock);
-	return retval;
+    retval = dlclose(fsal_hdl->dl_handle);
+    PTHREAD_MUTEX_unlock(&fsal_lock);
+    return retval;
 
- err:
-	PTHREAD_RWLOCK_unlock(&fsal_hdl->lock);
-	PTHREAD_MUTEX_unlock(&fsal_lock);
-	return retval;
+err:
+    PTHREAD_RWLOCK_unlock(&fsal_hdl->lock);
+    PTHREAD_MUTEX_unlock(&fsal_lock);
+    return retval;
 }
 
 /* init_config
  * default case is we have no config so return happy
  */
 
-static fsal_status_t init_config(struct fsal_module *fsal_hdl,
-				 config_file_t config_struct,
-				 struct config_error_type *err_type)
+static fsal_status_t init_config(struct fsal_module* fsal_hdl,
+                                 config_file_t config_struct,
+                                 struct config_error_type* err_type)
 {
-	return fsalstat(ERR_FSAL_NO_ERROR, 0);
+    return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
 
 /* dump_config
  * default is to do nothing
  */
 
-static void dump_config(struct fsal_module *fsal_hdl, int log_fd)
+static void dump_config(struct fsal_module* fsal_hdl, int log_fd)
 {
-	/* return */
+    /* return */
 }
 
 /* create_export
  * default is we cannot create an export
  */
 
-static fsal_status_t create_export(struct fsal_module *fsal_hdl,
-				   void *parse_node,
-				   struct config_error_type *err_type,
-				   const struct fsal_up_vector *up_ops)
+static fsal_status_t create_export(struct fsal_module* fsal_hdl,
+                                   void* parse_node,
+                                   struct config_error_type* err_type,
+                                   const struct fsal_up_vector* up_ops)
 {
-	LogCrit(COMPONENT_FSAL,
-		"Invoking unsupported FSAL operation");
-	return fsalstat(ERR_FSAL_NOTSUPP, ENOTSUP);
+    LogCrit(COMPONENT_FSAL,
+        "Invoking unsupported FSAL operation");
+    return fsalstat(ERR_FSAL_NOTSUPP, ENOTSUP);
 }
 
 /**
@@ -160,27 +164,27 @@ static fsal_status_t create_export(struct fsal_module *fsal_hdl,
 
 static void emergency_cleanup(void)
 {
-	/* return */
+    /* return */
 }
 
 /**
  * @brief Be uninformative about a device
  */
 
-static nfsstat4 getdeviceinfo(struct fsal_module *fsal_hdl, XDR *da_addr_body,
-			      const layouttype4 type,
-			      const struct pnfs_deviceid *deviceid)
+static nfsstat4 getdeviceinfo(struct fsal_module* fsal_hdl, XDR* da_addr_body,
+                              const layouttype4 type,
+                              const struct pnfs_deviceid* deviceid)
 {
-	return NFS4ERR_NOTSUPP;
+    return NFS4ERR_NOTSUPP;
 }
 
 /**
  * No da_addr.
  */
 
-static size_t fs_da_addr_size(struct fsal_module *fsal_hdl)
+static size_t fs_da_addr_size(struct fsal_module* fsal_hdl)
 {
-	return 0;
+    return 0;
 }
 
 /**
@@ -195,17 +199,17 @@ static size_t fs_da_addr_size(struct fsal_module *fsal_hdl)
  * @return FSAL status.
  */
 
-static fsal_status_t fsal_pnfs_ds(struct fsal_module *const fsal_hdl,
-				  void *parse_node,
-				  struct fsal_pnfs_ds **const handle)
+static fsal_status_t fsal_pnfs_ds(struct fsal_module*const fsal_hdl,
+                                  void* parse_node,
+                                  struct fsal_pnfs_ds**const handle)
 {
-	LogDebug(COMPONENT_PNFS, "Default pNFS DS creation!");
-	if (*handle == NULL)
-		*handle = pnfs_ds_alloc();
+    LogDebug(COMPONENT_PNFS, "Default pNFS DS creation!");
+    if(*handle == NULL)
+        *handle = pnfs_ds_alloc();
 
-	fsal_pnfs_ds_init(*handle, fsal_hdl);
-	op_ctx->fsal_pnfs_ds = *handle;
-	return fsalstat(ERR_FSAL_NO_ERROR, 0);
+    fsal_pnfs_ds_init(*handle, fsal_hdl);
+    op_ctx->fsal_pnfs_ds = *handle;
+    return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
 
 /**
@@ -214,9 +218,9 @@ static fsal_status_t fsal_pnfs_ds(struct fsal_module *const fsal_hdl,
  * @param[in]  ops	FSAL pNFS Data Server operations vector
  */
 
-static void fsal_pnfs_ds_ops(struct fsal_pnfs_ds_ops *ops)
+static void fsal_pnfs_ds_ops(struct fsal_pnfs_ds_ops* ops)
 {
-	memcpy(ops, &def_pnfs_ds_ops, sizeof(struct fsal_pnfs_ds_ops));
+    memcpy(ops, &def_pnfs_ds_ops, sizeof(struct fsal_pnfs_ds_ops));
 }
 
 /**
@@ -226,9 +230,9 @@ static void fsal_pnfs_ds_ops(struct fsal_pnfs_ds_ops *ops)
  *
  * @retval true if extended operations are supported.
  */
-static bool support_ex(struct fsal_obj_handle *obj)
+static bool support_ex(struct fsal_obj_handle* obj)
 {
-	return false;
+    return false;
 }
 
 /**
@@ -237,10 +241,10 @@ static bool support_ex(struct fsal_obj_handle *obj)
  * @param[in] fsal_hdl          FSAL module
  * @param[in] iter              opaque pointer to DBusMessageIter
  */
-static void fsal_extract_stats(struct fsal_module *const fsal_hdl, void *iter)
+static void fsal_extract_stats(struct fsal_module*const fsal_hdl, void* iter)
 {
-	LogDebug(COMPONENT_FSAL,
-		"Invoking unsupported FSAL operation");
+    LogDebug(COMPONENT_FSAL,
+        "Invoking unsupported FSAL operation");
 }
 
 /**
@@ -248,10 +252,10 @@ static void fsal_extract_stats(struct fsal_module *const fsal_hdl, void *iter)
  *
  * @param[in] fsal_hdl          FSAL module
  */
-static void fsal_reset_stats(struct fsal_module *const fsal_hdl)
+static void fsal_reset_stats(struct fsal_module*const fsal_hdl)
 {
-	LogDebug(COMPONENT_FSAL,
-		"Invoking unsupported FSAL operation");
+    LogDebug(COMPONENT_FSAL,
+        "Invoking unsupported FSAL operation");
 }
 
 /* Default fsal module method vector.
@@ -259,317 +263,317 @@ static void fsal_reset_stats(struct fsal_module *const fsal_hdl)
  */
 
 struct fsal_ops def_fsal_ops = {
-	.unload = unload_fsal,
-	.init_config = init_config,
-	.dump_config = dump_config,
-	.create_export = create_export,
-	.emergency_cleanup = emergency_cleanup,
-	.getdeviceinfo = getdeviceinfo,
-	.fs_da_addr_size = fs_da_addr_size,
-	.fsal_pnfs_ds = fsal_pnfs_ds,
-	.fsal_pnfs_ds_ops = fsal_pnfs_ds_ops,
-	.support_ex = support_ex,
-	.fsal_extract_stats = fsal_extract_stats,
-	.fsal_reset_stats = fsal_reset_stats,
+    .unload = unload_fsal,
+    .init_config = init_config,
+    .dump_config = dump_config,
+    .create_export = create_export,
+    .emergency_cleanup = emergency_cleanup,
+    .getdeviceinfo = getdeviceinfo,
+    .fs_da_addr_size = fs_da_addr_size,
+    .fsal_pnfs_ds = fsal_pnfs_ds,
+    .fsal_pnfs_ds_ops = fsal_pnfs_ds_ops,
+    .support_ex = support_ex,
+    .fsal_extract_stats = fsal_extract_stats,
+    .fsal_reset_stats = fsal_reset_stats,
 };
 
 /* get_name
  * default case is to return the name of the FSAL
  */
 
-static const char *get_name(struct fsal_export *exp_hdl)
+static const char* get_name(struct fsal_export* exp_hdl)
 {
-	return exp_hdl->fsal->name;
+    return exp_hdl->fsal->name;
 }
 
 /* export_unexport
  * Nothing to do in the default case
  */
 
-static void export_unexport(struct fsal_export *exp_hdl,
-			    struct fsal_obj_handle *root_obj)
+static void export_unexport(struct fsal_export* exp_hdl,
+                            struct fsal_obj_handle* root_obj)
 {
-	/* return */
+    /* return */
 }
 
 /* export_release
  * Nothing to do in the default case
  */
 
-static void export_release(struct fsal_export *exp_hdl)
+static void export_release(struct fsal_export* exp_hdl)
 {
-	/* return */
+    /* return */
 }
 
 /* lookup_path
  * default case is not supported
  */
 
-fsal_status_t lookup_path(struct fsal_export *exp_hdl,
-			  const char *path,
-			  struct fsal_obj_handle **handle,
-			  struct attrlist *attrs_out)
+fsal_status_t lookup_path(struct fsal_export* exp_hdl,
+                          const char* path,
+                          struct fsal_obj_handle** handle,
+                          struct attrlist* attrs_out)
 {
-	LogCrit(COMPONENT_FSAL,
-		"Invoking unsupported FSAL operation");
-	return fsalstat(ERR_FSAL_NOTSUPP, ENOTSUP);
+    LogCrit(COMPONENT_FSAL,
+        "Invoking unsupported FSAL operation");
+    return fsalstat(ERR_FSAL_NOTSUPP, ENOTSUP);
 }
 
-static fsal_status_t lookup_junction(struct fsal_export *exp_hdl,
-				     struct fsal_obj_handle *junction,
-				     struct fsal_obj_handle **handle)
+static fsal_status_t lookup_junction(struct fsal_export* exp_hdl,
+                                     struct fsal_obj_handle* junction,
+                                     struct fsal_obj_handle** handle)
 {
-	return fsalstat(ERR_FSAL_NO_ERROR, 0);
+    return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
 
 /* wire_to_host
  * default case is not supported
  */
 
-static fsal_status_t wire_to_host(struct fsal_export *exp_hdl,
-				  fsal_digesttype_t in_type,
-				  struct gsh_buffdesc *fh_desc,
-				  int flags)
+static fsal_status_t wire_to_host(struct fsal_export* exp_hdl,
+                                  fsal_digesttype_t in_type,
+                                  struct gsh_buffdesc* fh_desc,
+                                  int flags)
 {
-	LogCrit(COMPONENT_FSAL,
-		"Invoking unsupported FSAL operation");
-	return fsalstat(ERR_FSAL_NOTSUPP, ENOTSUP);
+    LogCrit(COMPONENT_FSAL,
+        "Invoking unsupported FSAL operation");
+    return fsalstat(ERR_FSAL_NOTSUPP, ENOTSUP);
 }
 
 /* exp_host_to_key  Produce handle-key from host-handle
  *
  * default case is that "handle-key" is same as host-handle!
  */
-static fsal_status_t exp_host_to_key(struct fsal_export *exp_hdl,
-				       struct gsh_buffdesc *fh_desc)
+static fsal_status_t exp_host_to_key(struct fsal_export* exp_hdl,
+                                     struct gsh_buffdesc* fh_desc)
 {
-	return fsalstat(ERR_FSAL_NO_ERROR, 0);
+    return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
 
 /* create_handle
  * default case is not supported
  */
 
-static fsal_status_t create_handle(struct fsal_export *exp_hdl,
-				   struct gsh_buffdesc *hdl_desc,
-				   struct fsal_obj_handle **handle,
-				   struct attrlist *attrs_out)
+static fsal_status_t create_handle(struct fsal_export* exp_hdl,
+                                   struct gsh_buffdesc* hdl_desc,
+                                   struct fsal_obj_handle** handle,
+                                   struct attrlist* attrs_out)
 {
-	LogCrit(COMPONENT_FSAL,
-		"Invoking unsupported FSAL operation");
-	return fsalstat(ERR_FSAL_NOTSUPP, ENOTSUP);
+    LogCrit(COMPONENT_FSAL,
+        "Invoking unsupported FSAL operation");
+    return fsalstat(ERR_FSAL_NOTSUPP, ENOTSUP);
 }
 
 /* get_dynamic_info
  * default case is not supported
  */
 
-static fsal_status_t get_dynamic_info(struct fsal_export *exp_hdl,
-				      struct fsal_obj_handle *obj_hdl,
-				      fsal_dynamicfsinfo_t *infop)
+static fsal_status_t get_dynamic_info(struct fsal_export* exp_hdl,
+                                      struct fsal_obj_handle* obj_hdl,
+                                      fsal_dynamicfsinfo_t* infop)
 {
-	LogCrit(COMPONENT_FSAL,
-		"Invoking unsupported FSAL operation");
-	return fsalstat(ERR_FSAL_NOTSUPP, ENOTSUP);
+    LogCrit(COMPONENT_FSAL,
+        "Invoking unsupported FSAL operation");
+    return fsalstat(ERR_FSAL_NOTSUPP, ENOTSUP);
 }
 
 /* fs_supports
  * default case is supports nothing
  */
 
-static bool fs_supports(struct fsal_export *exp_hdl,
-			fsal_fsinfo_options_t option)
+static bool fs_supports(struct fsal_export* exp_hdl,
+                        fsal_fsinfo_options_t option)
 {
-	return false;
+    return false;
 }
 
 /* fs_maxfilesize
  * default case is zero size
  */
 
-static uint64_t fs_maxfilesize(struct fsal_export *exp_hdl)
+static uint64_t fs_maxfilesize(struct fsal_export* exp_hdl)
 {
-	return 0;
+    return 0;
 }
 
 /* fs_maxread
  * default case is zero length
  */
 
-static uint32_t fs_maxread(struct fsal_export *exp_hdl)
+static uint32_t fs_maxread(struct fsal_export* exp_hdl)
 {
-	return 0;
+    return 0;
 }
 
 /* fs_maxwrite
  * default case is zero length
  */
 
-static uint32_t fs_maxwrite(struct fsal_export *exp_hdl)
+static uint32_t fs_maxwrite(struct fsal_export* exp_hdl)
 {
-	return 0;
+    return 0;
 }
 
 /* fs_maxlink
  * default case is zero links
  */
 
-static uint32_t fs_maxlink(struct fsal_export *exp_hdl)
+static uint32_t fs_maxlink(struct fsal_export* exp_hdl)
 {
-	return 0;
+    return 0;
 }
 
 /* fs_maxnamelen
  * default case is zero length
  */
 
-static uint32_t fs_maxnamelen(struct fsal_export *exp_hdl)
+static uint32_t fs_maxnamelen(struct fsal_export* exp_hdl)
 {
-	return 0;
+    return 0;
 }
 
 /* fs_maxpathlen
  * default case is zero length
  */
 
-static uint32_t fs_maxpathlen(struct fsal_export *exp_hdl)
+static uint32_t fs_maxpathlen(struct fsal_export* exp_hdl)
 {
-	return 0;
+    return 0;
 }
 
 /* fs_lease_time
  * default case is zero interval time
  */
 
-static struct timespec fs_lease_time(struct fsal_export *exp_hdl)
+static struct timespec fs_lease_time(struct fsal_export* exp_hdl)
 {
-	struct timespec lease_time = { 0, 0 };
+    struct timespec lease_time = { 0, 0 };
 
-	return lease_time;
+    return lease_time;
 }
 
 /* fs_acl_support
  * default case is none, neither deny or allow
  */
 
-static fsal_aclsupp_t fs_acl_support(struct fsal_export *exp_hdl)
+static fsal_aclsupp_t fs_acl_support(struct fsal_export* exp_hdl)
 {
-	return 0;
+    return 0;
 }
 
 /* fs_supported_attrs
  * default case is none
  */
 
-static attrmask_t fs_supported_attrs(struct fsal_export *exp_hdl)
+static attrmask_t fs_supported_attrs(struct fsal_export* exp_hdl)
 {
-	return 0;
+    return 0;
 }
 
 /* fs_umask
  * default case is no access
  */
 
-static uint32_t fs_umask(struct fsal_export *exp_hdl)
+static uint32_t fs_umask(struct fsal_export* exp_hdl)
 {
-	return 0000;
+    return 0000;
 }
 
 /* fs_xattr_access_rights
  * default case is no access
  */
 
-static uint32_t fs_xattr_access_rights(struct fsal_export *exp_hdl)
+static uint32_t fs_xattr_access_rights(struct fsal_export* exp_hdl)
 {
-	return 0000;
+    return 0000;
 }
 
 /* check_quota
  * return happiness for now.
  */
 
-static fsal_status_t check_quota(struct fsal_export *exp_hdl,
-				 const char *filepath, int quota_type)
+static fsal_status_t check_quota(struct fsal_export* exp_hdl,
+                                 const char* filepath, int quota_type)
 {
-	return fsalstat(ERR_FSAL_NO_ERROR, 0);
+    return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
 
 /* get_quota
  * default case not supported
  */
 
-static fsal_status_t get_quota(struct fsal_export *exp_hdl,
-			       const char *filepath, int quota_type,
-			       int quota_id,
-			       fsal_quota_t *pquota)
+static fsal_status_t get_quota(struct fsal_export* exp_hdl,
+                               const char* filepath, int quota_type,
+                               int quota_id,
+                               fsal_quota_t* pquota)
 {
-	LogCrit(COMPONENT_FSAL,
-		"Invoking unsupported FSAL operation");
-	return fsalstat(ERR_FSAL_NOTSUPP, ENOTSUP);
+    LogCrit(COMPONENT_FSAL,
+        "Invoking unsupported FSAL operation");
+    return fsalstat(ERR_FSAL_NOTSUPP, ENOTSUP);
 }
 
 /* set_quota
  * default case not supported
  */
 
-static fsal_status_t set_quota(struct fsal_export *exp_hdl,
-			       const char *filepath, int quota_type,
-			       int quota_id,
-			       fsal_quota_t *pquota, fsal_quota_t *presquota)
+static fsal_status_t set_quota(struct fsal_export* exp_hdl,
+                               const char* filepath, int quota_type,
+                               int quota_id,
+                               fsal_quota_t* pquota, fsal_quota_t* presquota)
 {
-	LogCrit(COMPONENT_FSAL,
-		"Invoking unsupported FSAL operation");
-	return fsalstat(ERR_FSAL_NOTSUPP, ENOTSUP);
+    LogCrit(COMPONENT_FSAL,
+        "Invoking unsupported FSAL operation");
+    return fsalstat(ERR_FSAL_NOTSUPP, ENOTSUP);
 }
 
 /**
  * @brief Be uninformative about all devices
  */
 
-static nfsstat4 getdevicelist(struct fsal_export *exp_hdl, layouttype4 type,
-			      void *opaque, bool(*cb) (void *opaque,
-						       const uint64_t id),
-			      struct fsal_getdevicelist_res *res)
+static nfsstat4 getdevicelist(struct fsal_export* exp_hdl, layouttype4 type,
+                              void* opaque, bool (*cb)(void* opaque,
+                                                       const uint64_t id),
+                              struct fsal_getdevicelist_res* res)
 {
-	return NFS4ERR_NOTSUPP;
+    return NFS4ERR_NOTSUPP;
 }
 
 /**
  * @brief Support no layout types
  */
 
-static void fs_layouttypes(struct fsal_export *exp_hdl, int32_t *count,
-			   const layouttype4 **types)
+static void fs_layouttypes(struct fsal_export* exp_hdl, int32_t* count,
+                           const layouttype4** types)
 {
-	*count = 0;
-	*types = NULL;
+    *count = 0;
+    *types = NULL;
 }
 
 /**
  * @brief Read no bytes through layouts
  */
 
-static uint32_t fs_layout_blocksize(struct fsal_export *exp_hdl)
+static uint32_t fs_layout_blocksize(struct fsal_export* exp_hdl)
 {
-	return 0;
+    return 0;
 }
 
 /**
  * @brief No segments
  */
 
-static uint32_t fs_maximum_segments(struct fsal_export *exp_hdl)
+static uint32_t fs_maximum_segments(struct fsal_export* exp_hdl)
 {
-	return 0;
+    return 0;
 }
 
 /**
  * @brief No loc_body
  */
 
-static size_t fs_loc_body_size(struct fsal_export *exp_hdl)
+static size_t fs_loc_body_size(struct fsal_export* exp_hdl)
 {
-	return 0;
+    return 0;
 }
 
 /**
@@ -582,10 +586,10 @@ static size_t fs_loc_body_size(struct fsal_export *exp_hdl)
  *
  * @return No errors
  */
-static void global_verifier(struct fsal_export *exp_hdl,
-			    struct gsh_buffdesc *verf_desc)
+static void global_verifier(struct fsal_export* exp_hdl,
+                            struct gsh_buffdesc* verf_desc)
 {
-	memcpy(verf_desc->addr, &NFS4_write_verifier, verf_desc->len);
+    memcpy(verf_desc->addr, &NFS4_write_verifier, verf_desc->len);
 }
 
 /**
@@ -601,12 +605,12 @@ static void global_verifier(struct fsal_export *exp_hdl,
  * @returns a state structure.
  */
 
-static struct state_t *alloc_state(struct fsal_export *exp_hdl,
-				   enum state_type state_type,
-				   struct state_t *related_state)
+static struct state_t* alloc_state(struct fsal_export* exp_hdl,
+                                   enum state_type state_type,
+                                   struct state_t* related_state)
 {
-	return init_state(gsh_calloc(1, sizeof(struct state_t)),
-			  exp_hdl, state_type, related_state);
+    return init_state(gsh_calloc(1, sizeof(struct state_t)),
+                      exp_hdl, state_type, related_state);
 }
 
 /**
@@ -617,9 +621,9 @@ static struct state_t *alloc_state(struct fsal_export *exp_hdl,
  * @returns NULL on failure otherwise a state structure.
  */
 
-void free_state(struct fsal_export *exp_hdl, struct state_t *state)
+void free_state(struct fsal_export* exp_hdl, struct state_t* state)
 {
-	gsh_free(state);
+    gsh_free(state);
 }
 
 /**
@@ -631,9 +635,9 @@ void free_state(struct fsal_export *exp_hdl, struct state_t *state)
  * @returns NULL on failure otherwise a state structure.
  */
 
-bool is_superuser(struct fsal_export *exp_hdl, const struct user_cred *creds)
+bool is_superuser(struct fsal_export* exp_hdl, const struct user_cred* creds)
 {
-	return (creds->caller_uid == 0);
+    return (creds->caller_uid == 0);
 }
 
 /* Default fsal export method vector.
@@ -641,39 +645,39 @@ bool is_superuser(struct fsal_export *exp_hdl, const struct user_cred *creds)
  */
 
 struct export_ops def_export_ops = {
-	.get_name = get_name,
-	.unexport = export_unexport,
-	.release = export_release,
-	.lookup_path = lookup_path,
-	.lookup_junction = lookup_junction,
-	.wire_to_host = wire_to_host,
-	.host_to_key = exp_host_to_key,
-	.create_handle = create_handle,
-	.get_fs_dynamic_info = get_dynamic_info,
-	.fs_supports = fs_supports,
-	.fs_maxfilesize = fs_maxfilesize,
-	.fs_maxread = fs_maxread,
-	.fs_maxwrite = fs_maxwrite,
-	.fs_maxlink = fs_maxlink,
-	.fs_maxnamelen = fs_maxnamelen,
-	.fs_maxpathlen = fs_maxpathlen,
-	.fs_lease_time = fs_lease_time,
-	.fs_acl_support = fs_acl_support,
-	.fs_supported_attrs = fs_supported_attrs,
-	.fs_umask = fs_umask,
-	.fs_xattr_access_rights = fs_xattr_access_rights,
-	.check_quota = check_quota,
-	.get_quota = get_quota,
-	.set_quota = set_quota,
-	.getdevicelist = getdevicelist,
-	.fs_layouttypes = fs_layouttypes,
-	.fs_layout_blocksize = fs_layout_blocksize,
-	.fs_maximum_segments = fs_maximum_segments,
-	.fs_loc_body_size = fs_loc_body_size,
-	.get_write_verifier = global_verifier,
-	.alloc_state = alloc_state,
-	.free_state = free_state,
-	.is_superuser = is_superuser,
+    .get_name = get_name,
+    .unexport = export_unexport,
+    .release = export_release,
+    .lookup_path = lookup_path,
+    .lookup_junction = lookup_junction,
+    .wire_to_host = wire_to_host,
+    .host_to_key = exp_host_to_key,
+    .create_handle = create_handle,
+    .get_fs_dynamic_info = get_dynamic_info,
+    .fs_supports = fs_supports,
+    .fs_maxfilesize = fs_maxfilesize,
+    .fs_maxread = fs_maxread,
+    .fs_maxwrite = fs_maxwrite,
+    .fs_maxlink = fs_maxlink,
+    .fs_maxnamelen = fs_maxnamelen,
+    .fs_maxpathlen = fs_maxpathlen,
+    .fs_lease_time = fs_lease_time,
+    .fs_acl_support = fs_acl_support,
+    .fs_supported_attrs = fs_supported_attrs,
+    .fs_umask = fs_umask,
+    .fs_xattr_access_rights = fs_xattr_access_rights,
+    .check_quota = check_quota,
+    .get_quota = get_quota,
+    .set_quota = set_quota,
+    .getdevicelist = getdevicelist,
+    .fs_layouttypes = fs_layouttypes,
+    .fs_layout_blocksize = fs_layout_blocksize,
+    .fs_maximum_segments = fs_maximum_segments,
+    .fs_loc_body_size = fs_loc_body_size,
+    .get_write_verifier = global_verifier,
+    .alloc_state = alloc_state,
+    .free_state = free_state,
+    .is_superuser = is_superuser,
 };
 
 /* fsal_obj_handle common methods
@@ -683,9 +687,9 @@ struct export_ops def_export_ops = {
  * test the type of this handle
  */
 
-static bool handle_is(struct fsal_obj_handle *obj_hdl, object_file_type_t type)
+static bool handle_is(struct fsal_obj_handle* obj_hdl, object_file_type_t type)
 {
-	return obj_hdl->type == type;
+    return obj_hdl->type == type;
 }
 
 /* get_ref
@@ -693,10 +697,10 @@ static bool handle_is(struct fsal_obj_handle *obj_hdl, object_file_type_t type)
  * FSAL_MDCACHE.
  */
 
-static void handle_get_ref(struct fsal_obj_handle *obj_hdl)
+static void handle_get_ref(struct fsal_obj_handle* obj_hdl)
 {
-	LogFatal(COMPONENT_FSAL,
-		 "FSAL Must support get_ref");
+    LogFatal(COMPONENT_FSAL,
+        "FSAL Must support get_ref");
 }
 
 /* put_ref
@@ -704,10 +708,10 @@ static void handle_get_ref(struct fsal_obj_handle *obj_hdl)
  * FSAL_MDCACHE.
  */
 
-static void handle_put_ref(struct fsal_obj_handle *obj_hdl)
+static void handle_put_ref(struct fsal_obj_handle* obj_hdl)
 {
-	LogFatal(COMPONENT_FSAL,
-		 "FSAL Must support put_ref");
+    LogFatal(COMPONENT_FSAL,
+        "FSAL Must support put_ref");
 }
 
 /* handle_release
@@ -715,9 +719,9 @@ static void handle_put_ref(struct fsal_obj_handle *obj_hdl)
  * creating an handle is not supported so getting here is bad
  */
 
-static void handle_release(struct fsal_obj_handle *obj_hdl)
+static void handle_release(struct fsal_obj_handle* obj_hdl)
 {
-	/* return */
+    /* return */
 }
 
 /**
@@ -737,570 +741,570 @@ static void handle_release(struct fsal_obj_handle *obj_hdl)
  *
  */
 
-static fsal_status_t handle_merge(struct fsal_obj_handle *orig_hdl,
-				  struct fsal_obj_handle *dupe_hdl)
+static fsal_status_t handle_merge(struct fsal_obj_handle* orig_hdl,
+                                  struct fsal_obj_handle* dupe_hdl)
 {
-	/* Default is to do nothing. */
-	return fsalstat(ERR_FSAL_NO_ERROR, 0);
+    /* Default is to do nothing. */
+    return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
 
 /* lookup
  * default case not supported
  */
 
-static fsal_status_t lookup(struct fsal_obj_handle *parent,
-			    const char *path, struct fsal_obj_handle **handle,
-			    struct attrlist *attrs_out)
+static fsal_status_t lookup(struct fsal_obj_handle* parent,
+                            const char* path, struct fsal_obj_handle** handle,
+                            struct attrlist* attrs_out)
 {
-	LogCrit(COMPONENT_FSAL,
-		"Invoking unsupported FSAL operation");
-	return fsalstat(ERR_FSAL_NOTSUPP, ENOTSUP);
+    LogCrit(COMPONENT_FSAL,
+        "Invoking unsupported FSAL operation");
+    return fsalstat(ERR_FSAL_NOTSUPP, ENOTSUP);
 }
 
 /* read_dirents
  * default case not supported
  */
 
-static fsal_status_t read_dirents(struct fsal_obj_handle *dir_hdl,
-				  fsal_cookie_t *whence, void *dir_state,
-				  fsal_readdir_cb cb, attrmask_t attrmask,
-				  bool *eof)
+static fsal_status_t read_dirents(struct fsal_obj_handle* dir_hdl,
+                                  fsal_cookie_t* whence, void* dir_state,
+                                  fsal_readdir_cb cb, attrmask_t attrmask,
+                                  bool* eof)
 {
-	LogCrit(COMPONENT_FSAL,
-		"Invoking unsupported FSAL operation");
-	return fsalstat(ERR_FSAL_NOTSUPP, ENOTSUP);
+    LogCrit(COMPONENT_FSAL,
+        "Invoking unsupported FSAL operation");
+    return fsalstat(ERR_FSAL_NOTSUPP, ENOTSUP);
 }
 
 /* compute_readdir_cookie
  * default is to return 0 which indicates not supported
  */
 
-fsal_cookie_t compute_readdir_cookie(struct fsal_obj_handle *parent,
-				     const char *name)
+fsal_cookie_t compute_readdir_cookie(struct fsal_obj_handle* parent,
+                                     const char* name)
 {
-	return 0;
+    return 0;
 }
 
 /* dirent_cmp
  * Sort dirents by name.
  */
 
-int dirent_cmp(struct fsal_obj_handle *parent,
-	       const char *name1, fsal_cookie_t cookie1,
-	       const char *name2, fsal_cookie_t cookie2)
+int dirent_cmp(struct fsal_obj_handle* parent,
+               const char* name1, fsal_cookie_t cookie1,
+               const char* name2, fsal_cookie_t cookie2)
 {
-	/* Not supported by default. */
-	assert(false);
-	return 0;
+    /* Not supported by default. */
+    assert(false);
+    return 0;
 }
 
 /* create
  * default case not supported
  */
 
-static fsal_status_t create(struct fsal_obj_handle *dir_hdl,
-			    const char *name, struct attrlist *attrib,
-			    struct fsal_obj_handle **handle,
-			    struct attrlist *attrs_out)
+static fsal_status_t create(struct fsal_obj_handle* dir_hdl,
+                            const char* name, struct attrlist* attrib,
+                            struct fsal_obj_handle** handle,
+                            struct attrlist* attrs_out)
 {
-	LogCrit(COMPONENT_FSAL,
-		"Invoking unsupported FSAL operation");
-	return fsalstat(ERR_FSAL_NOTSUPP, ENOTSUP);
+    LogCrit(COMPONENT_FSAL,
+        "Invoking unsupported FSAL operation");
+    return fsalstat(ERR_FSAL_NOTSUPP, ENOTSUP);
 }
 
 /* makedir
  * default case not supported
  */
 
-static fsal_status_t makedir(struct fsal_obj_handle *dir_hdl,
-			     const char *name, struct attrlist *attrib,
-			     struct fsal_obj_handle **handle,
-			     struct attrlist *attrs_out)
+static fsal_status_t makedir(struct fsal_obj_handle* dir_hdl,
+                             const char* name, struct attrlist* attrib,
+                             struct fsal_obj_handle** handle,
+                             struct attrlist* attrs_out)
 {
-	LogCrit(COMPONENT_FSAL,
-		"Invoking unsupported FSAL operation");
-	return fsalstat(ERR_FSAL_NOTSUPP, ENOTSUP);
+    LogCrit(COMPONENT_FSAL,
+        "Invoking unsupported FSAL operation");
+    return fsalstat(ERR_FSAL_NOTSUPP, ENOTSUP);
 }
 
 /* makenode
  * default case not supported
  */
 
-static fsal_status_t makenode(struct fsal_obj_handle *dir_hdl,
-			      const char *name, object_file_type_t nodetype,
-			      struct attrlist *attrib,
-			      struct fsal_obj_handle **handle,
-			      struct attrlist *attrs_out)
+static fsal_status_t makenode(struct fsal_obj_handle* dir_hdl,
+                              const char* name, object_file_type_t nodetype,
+                              struct attrlist* attrib,
+                              struct fsal_obj_handle** handle,
+                              struct attrlist* attrs_out)
 {
-	LogCrit(COMPONENT_FSAL,
-		"Invoking unsupported FSAL operation");
-	return fsalstat(ERR_FSAL_NOTSUPP, ENOTSUP);
+    LogCrit(COMPONENT_FSAL,
+        "Invoking unsupported FSAL operation");
+    return fsalstat(ERR_FSAL_NOTSUPP, ENOTSUP);
 }
 
 /* makesymlink
  * default case not supported
  */
 
-static fsal_status_t makesymlink(struct fsal_obj_handle *dir_hdl,
-				 const char *name, const char *link_path,
-				 struct attrlist *attrib,
-				 struct fsal_obj_handle **handle,
-				 struct attrlist *attrs_out)
+static fsal_status_t makesymlink(struct fsal_obj_handle* dir_hdl,
+                                 const char* name, const char* link_path,
+                                 struct attrlist* attrib,
+                                 struct fsal_obj_handle** handle,
+                                 struct attrlist* attrs_out)
 {
-	LogCrit(COMPONENT_FSAL,
-		"Invoking unsupported FSAL operation");
-	return fsalstat(ERR_FSAL_NOTSUPP, ENOTSUP);
+    LogCrit(COMPONENT_FSAL,
+        "Invoking unsupported FSAL operation");
+    return fsalstat(ERR_FSAL_NOTSUPP, ENOTSUP);
 }
 
 /* readsymlink
  * default case not supported
  */
 
-static fsal_status_t readsymlink(struct fsal_obj_handle *obj_hdl,
-				 struct gsh_buffdesc *link_content,
-				 bool refresh)
+static fsal_status_t readsymlink(struct fsal_obj_handle* obj_hdl,
+                                 struct gsh_buffdesc* link_content,
+                                 bool refresh)
 {
-	LogCrit(COMPONENT_FSAL,
-		"Invoking unsupported FSAL operation");
-	return fsalstat(ERR_FSAL_NOTSUPP, ENOTSUP);
+    LogCrit(COMPONENT_FSAL,
+        "Invoking unsupported FSAL operation");
+    return fsalstat(ERR_FSAL_NOTSUPP, ENOTSUP);
 }
 
 /* getxattrs
  * default case not supported
  */
 
-static fsal_status_t getxattrs(struct fsal_obj_handle *obj_hdl,
-				xattrname4 *xa_name,
-				xattrvalue4 *xa_value)
+static fsal_status_t getxattrs(struct fsal_obj_handle* obj_hdl,
+                               xattrname4* xa_name,
+                               xattrvalue4* xa_value)
 {
-	LogCrit(COMPONENT_FSAL,
-		"Invoking unsupported FSAL operation");
-	return fsalstat(ERR_FSAL_NOTSUPP, ENOTSUP);
+    LogCrit(COMPONENT_FSAL,
+        "Invoking unsupported FSAL operation");
+    return fsalstat(ERR_FSAL_NOTSUPP, ENOTSUP);
 }
 
 /* setxattrs
  * default case not supported
  */
 
-static fsal_status_t setxattrs(struct fsal_obj_handle *obj_hdl,
-				setxattr_type4 sa_type,
-				xattrname4 *xa_name,
-				xattrvalue4 *xa_value)
+static fsal_status_t setxattrs(struct fsal_obj_handle* obj_hdl,
+                               setxattr_type4 sa_type,
+                               xattrname4* xa_name,
+                               xattrvalue4* xa_value)
 {
-	LogCrit(COMPONENT_FSAL,
-		"Invoking unsupported FSAL operation");
-	return fsalstat(ERR_FSAL_NOTSUPP, ENOTSUP);
+    LogCrit(COMPONENT_FSAL,
+        "Invoking unsupported FSAL operation");
+    return fsalstat(ERR_FSAL_NOTSUPP, ENOTSUP);
 }
 
 /* removexattrs
  * default case not supported
  */
 
-static fsal_status_t removexattrs(struct fsal_obj_handle *obj_hdl,
-				xattrname4 *xa_name)
+static fsal_status_t removexattrs(struct fsal_obj_handle* obj_hdl,
+                                  xattrname4* xa_name)
 {
-	LogCrit(COMPONENT_FSAL,
-		"Invoking unsupported FSAL operation");
-	return fsalstat(ERR_FSAL_NOTSUPP, ENOTSUP);
+    LogCrit(COMPONENT_FSAL,
+        "Invoking unsupported FSAL operation");
+    return fsalstat(ERR_FSAL_NOTSUPP, ENOTSUP);
 }
 
 /* listxattrs
  * default case not supported
  */
 
-static fsal_status_t listxattrs(struct fsal_obj_handle *obj_hdl,
-				count4 la_maxcount,
-				nfs_cookie4 *la_cookie,
-				verifier4 *la_cookieverf,
-				bool_t *lr_eof,
-				xattrlist4 *lr_names)
+static fsal_status_t listxattrs(struct fsal_obj_handle* obj_hdl,
+                                count4 la_maxcount,
+                                nfs_cookie4* la_cookie,
+                                verifier4* la_cookieverf,
+                                bool_t* lr_eof,
+                                xattrlist4* lr_names)
 {
-	LogCrit(COMPONENT_FSAL,
-		"Invoking unsupported FSAL operation");
-	return fsalstat(ERR_FSAL_NOTSUPP, ENOTSUP);
+    LogCrit(COMPONENT_FSAL,
+        "Invoking unsupported FSAL operation");
+    return fsalstat(ERR_FSAL_NOTSUPP, ENOTSUP);
 }
 
 /* getattrs
  * default case not supported
  */
 
-static fsal_status_t getattrs(struct fsal_obj_handle *obj_hdl,
-			      struct attrlist *attrs)
+static fsal_status_t getattrs(struct fsal_obj_handle* obj_hdl,
+                              struct attrlist* attrs)
 {
-	LogCrit(COMPONENT_FSAL,
-		"Invoking unsupported FSAL operation");
-	return fsalstat(ERR_FSAL_NOTSUPP, ENOTSUP);
+    LogCrit(COMPONENT_FSAL,
+        "Invoking unsupported FSAL operation");
+    return fsalstat(ERR_FSAL_NOTSUPP, ENOTSUP);
 }
 
 /* setattrs
  * default case not supported
  */
 
-static fsal_status_t setattrs(struct fsal_obj_handle *obj_hdl,
-			      struct attrlist *attrs)
+static fsal_status_t setattrs(struct fsal_obj_handle* obj_hdl,
+                              struct attrlist* attrs)
 {
-	LogCrit(COMPONENT_FSAL,
-		"Invoking unsupported FSAL operation");
-	return fsalstat(ERR_FSAL_NOTSUPP, ENOTSUP);
+    LogCrit(COMPONENT_FSAL,
+        "Invoking unsupported FSAL operation");
+    return fsalstat(ERR_FSAL_NOTSUPP, ENOTSUP);
 }
 
 /* linkfile
  * default case not supported
  */
 
-static fsal_status_t linkfile(struct fsal_obj_handle *obj_hdl,
-			      struct fsal_obj_handle *destdir_hdl,
-			      const char *name)
+static fsal_status_t linkfile(struct fsal_obj_handle* obj_hdl,
+                              struct fsal_obj_handle* destdir_hdl,
+                              const char* name)
 {
-	LogCrit(COMPONENT_FSAL,
-		"Invoking unsupported FSAL operation");
-	return fsalstat(ERR_FSAL_NOTSUPP, ENOTSUP);
+    LogCrit(COMPONENT_FSAL,
+        "Invoking unsupported FSAL operation");
+    return fsalstat(ERR_FSAL_NOTSUPP, ENOTSUP);
 }
 
 /* renamefile
  * default case not supported
  */
 
-static fsal_status_t renamefile(struct fsal_obj_handle *obj_hdl,
-				struct fsal_obj_handle *olddir_hdl,
-				const char *old_name,
-				struct fsal_obj_handle *newdir_hdl,
-				const char *new_name)
+static fsal_status_t renamefile(struct fsal_obj_handle* obj_hdl,
+                                struct fsal_obj_handle* olddir_hdl,
+                                const char* old_name,
+                                struct fsal_obj_handle* newdir_hdl,
+                                const char* new_name)
 {
-	LogCrit(COMPONENT_FSAL,
-		"Invoking unsupported FSAL operation");
-	return fsalstat(ERR_FSAL_NOTSUPP, ENOTSUP);
+    LogCrit(COMPONENT_FSAL,
+        "Invoking unsupported FSAL operation");
+    return fsalstat(ERR_FSAL_NOTSUPP, ENOTSUP);
 }
 
 /* file_unlink
  * default case not supported
  */
 
-static fsal_status_t file_unlink(struct fsal_obj_handle *dir_hdl,
-				 struct fsal_obj_handle *obj_hdl,
-				 const char *name)
+static fsal_status_t file_unlink(struct fsal_obj_handle* dir_hdl,
+                                 struct fsal_obj_handle* obj_hdl,
+                                 const char* name)
 {
-	LogCrit(COMPONENT_FSAL,
-		"Invoking unsupported FSAL operation");
-	return fsalstat(ERR_FSAL_NOTSUPP, ENOTSUP);
+    LogCrit(COMPONENT_FSAL,
+        "Invoking unsupported FSAL operation");
+    return fsalstat(ERR_FSAL_NOTSUPP, ENOTSUP);
 }
 
 /* file_open
  * default case not supported
  */
 
-static fsal_status_t file_open(struct fsal_obj_handle *obj_hdl,
-			       fsal_openflags_t openflags)
+static fsal_status_t file_open(struct fsal_obj_handle* obj_hdl,
+                               fsal_openflags_t openflags)
 {
-	LogCrit(COMPONENT_FSAL,
-		"Invoking unsupported FSAL operation");
-	return fsalstat(ERR_FSAL_NOTSUPP, ENOTSUP);
+    LogCrit(COMPONENT_FSAL,
+        "Invoking unsupported FSAL operation");
+    return fsalstat(ERR_FSAL_NOTSUPP, ENOTSUP);
 }
 
 /* file_reopen
  * default case not supported
  */
 
-static fsal_status_t file_reopen(struct fsal_obj_handle *obj_hdl,
-				 fsal_openflags_t openflags)
+static fsal_status_t file_reopen(struct fsal_obj_handle* obj_hdl,
+                                 fsal_openflags_t openflags)
 {
-	LogCrit(COMPONENT_FSAL,
-		"Invoking unsupported FSAL operation");
-	return fsalstat(ERR_FSAL_NOTSUPP, ENOTSUP);
+    LogCrit(COMPONENT_FSAL,
+        "Invoking unsupported FSAL operation");
+    return fsalstat(ERR_FSAL_NOTSUPP, ENOTSUP);
 }
 
 /* fs_locations
  * default case not supported
  */
 
-static fsal_status_t fs_locations(struct fsal_obj_handle *obj_hdl,
-				 struct fs_locations4 *fs_locs)
+static fsal_status_t fs_locations(struct fsal_obj_handle* obj_hdl,
+                                  struct fs_locations4* fs_locs)
 {
-	return fsalstat(ERR_FSAL_NOTSUPP, ENOTSUP);
+    return fsalstat(ERR_FSAL_NOTSUPP, ENOTSUP);
 }
 
 /* file_status
  * default case file always closed
  */
 
-static fsal_openflags_t file_status(struct fsal_obj_handle *obj_hdl)
+static fsal_openflags_t file_status(struct fsal_obj_handle* obj_hdl)
 {
-	return FSAL_O_CLOSED;
+    return FSAL_O_CLOSED;
 }
 
 /* file_read
  * default case not supported
  */
 
-static fsal_status_t file_read(struct fsal_obj_handle *obj_hdl,
-			       uint64_t seek_descriptor, size_t buffer_size,
-			       void *buffer, size_t *read_amount,
-			       bool *end_of_file)
+static fsal_status_t file_read(struct fsal_obj_handle* obj_hdl,
+                               uint64_t seek_descriptor, size_t buffer_size,
+                               void* buffer, size_t* read_amount,
+                               bool* end_of_file)
 {
-	LogCrit(COMPONENT_FSAL,
-		"Invoking unsupported FSAL operation");
-	return fsalstat(ERR_FSAL_NOTSUPP, ENOTSUP);
+    LogCrit(COMPONENT_FSAL,
+        "Invoking unsupported FSAL operation");
+    return fsalstat(ERR_FSAL_NOTSUPP, ENOTSUP);
 }
 
 /* file_read_plus
  * default case not supported
  */
 
-static fsal_status_t file_read_plus(struct fsal_obj_handle *obj_hdl,
-			       uint64_t seek_descriptor, size_t buffer_size,
-			       void *buffer, size_t *read_amount,
-			       bool *end_of_file, struct io_info *info)
+static fsal_status_t file_read_plus(struct fsal_obj_handle* obj_hdl,
+                                    uint64_t seek_descriptor, size_t buffer_size,
+                                    void* buffer, size_t* read_amount,
+                                    bool* end_of_file, struct io_info* info)
 {
-	LogCrit(COMPONENT_FSAL,
-		"Invoking unsupported FSAL operation");
-	return fsalstat(ERR_FSAL_NOTSUPP, ENOTSUP);
+    LogCrit(COMPONENT_FSAL,
+        "Invoking unsupported FSAL operation");
+    return fsalstat(ERR_FSAL_NOTSUPP, ENOTSUP);
 }
 
 /* file_write
  * default case not supported
  */
 
-static fsal_status_t file_write(struct fsal_obj_handle *obj_hdl,
-				uint64_t seek_descriptor, size_t buffer_size,
-				void *buffer, size_t *write_amount,
-				bool *fsal_stable)
+static fsal_status_t file_write(struct fsal_obj_handle* obj_hdl,
+                                uint64_t seek_descriptor, size_t buffer_size,
+                                void* buffer, size_t* write_amount,
+                                bool* fsal_stable)
 {
-	LogCrit(COMPONENT_FSAL,
-		"Invoking unsupported FSAL operation");
-	return fsalstat(ERR_FSAL_NOTSUPP, ENOTSUP);
+    LogCrit(COMPONENT_FSAL,
+        "Invoking unsupported FSAL operation");
+    return fsalstat(ERR_FSAL_NOTSUPP, ENOTSUP);
 }
 
 /* file_write_plus
  * default case not supported
  */
 
-static fsal_status_t file_write_plus(struct fsal_obj_handle *obj_hdl,
-				uint64_t seek_descriptor, size_t buffer_size,
-				void *buffer, size_t *write_amount,
-				bool *fsal_stable, struct io_info *info)
+static fsal_status_t file_write_plus(struct fsal_obj_handle* obj_hdl,
+                                     uint64_t seek_descriptor, size_t buffer_size,
+                                     void* buffer, size_t* write_amount,
+                                     bool* fsal_stable, struct io_info* info)
 {
-	LogCrit(COMPONENT_FSAL,
-		"Invoking unsupported FSAL operation");
-	return fsalstat(ERR_FSAL_NOTSUPP, ENOTSUP);
+    LogCrit(COMPONENT_FSAL,
+        "Invoking unsupported FSAL operation");
+    return fsalstat(ERR_FSAL_NOTSUPP, ENOTSUP);
 }
 
 /* seek
  * default case not supported
  */
 
-static fsal_status_t file_seek(struct fsal_obj_handle *obj_hdl,
-				struct io_info *info)
+static fsal_status_t file_seek(struct fsal_obj_handle* obj_hdl,
+                               struct io_info* info)
 {
-	LogCrit(COMPONENT_FSAL,
-		"Invoking unsupported FSAL operation");
-	return fsalstat(ERR_FSAL_NOTSUPP, ENOTSUP);
+    LogCrit(COMPONENT_FSAL,
+        "Invoking unsupported FSAL operation");
+    return fsalstat(ERR_FSAL_NOTSUPP, ENOTSUP);
 }
 
 /* io advise
  * default case not supported
  */
 
-static fsal_status_t file_io_advise(struct fsal_obj_handle *obj_hdl,
-				struct io_hints *hints)
+static fsal_status_t file_io_advise(struct fsal_obj_handle* obj_hdl,
+                                    struct io_hints* hints)
 {
-	hints->hints = 0;
+    hints->hints = 0;
 
-	return fsalstat(ERR_FSAL_NO_ERROR, 0);
+    return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
 
 /* commit
  * default case not supported
  */
 
-static fsal_status_t commit(struct fsal_obj_handle *obj_hdl,	/* sync */
-			    off_t offset, size_t len)
+static fsal_status_t commit(struct fsal_obj_handle* obj_hdl, /* sync */
+                            off_t offset, size_t len)
 {
-	LogCrit(COMPONENT_FSAL,
-		"Invoking unsupported FSAL operation");
-	return fsalstat(ERR_FSAL_NOTSUPP, ENOTSUP);
+    LogCrit(COMPONENT_FSAL,
+        "Invoking unsupported FSAL operation");
+    return fsalstat(ERR_FSAL_NOTSUPP, ENOTSUP);
 }
 
 /* lock_op
  * default case not supported
  */
 
-static fsal_status_t lock_op(struct fsal_obj_handle *obj_hdl,
-			     void *p_owner,
-			     fsal_lock_op_t lock_op,
-			     fsal_lock_param_t *request_lock,
-			     fsal_lock_param_t *conflicting_lock)
+static fsal_status_t lock_op(struct fsal_obj_handle* obj_hdl,
+                             void* p_owner,
+                             fsal_lock_op_t lock_op,
+                             fsal_lock_param_t* request_lock,
+                             fsal_lock_param_t* conflicting_lock)
 {
-	LogCrit(COMPONENT_FSAL,
-		"Invoking unsupported FSAL operation");
-	return fsalstat(ERR_FSAL_NOTSUPP, ENOTSUP);
+    LogCrit(COMPONENT_FSAL,
+        "Invoking unsupported FSAL operation");
+    return fsalstat(ERR_FSAL_NOTSUPP, ENOTSUP);
 }
 
 /* share_op
  * default case not supported
  */
 
-static fsal_status_t share_op(struct fsal_obj_handle *obj_hdl,
-			      void *p_owner,
-			      fsal_share_param_t request_share)
+static fsal_status_t share_op(struct fsal_obj_handle* obj_hdl,
+                              void* p_owner,
+                              fsal_share_param_t request_share)
 {
-	LogCrit(COMPONENT_FSAL,
-		"Invoking unsupported FSAL operation");
-	return fsalstat(ERR_FSAL_NOTSUPP, ENOTSUP);
+    LogCrit(COMPONENT_FSAL,
+        "Invoking unsupported FSAL operation");
+    return fsalstat(ERR_FSAL_NOTSUPP, ENOTSUP);
 }
 
 /* file_close
  * default case not supported
  */
 
-static fsal_status_t file_close(struct fsal_obj_handle *obj_hdl)
+static fsal_status_t file_close(struct fsal_obj_handle* obj_hdl)
 {
-	LogCrit(COMPONENT_FSAL,
-		"Invoking unsupported FSAL operation");
-	return fsalstat(ERR_FSAL_NOTSUPP, ENOTSUP);
+    LogCrit(COMPONENT_FSAL,
+        "Invoking unsupported FSAL operation");
+    return fsalstat(ERR_FSAL_NOTSUPP, ENOTSUP);
 }
 
 /* list_ext_attrs
  * default case not supported
  */
 
-static fsal_status_t list_ext_attrs(struct fsal_obj_handle *obj_hdl,
-				    unsigned int cookie,
-				    fsal_xattrent_t *xattrs_tab,
-				    unsigned int xattrs_tabsize,
-				    unsigned int *p_nb_returned,
-				    int *end_of_list)
+static fsal_status_t list_ext_attrs(struct fsal_obj_handle* obj_hdl,
+                                    unsigned int cookie,
+                                    fsal_xattrent_t* xattrs_tab,
+                                    unsigned int xattrs_tabsize,
+                                    unsigned int* p_nb_returned,
+                                    int* end_of_list)
 {
-	LogCrit(COMPONENT_FSAL,
-		"Invoking unsupported FSAL operation");
-	return fsalstat(ERR_FSAL_NOTSUPP, ENOTSUP);
+    LogCrit(COMPONENT_FSAL,
+        "Invoking unsupported FSAL operation");
+    return fsalstat(ERR_FSAL_NOTSUPP, ENOTSUP);
 }
 
 /* getextattr_id_by_name
  * default case not supported
  */
 
-static fsal_status_t getextattr_id_by_name(struct fsal_obj_handle *obj_hdl,
-					   const char *xattr_name,
-					   unsigned int *pxattr_id)
+static fsal_status_t getextattr_id_by_name(struct fsal_obj_handle* obj_hdl,
+                                           const char* xattr_name,
+                                           unsigned int* pxattr_id)
 {
-	LogCrit(COMPONENT_FSAL,
-		"Invoking unsupported FSAL operation");
-	return fsalstat(ERR_FSAL_NOTSUPP, ENOTSUP);
+    LogCrit(COMPONENT_FSAL,
+        "Invoking unsupported FSAL operation");
+    return fsalstat(ERR_FSAL_NOTSUPP, ENOTSUP);
 }
 
 /* getextattr_value_by_name
  * default case not supported
  */
 
-static fsal_status_t getextattr_value_by_name(struct fsal_obj_handle *obj_hdl,
-					      const char *xattr_name,
-					      caddr_t buffer_addr,
-					      size_t buffer_size,
-					      size_t *p_output_size)
+static fsal_status_t getextattr_value_by_name(struct fsal_obj_handle* obj_hdl,
+                                              const char* xattr_name,
+                                              caddr_t buffer_addr,
+                                              size_t buffer_size,
+                                              size_t* p_output_size)
 {
-	LogCrit(COMPONENT_FSAL,
-		"Invoking unsupported FSAL operation");
-	return fsalstat(ERR_FSAL_NOTSUPP, ENOTSUP);
+    LogCrit(COMPONENT_FSAL,
+        "Invoking unsupported FSAL operation");
+    return fsalstat(ERR_FSAL_NOTSUPP, ENOTSUP);
 }
 
 /* getextattr_value_by_id
  * default case not supported
  */
 
-static fsal_status_t getextattr_value_by_id(struct fsal_obj_handle *obj_hdl,
-					    unsigned int xattr_id,
-					    caddr_t buffer_addr,
-					    size_t buffer_size,
-					    size_t *p_output_size)
+static fsal_status_t getextattr_value_by_id(struct fsal_obj_handle* obj_hdl,
+                                            unsigned int xattr_id,
+                                            caddr_t buffer_addr,
+                                            size_t buffer_size,
+                                            size_t* p_output_size)
 {
-	LogCrit(COMPONENT_FSAL,
-		"Invoking unsupported FSAL operation");
-	return fsalstat(ERR_FSAL_NOTSUPP, ENOTSUP);
+    LogCrit(COMPONENT_FSAL,
+        "Invoking unsupported FSAL operation");
+    return fsalstat(ERR_FSAL_NOTSUPP, ENOTSUP);
 }
 
 /* setextattr_value
  * default case not supported
  */
 
-static fsal_status_t setextattr_value(struct fsal_obj_handle *obj_hdl,
-				      const char *xattr_name,
-				      caddr_t buffer_addr, size_t buffer_size,
-				      int create)
+static fsal_status_t setextattr_value(struct fsal_obj_handle* obj_hdl,
+                                      const char* xattr_name,
+                                      caddr_t buffer_addr, size_t buffer_size,
+                                      int create)
 {
-	LogCrit(COMPONENT_FSAL,
-		"Invoking unsupported FSAL operation");
-	return fsalstat(ERR_FSAL_NOTSUPP, ENOTSUP);
+    LogCrit(COMPONENT_FSAL,
+        "Invoking unsupported FSAL operation");
+    return fsalstat(ERR_FSAL_NOTSUPP, ENOTSUP);
 }
 
 /* setextattr_value_by_id
  * default case not supported
  */
 
-static fsal_status_t setextattr_value_by_id(struct fsal_obj_handle *obj_hdl,
-					    unsigned int xattr_id,
-					    caddr_t buffer_addr,
-					    size_t buffer_size)
+static fsal_status_t setextattr_value_by_id(struct fsal_obj_handle* obj_hdl,
+                                            unsigned int xattr_id,
+                                            caddr_t buffer_addr,
+                                            size_t buffer_size)
 {
-	LogCrit(COMPONENT_FSAL,
-		"Invoking unsupported FSAL operation");
-	return fsalstat(ERR_FSAL_NOTSUPP, ENOTSUP);
+    LogCrit(COMPONENT_FSAL,
+        "Invoking unsupported FSAL operation");
+    return fsalstat(ERR_FSAL_NOTSUPP, ENOTSUP);
 }
 
 /* remove_extattr_by_id
  * default case not supported
  */
 
-static fsal_status_t remove_extattr_by_id(struct fsal_obj_handle *obj_hdl,
-					  unsigned int xattr_id)
+static fsal_status_t remove_extattr_by_id(struct fsal_obj_handle* obj_hdl,
+                                          unsigned int xattr_id)
 {
-	LogCrit(COMPONENT_FSAL,
-		"Invoking unsupported FSAL operation");
-	return fsalstat(ERR_FSAL_NOTSUPP, ENOTSUP);
+    LogCrit(COMPONENT_FSAL,
+        "Invoking unsupported FSAL operation");
+    return fsalstat(ERR_FSAL_NOTSUPP, ENOTSUP);
 }
 
 /* remove_extattr_by_name
  * default case not supported
  */
 
-static fsal_status_t remove_extattr_by_name(struct fsal_obj_handle *obj_hdl,
-					    const char *xattr_name)
+static fsal_status_t remove_extattr_by_name(struct fsal_obj_handle* obj_hdl,
+                                            const char* xattr_name)
 {
-	LogCrit(COMPONENT_FSAL,
-		"Invoking unsupported FSAL operation");
-	return fsalstat(ERR_FSAL_NOTSUPP, ENOTSUP);
+    LogCrit(COMPONENT_FSAL,
+        "Invoking unsupported FSAL operation");
+    return fsalstat(ERR_FSAL_NOTSUPP, ENOTSUP);
 }
 
 /* handle_to_wire
  * default case server fault
  */
 
-static fsal_status_t handle_to_wire(const struct fsal_obj_handle *obj_hdl,
-				    fsal_digesttype_t output_type,
-				    struct gsh_buffdesc *fh_desc)
+static fsal_status_t handle_to_wire(const struct fsal_obj_handle* obj_hdl,
+                                    fsal_digesttype_t output_type,
+                                    struct gsh_buffdesc* fh_desc)
 {
-	return fsalstat(ERR_FSAL_SERVERFAULT, 0);
+    return fsalstat(ERR_FSAL_SERVERFAULT, 0);
 }
 
 /**
  * handle_cmp
  * default case compare with handle_to_key
  */
-static bool handle_cmp(struct fsal_obj_handle *obj_hdl1,
-		       struct fsal_obj_handle *obj_hdl2)
+static bool handle_cmp(struct fsal_obj_handle* obj_hdl1,
+                       struct fsal_obj_handle* obj_hdl2)
 {
-	struct gsh_buffdesc key1, key2;
+    struct gsh_buffdesc key1, key2;
 
-	if (obj_hdl1 == NULL || obj_hdl2 == NULL)
-		return false;
+    if(obj_hdl1 == NULL || obj_hdl2 == NULL)
+        return false;
 
-	if (obj_hdl1 == obj_hdl2)
-		return true;
+    if(obj_hdl1 == obj_hdl2)
+        return true;
 
-	obj_hdl1->obj_ops.handle_to_key(obj_hdl1, &key1);
-	obj_hdl2->obj_ops.handle_to_key(obj_hdl2, &key2);
-	if (key1.len != key2.len)
-		return false;
-	return !memcmp(key1.addr, key2.addr, key1.len);
+    obj_hdl1->obj_ops.handle_to_key(obj_hdl1, &key1);
+    obj_hdl2->obj_ops.handle_to_key(obj_hdl2, &key2);
+    if(key1.len != key2.len)
+        return false;
+    return !memcmp(key1.addr, key2.addr, key1.len);
 }
 
 /**
@@ -1308,11 +1312,11 @@ static bool handle_cmp(struct fsal_obj_handle *obj_hdl1,
  * default case return a safe empty key
  */
 
-static void handle_to_key(struct fsal_obj_handle *obj_hdl,
-			  struct gsh_buffdesc *fh_desc)
+static void handle_to_key(struct fsal_obj_handle* obj_hdl,
+                          struct gsh_buffdesc* fh_desc)
 {
-	fh_desc->addr = obj_hdl;
-	fh_desc->len = 0;
+    fh_desc->addr = obj_hdl;
+    fh_desc->len = 0;
 }
 
 /**
@@ -1329,12 +1333,12 @@ static void handle_to_key(struct fsal_obj_handle *obj_hdl,
  *
  * @return NFS4ERR_LAYOUTUNAVAILABLE
  */
-static nfsstat4 layoutget(struct fsal_obj_handle *obj_hdl,
-			  struct req_op_context *req_ctx, XDR *loc_body,
-			  const struct fsal_layoutget_arg *arg,
-			  struct fsal_layoutget_res *res)
+static nfsstat4 layoutget(struct fsal_obj_handle* obj_hdl,
+                          struct req_op_context* req_ctx, XDR* loc_body,
+                          const struct fsal_layoutget_arg* arg,
+                          struct fsal_layoutget_res* res)
 {
-	return NFS4ERR_LAYOUTUNAVAILABLE;
+    return NFS4ERR_LAYOUTUNAVAILABLE;
 }
 
 /**
@@ -1351,11 +1355,11 @@ static nfsstat4 layoutget(struct fsal_obj_handle *obj_hdl,
  *
  * @return NFS4ERR_NOTSUPP
  */
-static nfsstat4 layoutreturn(struct fsal_obj_handle *obj_hdl,
-			     struct req_op_context *req_ctx, XDR *lrf_body,
-			     const struct fsal_layoutreturn_arg *arg)
+static nfsstat4 layoutreturn(struct fsal_obj_handle* obj_hdl,
+                             struct req_op_context* req_ctx, XDR* lrf_body,
+                             const struct fsal_layoutreturn_arg* arg)
 {
-	return NFS4ERR_NOTSUPP;
+    return NFS4ERR_NOTSUPP;
 }
 
 /**
@@ -1371,32 +1375,32 @@ static nfsstat4 layoutreturn(struct fsal_obj_handle *obj_hdl,
  *
  * @return Valid error codes in RFC 5661, p. 366.
  */
-static nfsstat4 layoutcommit(struct fsal_obj_handle *obj_hdl,
-			     struct req_op_context *req_ctx, XDR *lou_body,
-			     const struct fsal_layoutcommit_arg *arg,
-			     struct fsal_layoutcommit_res *res)
+static nfsstat4 layoutcommit(struct fsal_obj_handle* obj_hdl,
+                             struct req_op_context* req_ctx, XDR* lou_body,
+                             const struct fsal_layoutcommit_arg* arg,
+                             struct fsal_layoutcommit_res* res)
 {
-	return NFS4ERR_NOTSUPP;
+    return NFS4ERR_NOTSUPP;
 }
 
 /* open2
  * default case not supported
  */
 
-static fsal_status_t open2(struct fsal_obj_handle *obj_hdl,
-			   struct state_t *fd,
-			   fsal_openflags_t openflags,
-			   enum fsal_create_mode createmode,
-			   const char *name,
-			   struct attrlist *attrib_set,
-			   fsal_verifier_t verifier,
-			   struct fsal_obj_handle **new_obj,
-			   struct attrlist *attrs_out,
-			   bool *caller_perm_check)
+static fsal_status_t open2(struct fsal_obj_handle* obj_hdl,
+                           struct state_t* fd,
+                           fsal_openflags_t openflags,
+                           enum fsal_create_mode createmode,
+                           const char* name,
+                           struct attrlist* attrib_set,
+                           fsal_verifier_t verifier,
+                           struct fsal_obj_handle** new_obj,
+                           struct attrlist* attrs_out,
+                           bool* caller_perm_check)
 {
-	LogCrit(COMPONENT_FSAL,
-		"Invoking unsupported FSAL operation");
-	return fsalstat(ERR_FSAL_NOTSUPP, ENOTSUP);
+    LogCrit(COMPONENT_FSAL,
+        "Invoking unsupported FSAL operation");
+    return fsalstat(ERR_FSAL_NOTSUPP, ENOTSUP);
 }
 
 /**
@@ -1410,182 +1414,185 @@ static fsal_status_t open2(struct fsal_obj_handle *obj_hdl,
  * @retval true if verifier matches
  */
 
-static bool check_verifier(struct fsal_obj_handle *obj_hdl,
-			   fsal_verifier_t verifier)
+static bool check_verifier(struct fsal_obj_handle* obj_hdl,
+                           fsal_verifier_t verifier)
 {
-	uint32_t verf_hi = 0, verf_lo = 0;
-	struct attrlist attrs;
-	bool result;
+    uint32_t verf_hi = 0, verf_lo = 0;
+    struct attrlist attrs;
+    bool result;
 
-	fsal_prepare_attrs(&attrs, ATTR_ATIME | ATTR_MTIME);
+    fsal_prepare_attrs(&attrs, ATTR_ATIME | ATTR_MTIME);
 
-	if (FSAL_IS_ERROR(obj_hdl->obj_ops.getattrs(obj_hdl, &attrs)))
-		return false;
+    if(FSAL_IS_ERROR(obj_hdl->obj_ops.getattrs(obj_hdl, &attrs)))
+        return false;
 
-	memcpy(&verf_hi,
-	       verifier,
-	       sizeof(uint32_t));
-	memcpy(&verf_lo,
-	       verifier + sizeof(uint32_t),
-	       sizeof(uint32_t));
+    memcpy(&verf_hi,
+           verifier,
+           sizeof(uint32_t));
+    memcpy(&verf_lo,
+           verifier + sizeof(uint32_t),
+           sizeof(uint32_t));
 
-	LogFullDebug(COMPONENT_FSAL,
-		     "Passed verifier %"PRIx32" %"PRIx32
-		     " file verifier %"PRIx32" %"PRIx32,
-		     verf_hi, verf_lo,
-		     (uint32_t) attrs.atime.tv_sec,
-		     (uint32_t) attrs.mtime.tv_sec);
+    LogFullDebug(COMPONENT_FSAL,
+        "Passed verifier %"PRIx32" %"PRIx32
+        " file verifier %"PRIx32" %"PRIx32,
+        verf_hi, verf_lo,
+        (uint32_t) attrs.atime.tv_sec,
+        (uint32_t) attrs.mtime.tv_sec)
+         
+    
+    ;
 
-	result = attrs.atime.tv_sec == verf_hi &&
-		 attrs.mtime.tv_sec == verf_lo;
+    result = attrs.atime.tv_sec == verf_hi &&
+            attrs.mtime.tv_sec == verf_lo;
 
-	/* Done with the attrs */
-	fsal_release_attrs(&attrs);
+    /* Done with the attrs */
+    fsal_release_attrs(&attrs);
 
-	return result;
+    return result;
 }
 
 /* status2
  * default case return openflags
  */
 
-static fsal_openflags_t status2(struct fsal_obj_handle *obj_hdl,
-				struct state_t *state)
+static fsal_openflags_t status2(struct fsal_obj_handle* obj_hdl,
+                                struct state_t* state)
 {
-	struct fsal_fd *fd = (struct fsal_fd *)(state + 1);
+    struct fsal_fd* fd = (struct fsal_fd *)(state + 1);
 
-	return fd->openflags;
+    return fd->openflags;
 }
 
 /* reopen2
  * default case not supported
  */
 
-static fsal_status_t reopen2(struct fsal_obj_handle *obj_hdl,
-			     struct state_t *state,
-			     fsal_openflags_t openflags)
+static fsal_status_t reopen2(struct fsal_obj_handle* obj_hdl,
+                             struct state_t* state,
+                             fsal_openflags_t openflags)
 {
-	LogCrit(COMPONENT_FSAL,
-		"Invoking unsupported FSAL operation");
-	return fsalstat(ERR_FSAL_NOTSUPP, ENOTSUP);
+    LogCrit(COMPONENT_FSAL,
+        "Invoking unsupported FSAL operation");
+    return fsalstat(ERR_FSAL_NOTSUPP, ENOTSUP);
 }
 
 /* read2
  * default case not supported
  */
 
-static fsal_status_t read2(struct fsal_obj_handle *obj_hdl,
-			   bool bypass,
-			   struct state_t *state,
-			   uint64_t seek_descriptor,
-			   size_t buffer_size,
-			   void *buffer, size_t *read_amount,
-			   bool *end_of_file,
-			   struct io_info *info)
+static fsal_status_t read2(struct fsal_obj_handle* obj_hdl,
+                           bool bypass,
+                           struct state_t* state,
+                           uint64_t seek_descriptor,
+                           size_t buffer_size,
+                           void* buffer, size_t* read_amount,
+                           bool* end_of_file,
+                           struct io_info* info)
 {
-	LogCrit(COMPONENT_FSAL,
-		"Invoking unsupported FSAL operation");
-	return fsalstat(ERR_FSAL_NOTSUPP, ENOTSUP);
+    LogCrit(COMPONENT_FSAL,
+        "Invoking unsupported FSAL operation");
+    return fsalstat(ERR_FSAL_NOTSUPP, ENOTSUP);
 }
 
 /* write2
  * default case not supported
  */
 
-static fsal_status_t write2(struct fsal_obj_handle *obj_hdl,
-			    bool bypass,
-			    struct state_t *state,
-			    uint64_t seek_descriptor,
-			    size_t buffer_size,
-			    void *buffer,
-			    size_t *write_amount,
-			    bool *fsal_stable,
-			    struct io_info *info)
+static fsal_status_t write2(struct fsal_obj_handle* obj_hdl,
+                            bool bypass,
+                            struct state_t* state,
+                            uint64_t seek_descriptor,
+                            size_t buffer_size,
+                            void* buffer,
+                            size_t* write_amount,
+                            bool* fsal_stable,
+                            struct io_info* info)
 {
-	LogCrit(COMPONENT_FSAL,
-		"Invoking unsupported FSAL operation");
-	return fsalstat(ERR_FSAL_NOTSUPP, ENOTSUP);
+    LogCrit(COMPONENT_FSAL,
+        "Invoking unsupported FSAL operation");
+    return fsalstat(ERR_FSAL_NOTSUPP, ENOTSUP);
 }
 
 /* seek2
  * default case not supported
  */
 
-static fsal_status_t seek2(struct fsal_obj_handle *obj_hdl,
-			   struct state_t *fd,
-			   struct io_info *info)
+static fsal_status_t seek2(struct fsal_obj_handle* obj_hdl,
+                           struct state_t* fd,
+                           struct io_info* info)
 {
-	LogCrit(COMPONENT_FSAL,
-		"Invoking unsupported FSAL operation");
-	return fsalstat(ERR_FSAL_NOTSUPP, ENOTSUP);
+    LogCrit(COMPONENT_FSAL,
+        "Invoking unsupported FSAL operation");
+    return fsalstat(ERR_FSAL_NOTSUPP, ENOTSUP);
 }
 
 /* io io_advise2
  * default case not supported
  */
 
-static fsal_status_t io_advise2(struct fsal_obj_handle *obj_hdl,
-				struct state_t *fd,
-				struct io_hints *hints)
+static fsal_status_t io_advise2(struct fsal_obj_handle* obj_hdl,
+                                struct state_t* fd,
+                                struct io_hints* hints)
 {
-	hints->hints = 0;
+    hints->hints = 0;
 
-	return fsalstat(ERR_FSAL_NO_ERROR, 0);
+    return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
 
 /* commit2
  * default case not supported
  */
 
-static fsal_status_t commit2(struct fsal_obj_handle *obj_hdl,
-			     off_t offset,
-			     size_t len)
+static fsal_status_t commit2(struct fsal_obj_handle* obj_hdl,
+                             off_t offset,
+                             size_t len)
 {
-	LogCrit(COMPONENT_FSAL,
-		"Invoking unsupported FSAL operation");
-	return fsalstat(ERR_FSAL_NOTSUPP, ENOTSUP);
+    LogCrit(COMPONENT_FSAL,
+        "Invoking unsupported FSAL operation");
+    return fsalstat(ERR_FSAL_NOTSUPP, ENOTSUP);
 }
 
 /* lock_op2
  * default case not supported
  */
 
-static fsal_status_t lock_op2(struct fsal_obj_handle *obj_hdl,
-			      struct state_t *state,
-			      void *p_owner,
-			      fsal_lock_op_t lock_op,
-			      fsal_lock_param_t *request_lock,
-			      fsal_lock_param_t *conflicting_lock)
+static fsal_status_t lock_op2(struct fsal_obj_handle* obj_hdl,
+                              struct state_t* state,
+                              void* p_owner,
+                              fsal_lock_op_t lock_op,
+                              fsal_lock_param_t* request_lock,
+                              fsal_lock_param_t* conflicting_lock)
 {
-	LogCrit(COMPONENT_FSAL,
-		"Invoking unsupported FSAL operation");
-	return fsalstat(ERR_FSAL_NOTSUPP, ENOTSUP);
+    LogCrit(COMPONENT_FSAL,
+        "Invoking unsupported FSAL operation");
+    return fsalstat(ERR_FSAL_NOTSUPP, ENOTSUP);
 }
 
 /* setattr2
  * default case not supported
  */
 
-static fsal_status_t setattr2(struct fsal_obj_handle *obj_hdl,
-			      bool bypass,
-			      struct state_t *state,
-			      struct attrlist *attrs)
+static fsal_status_t setattr2(struct fsal_obj_handle* obj_hdl,
+                              bool bypass,
+                              struct state_t* state,
+                              struct attrlist* attrs)
 {
-	LogCrit(COMPONENT_FSAL,
-		"Invoking unsupported FSAL operation");
-	return fsalstat(ERR_FSAL_NOTSUPP, ENOTSUP);
+    LogCrit(COMPONENT_FSAL,
+        "Invoking unsupported FSAL operation");
+    return fsalstat(ERR_FSAL_NOTSUPP, ENOTSUP);
 }
 
 /* close2
  * default case not supported
  */
 
-static fsal_status_t close2(struct fsal_obj_handle *obj_hdl,
-			    struct state_t *fd)
+static fsal_status_t close2(struct fsal_obj_handle* obj_hdl,
+                            struct state_t* fd)
 {
-	LogCrit(COMPONENT_FSAL,
-		"Invoking unsupported FSAL operation");
-	return fsalstat(ERR_FSAL_NOTSUPP, ENOTSUP);
+    LogCrit(COMPONENT_FSAL,
+        "Invoking unsupported FSAL operation");
+    return fsalstat(ERR_FSAL_NOTSUPP, ENOTSUP);
 }
 
 /* Default fsal handle object method vector.
@@ -1593,70 +1600,70 @@ static fsal_status_t close2(struct fsal_obj_handle *obj_hdl,
  */
 
 struct fsal_obj_ops def_handle_ops = {
-	.get_ref = handle_get_ref,
-	.put_ref = handle_put_ref,
-	.release = handle_release,
-	.merge = handle_merge,
-	.lookup = lookup,
-	.readdir = read_dirents,
-	.compute_readdir_cookie = compute_readdir_cookie,
-	.dirent_cmp = dirent_cmp,
-	.create = create,
-	.mkdir = makedir,
-	.mknode = makenode,
-	.symlink = makesymlink,
-	.readlink = readsymlink,
-	.test_access = fsal_test_access,	/* default is use common test */
-	.getattrs = getattrs,
-	.setattrs = setattrs,
-	.link = linkfile,
-	.rename = renamefile,
-	.unlink = file_unlink,
-	.open = file_open,
-	.reopen = file_reopen,
-	.fs_locations = fs_locations,
-	.status = file_status,
-	.read = file_read,
-	.read_plus = file_read_plus,
-	.write = file_write,
-	.write_plus = file_write_plus,
-	.seek = file_seek,
-	.io_advise = file_io_advise,
-	.commit = commit,
-	.lock_op = lock_op,
-	.share_op = share_op,
-	.close = file_close,
-	.list_ext_attrs = list_ext_attrs,
-	.getextattr_id_by_name = getextattr_id_by_name,
-	.getextattr_value_by_name = getextattr_value_by_name,
-	.getextattr_value_by_id = getextattr_value_by_id,
-	.setextattr_value = setextattr_value,
-	.setextattr_value_by_id = setextattr_value_by_id,
-	.remove_extattr_by_id = remove_extattr_by_id,
-	.remove_extattr_by_name = remove_extattr_by_name,
-	.handle_is = handle_is,
-	.handle_to_wire = handle_to_wire,
-	.handle_cmp = handle_cmp,
-	.handle_to_key = handle_to_key,
-	.layoutget = layoutget,
-	.layoutreturn = layoutreturn,
-	.layoutcommit = layoutcommit,
-	.getxattrs = getxattrs,
-	.setxattrs = setxattrs,
-	.removexattrs = removexattrs,
-	.listxattrs = listxattrs,
-	.open2 = open2,
-	.check_verifier = check_verifier,
-	.status2 = status2,
-	.reopen2 = reopen2,
-	.read2 = read2,
-	.write2 = write2,
-	.seek2 = seek2,
-	.io_advise2 = io_advise2,
-	.commit2 = commit2,
-	.lock_op2 = lock_op2,
-	.setattr2 = setattr2,
-	.close2 = close2,
+    .get_ref = handle_get_ref,
+    .put_ref = handle_put_ref,
+    .release = handle_release,
+    .merge = handle_merge,
+    .lookup = lookup,
+    .readdir = read_dirents,
+    .compute_readdir_cookie = compute_readdir_cookie,
+    .dirent_cmp = dirent_cmp,
+    .create = create,
+    .mkdir = makedir,
+    .mknode = makenode,
+    .symlink = makesymlink,
+    .readlink = readsymlink,
+    .test_access = fsal_test_access, /* default is use common test */
+    .getattrs = getattrs,
+    .setattrs = setattrs,
+    .link = linkfile,
+    .rename = renamefile,
+    .unlink = file_unlink,
+    .open = file_open,
+    .reopen = file_reopen,
+    .fs_locations = fs_locations,
+    .status = file_status,
+    .read = file_read,
+    .read_plus = file_read_plus,
+    .write = file_write,
+    .write_plus = file_write_plus,
+    .seek = file_seek,
+    .io_advise = file_io_advise,
+    .commit = commit,
+    .lock_op = lock_op,
+    .share_op = share_op,
+    .close = file_close,
+    .list_ext_attrs = list_ext_attrs,
+    .getextattr_id_by_name = getextattr_id_by_name,
+    .getextattr_value_by_name = getextattr_value_by_name,
+    .getextattr_value_by_id = getextattr_value_by_id,
+    .setextattr_value = setextattr_value,
+    .setextattr_value_by_id = setextattr_value_by_id,
+    .remove_extattr_by_id = remove_extattr_by_id,
+    .remove_extattr_by_name = remove_extattr_by_name,
+    .handle_is = handle_is,
+    .handle_to_wire = handle_to_wire,
+    .handle_cmp = handle_cmp,
+    .handle_to_key = handle_to_key,
+    .layoutget = layoutget,
+    .layoutreturn = layoutreturn,
+    .layoutcommit = layoutcommit,
+    .getxattrs = getxattrs,
+    .setxattrs = setxattrs,
+    .removexattrs = removexattrs,
+    .listxattrs = listxattrs,
+    .open2 = open2,
+    .check_verifier = check_verifier,
+    .status2 = status2,
+    .reopen2 = reopen2,
+    .read2 = read2,
+    .write2 = write2,
+    .seek2 = seek2,
+    .io_advise2 = io_advise2,
+    .commit2 = commit2,
+    .lock_op2 = lock_op2,
+    .setattr2 = setattr2,
+    .close2 = close2,
 };
 
 /* fsal_pnfs_ds common methods */
@@ -1668,11 +1675,11 @@ struct fsal_obj_ops def_handle_ops = {
  *
  * @param[in] pds Handle to release
  */
-static void pds_release(struct fsal_pnfs_ds *const pds)
+static void pds_release(struct fsal_pnfs_ds*const pds)
 {
-	LogDebug(COMPONENT_PNFS, "Default pNFS DS release!");
-	fsal_pnfs_ds_fini(pds);
-	gsh_free(pds);
+    LogDebug(COMPONENT_PNFS, "Default pNFS DS release!");
+    fsal_pnfs_ds_fini(pds);
+    gsh_free(pds);
 }
 
 /**
@@ -1684,15 +1691,15 @@ static void pds_release(struct fsal_pnfs_ds *const pds)
  * @retval NFS4_OK, NFS4ERR_ACCESS, NFS4ERR_WRONGSEC.
  */
 
-static nfsstat4 pds_permissions(struct fsal_pnfs_ds *const pds,
-				struct svc_req *req)
+static nfsstat4 pds_permissions(struct fsal_pnfs_ds*const pds,
+                                struct svc_req* req)
 {
-	/* FIX ME!!! Replace with a non-export dependent system.
-	 * For now, reset per init_root_op_context()
-	 */
-	op_ctx->export_perms->set = root_op_export_set;
-	op_ctx->export_perms->options = root_op_export_options;
-	return NFS4_OK;
+    /* FIX ME!!! Replace with a non-export dependent system.
+     * For now, reset per init_root_op_context()
+     */
+    op_ctx->export_perms->set = root_op_export_set;
+    op_ctx->export_perms->options = root_op_export_options;
+    return NFS4_OK;
 }
 
 /**
@@ -1705,16 +1712,16 @@ static nfsstat4 pds_permissions(struct fsal_pnfs_ds *const pds,
  * @retval NFS4_OK, NFS4ERR_SERVERFAULT.
  */
 
-static nfsstat4 pds_handle(struct fsal_pnfs_ds *const pds,
-			   const struct gsh_buffdesc *const hdl_desc,
-			   struct fsal_ds_handle **const handle,
-			   int flags)
+static nfsstat4 pds_handle(struct fsal_pnfs_ds*const pds,
+                           const struct gsh_buffdesc*const hdl_desc,
+                           struct fsal_ds_handle**const handle,
+                           int flags)
 {
-	LogCrit(COMPONENT_PNFS, "Unimplemented DS handle creation!");
-	*handle = gsh_calloc(1, sizeof(struct fsal_ds_handle));
+    LogCrit(COMPONENT_PNFS, "Unimplemented DS handle creation!");
+    *handle = gsh_calloc(1, sizeof(struct fsal_ds_handle));
 
-	fsal_ds_handle_init(*handle, pds);
-	return NFS4_OK;
+    fsal_ds_handle_init(*handle, pds);
+    return NFS4_OK;
 }
 
 /**
@@ -1723,16 +1730,16 @@ static nfsstat4 pds_handle(struct fsal_pnfs_ds *const pds,
  * @param[in]  ops	FSAL DS handle operations vector
  */
 
-static void pds_handle_ops(struct fsal_dsh_ops *ops)
+static void pds_handle_ops(struct fsal_dsh_ops* ops)
 {
-	memcpy(ops, &def_dsh_ops, sizeof(struct fsal_dsh_ops));
+    memcpy(ops, &def_dsh_ops, sizeof(struct fsal_dsh_ops));
 }
 
 struct fsal_pnfs_ds_ops def_pnfs_ds_ops = {
-	.release = pds_release,
-	.permissions = pds_permissions,
-	.make_ds_handle = pds_handle,
-	.fsal_dsh_ops = pds_handle_ops,
+    .release = pds_release,
+    .permissions = pds_permissions,
+    .make_ds_handle = pds_handle,
+    .fsal_dsh_ops = pds_handle_ops,
 };
 
 /* fsal_ds_handle common methods */
@@ -1745,11 +1752,11 @@ struct fsal_pnfs_ds_ops def_pnfs_ds_ops = {
  *
  * @param[in] release Handle to release
  */
-static void ds_release(struct fsal_ds_handle *const ds_hdl)
+static void ds_release(struct fsal_ds_handle*const ds_hdl)
 {
-	LogCrit(COMPONENT_PNFS, "Unimplemented DS handle release!");
-	fsal_ds_handle_fini(ds_hdl);
-	gsh_free(ds_hdl);
+    LogCrit(COMPONENT_PNFS, "Unimplemented DS handle release!");
+    fsal_ds_handle_fini(ds_hdl);
+    gsh_free(ds_hdl);
 }
 
 /**
@@ -1767,27 +1774,27 @@ static void ds_release(struct fsal_ds_handle *const ds_hdl)
  *
  * @return NFS4ERR_NOTSUPP.
  */
-static nfsstat4 ds_read(struct fsal_ds_handle *const ds_hdl,
-			struct req_op_context *const req_ctx,
-			const stateid4 *stateid, const offset4 offset,
-			const count4 requested_length, void *const buffer,
-			count4 * const supplied_length,
-			bool * const end_of_file)
+static nfsstat4 ds_read(struct fsal_ds_handle*const ds_hdl,
+                        struct req_op_context*const req_ctx,
+                        const stateid4* stateid, const offset4 offset,
+                        const count4 requested_length, void*const buffer,
+                        count4* const supplied_length,
+                        bool* const end_of_file)
 {
-	LogCrit(COMPONENT_PNFS, "Unimplemented DS read!");
-	return NFS4ERR_NOTSUPP;
+    LogCrit(COMPONENT_PNFS, "Unimplemented DS read!");
+    return NFS4ERR_NOTSUPP;
 }
 
-static nfsstat4 ds_read_plus(struct fsal_ds_handle *const ds_hdl,
-			struct req_op_context *const req_ctx,
-			const stateid4 *stateid, const offset4 offset,
-			const count4 requested_length, void *const buffer,
-			const count4 supplied_length,
-			bool * const end_of_file,
-			struct io_info *info)
+static nfsstat4 ds_read_plus(struct fsal_ds_handle*const ds_hdl,
+                             struct req_op_context*const req_ctx,
+                             const stateid4* stateid, const offset4 offset,
+                             const count4 requested_length, void*const buffer,
+                             const count4 supplied_length,
+                             bool* const end_of_file,
+                             struct io_info* info)
 {
-	LogCrit(COMPONENT_PNFS, "Unimplemented DS read_plus!");
-	return NFS4ERR_NOTSUPP;
+    LogCrit(COMPONENT_PNFS, "Unimplemented DS read_plus!");
+    return NFS4ERR_NOTSUPP;
 }
 
 /**
@@ -1808,31 +1815,31 @@ static nfsstat4 ds_read_plus(struct fsal_ds_handle *const ds_hdl,
  *
  * @return An NFSv4.1 status code.
  */
-static nfsstat4 ds_write(struct fsal_ds_handle *const ds_hdl,
-			 struct req_op_context *const req_ctx,
-			 const stateid4 *stateid, const offset4 offset,
-			 const count4 write_length, const void *buffer,
-			 const stable_how4 stability_wanted,
-			 count4 * const written_length,
-			 verifier4 * const writeverf,
-			 stable_how4 * const stability_got)
+static nfsstat4 ds_write(struct fsal_ds_handle*const ds_hdl,
+                         struct req_op_context*const req_ctx,
+                         const stateid4* stateid, const offset4 offset,
+                         const count4 write_length, const void* buffer,
+                         const stable_how4 stability_wanted,
+                         count4* const written_length,
+                         verifier4* const writeverf,
+                         stable_how4* const stability_got)
 {
-	LogCrit(COMPONENT_PNFS, "Unimplemented DS write!");
-	return NFS4ERR_NOTSUPP;
+    LogCrit(COMPONENT_PNFS, "Unimplemented DS write!");
+    return NFS4ERR_NOTSUPP;
 }
 
-static nfsstat4 ds_write_plus(struct fsal_ds_handle *const ds_hdl,
-			 struct req_op_context *const req_ctx,
-			 const stateid4 *stateid, const offset4 offset,
-			 const count4 write_length, const void *buffer,
-			 const stable_how4 stability_wanted,
-			 count4 * const written_length,
-			 verifier4 * const writeverf,
-			 stable_how4 * const stability_got,
-			 struct io_info *info)
+static nfsstat4 ds_write_plus(struct fsal_ds_handle*const ds_hdl,
+                              struct req_op_context*const req_ctx,
+                              const stateid4* stateid, const offset4 offset,
+                              const count4 write_length, const void* buffer,
+                              const stable_how4 stability_wanted,
+                              count4* const written_length,
+                              verifier4* const writeverf,
+                              stable_how4* const stability_got,
+                              struct io_info* info)
 {
-	LogCrit(COMPONENT_PNFS, "Unimplemented DS write_plus!");
-	return NFS4ERR_NOTSUPP;
+    LogCrit(COMPONENT_PNFS, "Unimplemented DS write_plus!");
+    return NFS4ERR_NOTSUPP;
 }
 
 /**
@@ -1846,22 +1853,22 @@ static nfsstat4 ds_write_plus(struct fsal_ds_handle *const ds_hdl,
  *
  * @return An NFSv4.1 status code.
  */
-static nfsstat4 ds_commit(struct fsal_ds_handle *const ds_hdl,
-			  struct req_op_context *const req_ctx,
-			  const offset4 offset, const count4 count,
-			  verifier4 * const writeverf)
+static nfsstat4 ds_commit(struct fsal_ds_handle*const ds_hdl,
+                          struct req_op_context*const req_ctx,
+                          const offset4 offset, const count4 count,
+                          verifier4* const writeverf)
 {
-	LogCrit(COMPONENT_PNFS, "Unimplemented DS commit!");
-	return NFS4ERR_NOTSUPP;
+    LogCrit(COMPONENT_PNFS, "Unimplemented DS commit!");
+    return NFS4ERR_NOTSUPP;
 }
 
 struct fsal_dsh_ops def_dsh_ops = {
-	.release = ds_release,
-	.read = ds_read,
-	.read_plus = ds_read_plus,
-	.write = ds_write,
-	.write_plus = ds_write_plus,
-	.commit = ds_commit
+    .release = ds_release,
+    .read = ds_read,
+    .read_plus = ds_read_plus,
+    .write = ds_write,
+    .write_plus = ds_write_plus,
+    .commit = ds_commit
 };
 
 /** @} */

@@ -37,21 +37,22 @@
  * @brief FSAL module manager
  */
 
-#include "config.h"
+#include "../include/config.h"
+#include "../include/log.h"
+#include "../include/fsal.h"
+#include "../include/nfs_core.h"
+#include "../include/config_parsing.h"
+#include "../include/pnfs_utils.h"
 
 #include <stdint.h>
 #include <stddef.h>
 #include <stdlib.h>
-#include <errno.h>
+//#include <errno.h>
 #include <string.h>
 #include <ctype.h>
 #include <pthread.h>
 #include <dlfcn.h>
-#include "log.h"
-#include "fsal.h"
-#include "nfs_core.h"
-#include "config_parsing.h"
-#include "pnfs_utils.h"
+
 #include "fsal_private.h"
 
 /**
@@ -71,9 +72,9 @@ GLIST_HEAD(fsal_list);
  * and this module. They must be accessed under lock.
  */
 
-static char *dl_error;
+static char* dl_error;
 static int so_error;
-static struct fsal_module *new_fsal;
+static struct fsal_module* new_fsal;
 
 /**
  * @}
@@ -83,12 +84,17 @@ static struct fsal_module *new_fsal;
  * @brief FSAL load state
  */
 
-static enum load_state {
-	init,		/*< In server start state. .init sections can run */
-	idle,		/*< Switch from init->idle early in main() */
-	loading,	/*< In dlopen(). set by load_fsal() just prior */
-	registered,	/*< signal by registration that all is well */
-	error		/*< signal by registration that all is not well */
+static enum load_state
+{
+    init,
+    /*< In server start state. .init sections can run */
+    idle,
+    /*< Switch from init->idle early in main() */
+    loading,
+    /*< In dlopen(). set by load_fsal() just prior */
+    registered,
+    /*< signal by registration that all is well */
+    error /*< signal by registration that all is not well */
 } load_state = init;
 
 
@@ -101,46 +107,47 @@ static enum load_state {
  * @param[in] init	Initialization function for FSAL
  */
 
-static void load_fsal_static(const char *name, void (*init)(void))
+static void load_fsal_static(const char* name, void (*init)(void))
 {
-	char pname[24];
-	char *dl_path;
-	struct fsal_module *fsal;
+    char pname[24];
+    char* dl_path;
+    struct fsal_module* fsal;
 
-	snprintf(pname, sizeof(pname), "Builtin-%s", name);
-	dl_path = gsh_strdup(pname);
+    snprintf(pname, sizeof(pname), "Builtin-%s", name);
+    dl_path = gsh_strdup(pname);
 
-	PTHREAD_MUTEX_lock(&fsal_lock);
+    PTHREAD_MUTEX_lock(&fsal_lock);
 
-	if (load_state != idle)
-		LogFatal(COMPONENT_INIT, "Couldn't Register FSAL_%s", name);
+    if(load_state != idle)
+        LogFatal(COMPONENT_INIT, "Couldn't Register FSAL_%s", name);
 
-	if (dl_error) {
-		gsh_free(dl_error);
-		dl_error = NULL;
-	}
+    if(dl_error)
+    {
+        gsh_free(dl_error);
+        dl_error = NULL;
+    }
 
-	load_state = loading;
+    load_state = loading;
 
-	PTHREAD_MUTEX_unlock(&fsal_lock);
+    PTHREAD_MUTEX_unlock(&fsal_lock);
 
-	/* now it is the module's turn to register itself */
-	init();
+    /* now it is the module's turn to register itself */
+    init();
 
-	PTHREAD_MUTEX_lock(&fsal_lock);
+    PTHREAD_MUTEX_lock(&fsal_lock);
 
-	if (load_state != registered)
-		LogFatal(COMPONENT_INIT, "Couldn't Register FSAL_%s", name);
+    if(load_state != registered)
+        LogFatal(COMPONENT_INIT, "Couldn't Register FSAL_%s", name);
 
-	/* we now finish things up, doing things the module can't see */
+    /* we now finish things up, doing things the module can't see */
 
-	fsal = new_fsal;   /* recover handle from .ctor and poison again */
-	new_fsal = NULL;
-	fsal->path = dl_path;
-	fsal->dl_handle = NULL;
-	so_error = 0;
-	load_state = idle;
-	PTHREAD_MUTEX_unlock(&fsal_lock);
+    fsal = new_fsal; /* recover handle from .ctor and poison again */
+    new_fsal = NULL;
+    fsal->path = dl_path;
+    fsal->dl_handle = NULL;
+    so_error = 0;
+    load_state = idle;
+    PTHREAD_MUTEX_unlock(&fsal_lock);
 }
 
 /**
@@ -152,22 +159,21 @@ static void load_fsal_static(const char *name, void (*init)(void))
 
 void start_fsals(void)
 {
+    /* .init was a long time ago... */
+    load_state = idle;
 
-	/* .init was a long time ago... */
-	load_state = idle;
+    /* Load FSAL_MDCACHE */
+    load_fsal_static("MDCACHE", mdcache_fsal_init);
 
-	/* Load FSAL_MDCACHE */
-	load_fsal_static("MDCACHE", mdcache_fsal_init);
-
-	/* Load FSAL_PSEUDO */
-	load_fsal_static("PSEUDO", pseudo_fsal_init);
+    /* Load FSAL_PSEUDO */
+    load_fsal_static("PSEUDO", pseudo_fsal_init);
 }
 
 /**
  * Enforced filename for FSAL library objects.
  */
 
-static const char *pathfmt = "%s/libfsal%s.so";
+static const char* pathfmt = "%s/libfsal%s.so";
 
 /**
  * @brief Load the fsal's shared object.
@@ -190,134 +196,145 @@ static const char *pathfmt = "%s/libfsal%s.so";
  * @retval other general dlopen errors are possible, all of them bad
  */
 
-int load_fsal(const char *name,
-	      struct fsal_module **fsal_hdl_p)
+int load_fsal(const char* name,
+              struct fsal_module** fsal_hdl_p)
 {
-	void *dl = NULL;
-	int retval = EBUSY;	/* already loaded */
-	char *dl_path;
-	struct fsal_module *fsal;
-	char *bp;
-	char *path = alloca(strlen(nfs_param.core_param.ganesha_modules_loc)
-			    + strlen(name)
-			    + strlen(pathfmt) + 1);
+    void* dl = NULL;
+    int retval = EBUSY; /* already loaded */
+    char* dl_path;
+    struct fsal_module* fsal;
+    char* bp;
+    char* path = alloca(strlen(nfs_param.core_param.ganesha_modules_loc)
+        + strlen(name)
+        + strlen(pathfmt) + 1);
 
-	sprintf(path, pathfmt,
-		nfs_param.core_param.ganesha_modules_loc,
-		name);
-	bp = rindex(path, '/');
-	bp++; /* now it is the basename, lcase it */
-	while (*bp != '\0') {
-		if (isupper(*bp))
-			*bp = tolower(*bp);
-		bp++;
-	}
-	dl_path = gsh_strdup(path);
+    sprintf(path, pathfmt,
+            nfs_param.core_param.ganesha_modules_loc,
+            name);
+    bp = rindex(path, '/');
+    bp++; /* now it is the basename, lcase it */
+    while(*bp != '\0')
+    {
+        if(isupper(*bp))
+            *bp = tolower(*bp);
+        bp++;
+    }
+    dl_path = gsh_strdup(path);
 
-	PTHREAD_MUTEX_lock(&fsal_lock);
-	if (load_state != idle)
-		goto errout;
-	if (dl_error) {
-		gsh_free(dl_error);
-		dl_error = NULL;
-	}
+    PTHREAD_MUTEX_lock(&fsal_lock);
+    if(load_state != idle)
+        goto errout;
+    if(dl_error)
+    {
+        gsh_free(dl_error);
+        dl_error = NULL;
+    }
 
-	load_state = loading;
-	PTHREAD_MUTEX_unlock(&fsal_lock);
+    load_state = loading;
+    PTHREAD_MUTEX_unlock(&fsal_lock);
 
-	LogDebug(COMPONENT_INIT, "Loading FSAL %s with %s", name, path);
+    LogDebug(COMPONENT_INIT, "Loading FSAL %s with %s", name, path);
 #if defined(LINUX) && !defined(SANITIZE_ADDRESS)
-	dl = dlopen(path, RTLD_NOW | RTLD_LOCAL | RTLD_DEEPBIND);
+    dl = dlopen(path, RTLD_NOW | RTLD_LOCAL | RTLD_DEEPBIND);
 #elif defined(FREEBSD) || defined(SANITIZE_ADDRESS)
-	dl = dlopen(path, RTLD_NOW | RTLD_LOCAL);
+    dl = dlopen(path, RTLD_NOW | RTLD_LOCAL);
 #endif
 
-	PTHREAD_MUTEX_lock(&fsal_lock);
-	if (dl == NULL) {
+    PTHREAD_MUTEX_lock(&fsal_lock);
+    if(dl == NULL)
+    {
 #ifdef ELIBACC
-		retval = ELIBACC;	/* hand craft a meaningful error */
+        retval = ELIBACC; /* hand craft a meaningful error */
 #else
-		retval = EPERM;	/* ELIBACC does not exist on MacOS */
+        retval = EPERM;	/* ELIBACC does not exist on MacOS */
 #endif
-		dl_error = gsh_strdup(dlerror());
-		LogCrit(COMPONENT_INIT, "Could not dlopen module:%s Error:%s",
-			path, dl_error);
-		goto errout;
-	}
-	dlerror();	/* clear it */
+        dl_error = gsh_strdup(dlerror());
+        LogCrit(COMPONENT_INIT, "Could not dlopen module:%s Error:%s",
+            path, dl_error);
+        goto errout;
+    }
+    dlerror(); /* clear it */
 
-/* now it is the module's turn to register itself */
+    /* now it is the module's turn to register itself */
 
 
-	if (load_state == loading) {
-		/* constructor didn't fire */
-		void (*module_init)(void);
-		char *sym_error;
+    if(load_state == loading)
+    {
+        /* constructor didn't fire */
+        void (*module_init)(void);
+        char* sym_error;
 
-		module_init = dlsym(dl, "fsal_init");
-		sym_error = (char *)dlerror();
-		if (sym_error != NULL) {
-			dl_error = gsh_strdup(sym_error);
-			so_error = ENOENT;
-			LogCrit(COMPONENT_INIT,
-				"Could not execute symbol fsal_init from module:%s Error:%s",
-				path, dl_error);
-			goto dlerr;
-		}
-		if ((void *)module_init == NULL) {
-			so_error = EFAULT;
-			LogCrit(COMPONENT_INIT,
-				"Could not execute symbol fsal_init from module:%s Error:%s",
-				path, dl_error);
-			goto dlerr;
-		}
-		PTHREAD_MUTEX_unlock(&fsal_lock);
+        module_init = dlsym(dl, "fsal_init");
+        sym_error = (char *)dlerror();
+        if(sym_error != NULL)
+        {
+            dl_error = gsh_strdup(sym_error);
+            so_error = ENOENT;
+            LogCrit(COMPONENT_INIT,
+                "Could not execute symbol fsal_init from module:%s Error:%s",
+                path, dl_error);
+            goto dlerr;
+        }
+        if((void *)module_init == NULL)
+        {
+            so_error = EFAULT;
+            LogCrit(COMPONENT_INIT,
+                "Could not execute symbol fsal_init from module:%s Error:%s",
+                path, dl_error);
+            goto dlerr;
+        }
+        PTHREAD_MUTEX_unlock(&fsal_lock);
 
-		(*module_init) ();	/* try registering by hand this time */
+        (*module_init)(); /* try registering by hand this time */
 
-		PTHREAD_MUTEX_lock(&fsal_lock);
-	}
-	if (load_state == error) {	/* we are in registration hell */
-		retval = so_error;	/* this is the registration error */
-		LogCrit(COMPONENT_INIT,
-			"Could not execute symbol fsal_init from module:%s Error:%s",
-			path, dl_error);
-		goto dlerr;
-	}
-	if (load_state != registered) {
-		retval = EPERM;
-		LogCrit(COMPONENT_INIT,
-			"Could not execute symbol fsal_init from module:%s Error:%s",
-			path, dl_error);
-		goto dlerr;
-	}
+        PTHREAD_MUTEX_lock(&fsal_lock);
+    }
+    if(load_state == error)
+    {
+        /* we are in registration hell */
+        retval = so_error; /* this is the registration error */
+        LogCrit(COMPONENT_INIT,
+            "Could not execute symbol fsal_init from module:%s Error:%s",
+            path, dl_error);
+        goto dlerr;
+    }
+    if(load_state != registered)
+    {
+        retval = EPERM;
+        LogCrit(COMPONENT_INIT,
+            "Could not execute symbol fsal_init from module:%s Error:%s",
+            path, dl_error);
+        goto dlerr;
+    }
 
-/* we now finish things up, doing things the module can't see */
+    /* we now finish things up, doing things the module can't see */
 
-	fsal = new_fsal;   /* recover handle from .ctor and poison again */
-	new_fsal = NULL;
+    fsal = new_fsal; /* recover handle from .ctor and poison again */
+    new_fsal = NULL;
 
-	/* take initial ref so we can pass it back... */
-	fsal_get(fsal);
+    /* take initial ref so we can pass it back... */
+    fsal_get(fsal);
 
-	fsal->path = dl_path;
-	fsal->dl_handle = dl;
-	so_error = 0;
-	*fsal_hdl_p = fsal;
-	load_state = idle;
-	PTHREAD_MUTEX_unlock(&fsal_lock);
-	return 0;
+    fsal->path = dl_path;
+    fsal->dl_handle = dl;
+    so_error = 0;
+    *fsal_hdl_p = fsal;
+    load_state = idle;
+    PTHREAD_MUTEX_unlock(&fsal_lock);
+    return 0;
 
 dlerr:
-	dlclose(dl);
+    dlclose(dl);
 errout:
-	load_state = idle;
-	PTHREAD_MUTEX_unlock(&fsal_lock);
-	LogMajor(COMPONENT_INIT, "Failed to load module (%s) because: %s",
-		 path,
-		 strerror(retval));
-	gsh_free(dl_path);
-	return retval;
+    load_state = idle;
+    PTHREAD_MUTEX_unlock(&fsal_lock);
+    LogMajor(COMPONENT_INIT, "Failed to load module (%s) because: %s",
+        path,
+        strerror(retval))
+    
+    ;
+    gsh_free(dl_path);
+    return retval;
 }
 
 /**
@@ -332,23 +349,26 @@ errout:
  * @return Module pointer or NULL if not found.
  */
 
-struct fsal_module *lookup_fsal(const char *name)
+struct fsal_module* lookup_fsal(const char* name)
 {
-	struct fsal_module *fsal;
-	struct glist_head *entry;
+    struct fsal_module* fsal;
+    struct glist_head* entry;
 
-	PTHREAD_MUTEX_lock(&fsal_lock);
-	glist_for_each(entry, &fsal_list) {
-		fsal = glist_entry(entry, struct fsal_module, fsals);
-		if (strcasecmp(name, fsal->name) == 0) {
-			fsal_get(fsal);
-			PTHREAD_MUTEX_unlock(&fsal_lock);
-			op_ctx->fsal_module = fsal;
-			return fsal;
-		}
-	}
-	PTHREAD_MUTEX_unlock(&fsal_lock);
-	return NULL;
+    PTHREAD_MUTEX_lock(&fsal_lock);
+    glist_for_each(entry, &fsal_list)
+    {
+        fsal = glist_entry(entry, struct fsal_module, fsals)
+        ;
+        if(strcasecmp(name, fsal->name) == 0)
+        {
+            fsal_get(fsal);
+            PTHREAD_MUTEX_unlock(&fsal_lock);
+            op_ctx->fsal_module = fsal;
+            return fsal;
+        }
+    }
+    PTHREAD_MUTEX_unlock(&fsal_lock);
+    return NULL;
 }
 
 /* functions only called by modules at ctor/dtor time
@@ -378,65 +398,70 @@ struct fsal_module *lookup_fsal(const char *name)
 /** @todo implement api versioning and pass the major,minor here
  */
 
-int register_fsal(struct fsal_module *fsal_hdl, const char *name,
-		  uint32_t major_version, uint32_t minor_version,
-		  uint8_t fsal_id)
+int register_fsal(struct fsal_module* fsal_hdl, const char* name,
+                  uint32_t major_version, uint32_t minor_version,
+                  uint8_t fsal_id)
 {
-	pthread_rwlockattr_t attrs;
+    pthread_rwlockattr_t attrs;
 
-	PTHREAD_MUTEX_lock(&fsal_lock);
-	if ((major_version != FSAL_MAJOR_VERSION)
-	    || (minor_version > FSAL_MINOR_VERSION)) {
-		so_error = EINVAL;
-		LogCrit(COMPONENT_INIT,
-			"FSAL \"%s\" failed to register because of version mismatch core = %d.%d, fsal = %d.%d",
-			name,
-			FSAL_MAJOR_VERSION, FSAL_MINOR_VERSION, major_version,
-			minor_version);
-		load_state = error;
-		goto errout;
-	}
-	so_error = 0;
-	if (!(load_state == loading || load_state == init)) {
-		so_error = EACCES;
-		goto errout;
-	}
-	new_fsal = fsal_hdl;
-	if (name != NULL)
-		new_fsal->name = gsh_strdup(name);
+    PTHREAD_MUTEX_lock(&fsal_lock);
+    if((major_version != FSAL_MAJOR_VERSION)
+        || (minor_version > FSAL_MINOR_VERSION))
+    {
+        so_error = EINVAL;
+        LogCrit(COMPONENT_INIT,
+            "FSAL \"%s\" failed to register because of version mismatch core = %d.%d, fsal = %d.%d",
+            name,
+            FSAL_MAJOR_VERSION, FSAL_MINOR_VERSION, major_version,
+            minor_version)
+             
+        
+        ;
+        load_state = error;
+        goto errout;
+    }
+    so_error = 0;
+    if(!(load_state == loading || load_state == init))
+    {
+        so_error = EACCES;
+        goto errout;
+    }
+    new_fsal = fsal_hdl;
+    if(name != NULL)
+        new_fsal->name = gsh_strdup(name);
 
-	/* init ops vector to system wide defaults
-	 * from FSAL/default_methods.c
-	 */
-	memcpy(&fsal_hdl->m_ops, &def_fsal_ops, sizeof(struct fsal_ops));
+    /* init ops vector to system wide defaults
+     * from FSAL/default_methods.c
+     */
+    memcpy(&fsal_hdl->m_ops, &def_fsal_ops, sizeof(struct fsal_ops));
 
-	pthread_rwlockattr_init(&attrs);
+    pthread_rwlockattr_init(&attrs);
 #ifdef GLIBC
-	pthread_rwlockattr_setkind_np(
-		&attrs,
-		PTHREAD_RWLOCK_PREFER_WRITER_NONRECURSIVE_NP);
+    pthread_rwlockattr_setkind_np(
+        &attrs,
+        PTHREAD_RWLOCK_PREFER_WRITER_NONRECURSIVE_NP);
 #endif
-	PTHREAD_RWLOCK_init(&fsal_hdl->lock, &attrs);
-	glist_init(&fsal_hdl->servers);
-	glist_init(&fsal_hdl->handles);
-	glist_init(&fsal_hdl->exports);
-	glist_add_tail(&fsal_list, &fsal_hdl->fsals);
-	if (load_state == loading)
-		load_state = registered;
-	if (fsal_id != FSAL_ID_NO_PNFS && fsal_id < FSAL_ID_COUNT)
-		pnfs_fsal[fsal_id] = fsal_hdl;
-	PTHREAD_MUTEX_unlock(&fsal_lock);
-	return 0;
+    PTHREAD_RWLOCK_init(&fsal_hdl->lock, &attrs);
+    glist_init(&fsal_hdl->servers);
+    glist_init(&fsal_hdl->handles);
+    glist_init(&fsal_hdl->exports);
+    glist_add_tail(&fsal_list, &fsal_hdl->fsals);
+    if(load_state == loading)
+        load_state = registered;
+    if(fsal_id != FSAL_ID_NO_PNFS && fsal_id < FSAL_ID_COUNT)
+        pnfs_fsal[fsal_id] = fsal_hdl;
+    PTHREAD_MUTEX_unlock(&fsal_lock);
+    return 0;
 
- errout:
+errout:
 
-	gsh_free(fsal_hdl->path);
-	gsh_free(fsal_hdl->name);
-	load_state = error;
-	PTHREAD_MUTEX_unlock(&fsal_lock);
-	LogCrit(COMPONENT_INIT, "FSAL \"%s\" failed to register because: %s",
-		name, strerror(so_error));
-	return so_error;
+    gsh_free(fsal_hdl->path);
+    gsh_free(fsal_hdl->name);
+    load_state = error;
+    PTHREAD_MUTEX_unlock(&fsal_lock);
+    LogCrit(COMPONENT_INIT, "FSAL \"%s\" failed to register because: %s",
+        name, strerror(so_error));
+    return so_error;
 }
 
 /**
@@ -452,20 +477,21 @@ int register_fsal(struct fsal_module *fsal_hdl, const char *name,
  * @retval EBUSY if FSAL is in use.
  */
 
-int unregister_fsal(struct fsal_module *fsal_hdl)
+int unregister_fsal(struct fsal_module* fsal_hdl)
 {
-	int32_t refcount = atomic_fetch_int32_t(&fsal_hdl->refcount);
+    int32_t refcount = atomic_fetch_int32_t(&fsal_hdl->refcount);
 
-	if (refcount != 0) {
-		/* this would be very bad */
-		LogCrit(COMPONENT_FSAL,
-			"Unregister FSAL %s with non-zero refcount=%"PRIi32,
-			fsal_hdl->name, refcount);
-		return EBUSY;
-	}
-	gsh_free(fsal_hdl->path);
-	gsh_free(fsal_hdl->name);
-	return 0;
+    if(refcount != 0)
+    {
+        /* this would be very bad */
+        LogCrit(COMPONENT_FSAL,
+            "Unregister FSAL %s with non-zero refcount=%"PRIi32,
+            fsal_hdl->name, refcount);
+        return EBUSY;
+    }
+    gsh_free(fsal_hdl->path);
+    gsh_free(fsal_hdl->name);
+    return 0;
 }
 
 /**
@@ -479,22 +505,27 @@ int unregister_fsal(struct fsal_module *fsal_hdl)
  * is available in the commit phase.
  */
 
-void *fsal_init(void *link_mem, void *self_struct)
+void* fsal_init(void* link_mem, void* self_struct)
 {
-	struct fsal_args *fp;
+    struct fsal_args* fp;
 
-	assert(link_mem != NULL || self_struct != NULL);
+    assert(link_mem != NULL || self_struct != NULL);
 
-	if (link_mem == NULL) {
-		return self_struct; /* NOP */
-	} else if (self_struct == NULL) {
-		return gsh_calloc(1, sizeof(struct fsal_args));
-	} else {
-		fp = self_struct;
-		gsh_free(fp->name);
-		gsh_free(fp);
-		return NULL;
-	}
+    if(link_mem == NULL)
+    {
+        return self_struct; /* NOP */
+    }
+    else if(self_struct == NULL)
+    {
+        return gsh_calloc(1, sizeof(struct fsal_args));
+    }
+    else
+    {
+        fp = self_struct;
+        gsh_free(fp->name);
+        gsh_free(fp);
+        return NULL;
+    }
 }
 
 /**
@@ -514,46 +545,50 @@ void *fsal_init(void *link_mem, void *self_struct)
  * @retval 0 on success, error count on errors
  */
 
-int fsal_load_init(void *node, const char *name, struct fsal_module **fsal_hdl,
-		   struct config_error_type *err_type)
+int fsal_load_init(void* node, const char* name, struct fsal_module** fsal_hdl,
+                   struct config_error_type* err_type)
 {
-	fsal_status_t status;
+    fsal_status_t status;
 
-	if (name == NULL || strlen(name) == 0) {
-		config_proc_error(node, err_type,
-				  "Name of FSAL is missing");
-		err_type->missing = true;
-		return 1;
-	}
+    if(name == NULL || strlen(name) == 0)
+    {
+        config_proc_error(node, err_type,
+                          "Name of FSAL is missing");
+        err_type->missing = true;
+        return 1;
+    }
 
-	*fsal_hdl = lookup_fsal(name);
-	if (*fsal_hdl == NULL) {
-		int retval;
-		config_file_t myconfig;
+    *fsal_hdl = lookup_fsal(name);
+    if(*fsal_hdl == NULL)
+    {
+        int retval;
+        config_file_t myconfig;
 
-		retval = load_fsal(name, fsal_hdl);
-		if (retval != 0) {
-			config_proc_error(node, err_type,
-					  "Failed to load FSAL (%s) because: %s",
-					  name,	strerror(retval));
-			err_type->fsal = true;
-			return 1;
-		}
-		op_ctx->fsal_module = *fsal_hdl;
-		myconfig = get_parse_root(node);
-		status = (*fsal_hdl)->m_ops.init_config(*fsal_hdl,
-							myconfig, err_type);
-		if (FSAL_IS_ERROR(status)) {
-			config_proc_error(node, err_type,
-					  "Failed to initialize FSAL (%s)",
-					  name);
-			fsal_put(*fsal_hdl);
-			err_type->fsal = true;
-			return 1;
-		}
-	}
+        retval = load_fsal(name, fsal_hdl);
+        if(retval != 0)
+        {
+            config_proc_error(node, err_type,
+                              "Failed to load FSAL (%s) because: %s",
+                              name, strerror(retval));
+            err_type->fsal = true;
+            return 1;
+        }
+        op_ctx->fsal_module = *fsal_hdl;
+        myconfig = get_parse_root(node);
+        status = (*fsal_hdl)->m_ops.init_config(*fsal_hdl,
+                                                myconfig, err_type);
+        if(FSAL_IS_ERROR(status))
+        {
+            config_proc_error(node, err_type,
+                              "Failed to initialize FSAL (%s)",
+                              name);
+            fsal_put(*fsal_hdl);
+            err_type->fsal = true;
+            return 1;
+        }
+    }
 
-	return 0;
+    return 0;
 }
 
 /**
@@ -562,17 +597,17 @@ int fsal_load_init(void *node, const char *name, struct fsal_module **fsal_hdl,
  * @retval 0 on success, error count on errors
  */
 
-int subfsal_commit(void *node, void *link_mem, void *self_struct,
-		   struct config_error_type *err_type)
+int subfsal_commit(void* node, void* link_mem, void* self_struct,
+                   struct config_error_type* err_type)
 {
-	struct fsal_module *fsal_next;
-	struct subfsal_args *subfsal = (struct subfsal_args *)self_struct;
-	int errcnt = fsal_load_init(node, subfsal->name, &fsal_next, err_type);
+    struct fsal_module* fsal_next;
+    struct subfsal_args* subfsal = (struct subfsal_args *)self_struct;
+    int errcnt = fsal_load_init(node, subfsal->name, &fsal_next, err_type);
 
-	if (errcnt == 0)
-		subfsal->fsal_node = node;
+    if(errcnt == 0)
+        subfsal->fsal_node = node;
 
-	return errcnt;
+    return errcnt;
 }
 
 /** @} */
