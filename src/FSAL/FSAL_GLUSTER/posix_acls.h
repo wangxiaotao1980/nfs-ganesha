@@ -1,7 +1,9 @@
-#include <sys/acl.h>
-#include "nfs4_acls.h"
+//#include "../../include/nfs4_acls.h"
+#include "../../include/fsal_types.h"
+
 #include <acl/libacl.h>
-#include "fsal_types.h"
+#include <sys/acl.h>
+
 
 /* inheritance flags checks */
 #define IS_FSAL_ACE_HAS_INHERITANCE_FLAGS(ACE) \

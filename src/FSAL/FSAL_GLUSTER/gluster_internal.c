@@ -24,15 +24,14 @@
 /* main.c
  * Module core functions
  */
+#include "../../include/fsal_api.h"
+#include "../../include/fsal_convert.h"
+#include "../../include/nfs4_acls.h"
+#include "../../include/FSAL/fsal_commonlib.h"
 
 #include <sys/types.h>
 #include <attr/xattr.h> /* ENOATTR */
 #include "gluster_internal.h"
-#include "fsal_api.h"
-#include "fsal_convert.h"
-#include "nfs4_acls.h"
-#include "FSAL/fsal_commonlib.h"
-#include "posix_acls.h"
 
 /**
  * @brief FSAL status mapping from GlusterFS errors
@@ -48,17 +47,18 @@
 
 fsal_status_t gluster2fsal_error(const int err)
 {
-	fsal_status_t status;
-	int g_err = err;
+    fsal_status_t status;
+    int g_err = err;
 
-	if (!g_err) {
-		LogWarn(COMPONENT_FSAL, "appropriate errno not set");
-		g_err = EINVAL;
-	}
-	status.minor = g_err;
-	status.major = posix2fsal_error(g_err);
+    if(!g_err)
+    {
+        LogWarn(COMPONENT_FSAL, "appropriate errno not set");
+        g_err = EINVAL;
+    }
+    status.minor = g_err;
+    status.major = posix2fsal_error(g_err);
 
-	return status;
+    return status;
 }
 
 /**
@@ -71,57 +71,58 @@ fsal_status_t gluster2fsal_error(const int err)
  * @param[out] fsalattr FSAL attributes
  */
 
-void stat2fsal_attributes(const struct stat *buffstat,
-			  struct attrlist *fsalattr)
+void stat2fsal_attributes(const struct stat* buffstat,
+                          struct attrlist* fsalattr)
 {
-	/* Indicate which atrributes we have set without affecting the
-	 * other bits in the mask.
-	 */
-	fsalattr->valid_mask |= ATTRS_POSIX;
-	fsalattr->supported = op_ctx->fsal_export->exp_ops.fs_supported_attrs(
-							op_ctx->fsal_export);
+    /* Indicate which atrributes we have set without affecting the
+     * other bits in the mask.
+     */
+    fsalattr->valid_mask |= ATTRS_POSIX;
+    fsalattr->supported = op_ctx->fsal_export->exp_ops.fs_supported_attrs(
+                                                                          op_ctx->fsal_export);
 
-	/* Fills the output struct */
-	fsalattr->type = posix2fsal_type(buffstat->st_mode);
+    /* Fills the output struct */
+    fsalattr->type = posix2fsal_type(buffstat->st_mode);
 
-	fsalattr->filesize = buffstat->st_size;
+    fsalattr->filesize = buffstat->st_size;
 
-	fsalattr->fsid = posix2fsal_fsid(buffstat->st_dev);
+    fsalattr->fsid = posix2fsal_fsid(buffstat->st_dev);
 
-	fsalattr->fileid = buffstat->st_ino;
+    fsalattr->fileid = buffstat->st_ino;
 
-	fsalattr->mode = unix2fsal_mode(buffstat->st_mode);
+    fsalattr->mode = unix2fsal_mode(buffstat->st_mode);
 
-	fsalattr->numlinks = buffstat->st_nlink;
+    fsalattr->numlinks = buffstat->st_nlink;
 
-	fsalattr->owner = buffstat->st_uid;
+    fsalattr->owner = buffstat->st_uid;
 
-	fsalattr->group = buffstat->st_gid;
+    fsalattr->group = buffstat->st_gid;
 
-	/** @todo: gfapi currently only fills in the legacy time_t fields
-	 *         when it supports the timespec fields calls to this
-	 *         function should be replaced with calls to
-	 *         posix2fsal_attributes rather than changing this code.
-	 */
-	fsalattr->atime = posix2fsal_time(buffstat->st_atime, 0);
-	fsalattr->ctime = posix2fsal_time(buffstat->st_ctime, 0);
-	fsalattr->mtime = posix2fsal_time(buffstat->st_mtime, 0);
+    /** @todo: gfapi currently only fills in the legacy time_t fields
+     *         when it supports the timespec fields calls to this
+     *         function should be replaced with calls to
+     *         posix2fsal_attributes rather than changing this code.
+     */
+    fsalattr->atime = posix2fsal_time(buffstat->st_atime, 0);
+    fsalattr->ctime = posix2fsal_time(buffstat->st_ctime, 0);
+    fsalattr->mtime = posix2fsal_time(buffstat->st_mtime, 0);
 
-	fsalattr->chgtime = posix2fsal_time(MAX(buffstat->st_mtime,
-						buffstat->st_ctime), 0);
-	fsalattr->change = fsalattr->chgtime.tv_sec;
+    fsalattr->chgtime = posix2fsal_time(MAX(buffstat->st_mtime,
+                                            buffstat->st_ctime), 0);
+    fsalattr->change = fsalattr->chgtime.tv_sec;
 
-	fsalattr->spaceused = buffstat->st_blocks * S_BLKSIZE;
+    fsalattr->spaceused = buffstat->st_blocks * S_BLKSIZE;
 
-	fsalattr->rawdev = posix2fsal_devt(buffstat->st_rdev);
+    fsalattr->rawdev = posix2fsal_devt(buffstat->st_rdev);
 }
 
-struct fsal_staticfsinfo_t *gluster_staticinfo(struct fsal_module *hdl)
+struct fsal_staticfsinfo_t* gluster_staticinfo(struct fsal_module* hdl)
 {
-	struct glusterfs_fsal_module *glfsal_module;
+    struct glusterfs_fsal_module* glfsal_module;
 
-	glfsal_module = container_of(hdl, struct glusterfs_fsal_module, fsal);
-	return &glfsal_module->fs_info;
+    glfsal_module = container_of(hdl, struct glusterfs_fsal_module, fsal)
+    ;
+    return &glfsal_module->fs_info;
 }
 
 /**
@@ -138,40 +139,41 @@ struct fsal_staticfsinfo_t *gluster_staticinfo(struct fsal_module *hdl)
  * @return 0 on success, negative error codes on failure.
  */
 
-void construct_handle(struct glusterfs_export *glexport, const struct stat *st,
-		      struct glfs_object *glhandle, unsigned char *globjhdl,
-		      int len, struct glusterfs_handle **obj,
-		      const char *vol_uuid)
+void construct_handle(struct glusterfs_export* glexport, const struct stat* st,
+                      struct glfs_object* glhandle, unsigned char* globjhdl,
+                      int len, struct glusterfs_handle** obj,
+                      const char* vol_uuid)
 {
-	struct glusterfs_handle *constructing = NULL;
-	glusterfs_fsal_xstat_t buffxstat;
+    struct glusterfs_handle* constructing = NULL;
+    glusterfs_fsal_xstat_t buffxstat;
 
-	memset(&buffxstat, 0, sizeof(glusterfs_fsal_xstat_t));
+    memset(&buffxstat, 0, sizeof(glusterfs_fsal_xstat_t));
 
-	constructing = gsh_calloc(1, sizeof(struct glusterfs_handle));
+    constructing = gsh_calloc(1, sizeof(struct glusterfs_handle));
 
-	constructing->glhandle = glhandle;
-	memcpy(constructing->globjhdl, vol_uuid, GLAPI_UUID_LENGTH);
-	memcpy(constructing->globjhdl+GLAPI_UUID_LENGTH, globjhdl,
-	       GFAPI_HANDLE_LENGTH);
-	constructing->globalfd.glfd = NULL;
+    constructing->glhandle = glhandle;
+    memcpy(constructing->globjhdl, vol_uuid, GLAPI_UUID_LENGTH);
+    memcpy(constructing->globjhdl + GLAPI_UUID_LENGTH, globjhdl,
+           GFAPI_HANDLE_LENGTH);
+    constructing->globalfd.glfd = NULL;
 
-	fsal_obj_handle_init(&constructing->handle, &glexport->export,
-			     posix2fsal_type(st->st_mode));
-	constructing->handle.fsid = posix2fsal_fsid(st->st_dev);
-	constructing->handle.fileid = st->st_ino;
-	handle_ops_init(&constructing->handle.obj_ops);
+    fsal_obj_handle_init(&constructing->handle, &glexport->export,
+                         posix2fsal_type(st->st_mode));
+    constructing->handle.fsid = posix2fsal_fsid(st->st_dev);
+    constructing->handle.fileid = st->st_ino;
+    handle_ops_init(&constructing->handle.obj_ops);
 
-	*obj = constructing;
+    *obj = constructing;
 }
 
-void gluster_cleanup_vars(struct glfs_object *glhandle)
+void gluster_cleanup_vars(struct glfs_object* glhandle)
 {
-	if (glhandle) {
-		/* Error ignored, this is a cleanup operation, can't do much. */
-		/** @todo: Useful point for logging? */
-		glfs_h_close(glhandle);
-	}
+    if(glhandle)
+    {
+        /* Error ignored, this is a cleanup operation, can't do much. */
+        /** @todo: Useful point for logging? */
+        glfs_h_close(glhandle);
+    }
 }
 
 /* fs_specific_has() parses the fs_specific string for a particular key,
@@ -182,336 +184,365 @@ void gluster_cleanup_vars(struct glfs_object *glhandle)
  * can be of the form key=value or just key. Example:
  *	FS_specific = "foo=baz,enable_A";
  */
-bool fs_specific_has(const char *fs_specific, const char *key, char *val,
-		     int *max_val_bytes)
+bool fs_specific_has(const char* fs_specific, const char* key, char* val,
+                     int* max_val_bytes)
 {
-	char *next_comma, *option;
-	bool ret;
-	char *fso_dup = NULL;
+    char* next_comma, * option;
+    bool ret;
+    char* fso_dup = NULL;
 
-	if (!fs_specific || !fs_specific[0])
-		return false;
+    if(!fs_specific || !fs_specific[0])
+        return false;
 
-	fso_dup = gsh_strdup(fs_specific);
+    fso_dup = gsh_strdup(fs_specific);
 
-	for (option = strtok_r(fso_dup, ",", &next_comma); option;
-	     option = strtok_r(NULL, ",", &next_comma)) {
-		char *k = option;
-		char *v = k;
+    for(option = strtok_r(fso_dup, ",", &next_comma); option;
+        option = strtok_r(NULL, ",", &next_comma))
+    {
+        char* k = option;
+        char* v = k;
 
-		strsep(&v, "=");
-		if (0 == strcmp(k, key)) {
-			if (val)
-				strncpy(val, v, *max_val_bytes);
-			if (max_val_bytes)
-				*max_val_bytes = strlen(v) + 1;
-			ret = true;
-			goto cleanup;
-		}
-	}
+        strsep(&v, "=");
+        if(0 == strcmp(k, key))
+        {
+            if(val)
+                strncpy(val, v, *max_val_bytes);
+            if(max_val_bytes)
+                *max_val_bytes = strlen(v) + 1;
+            ret = true;
+            goto cleanup;
+        }
+    }
 
-	ret = false;
- cleanup:
-	gsh_free(fso_dup);
-	return ret;
+    ret = false;
+cleanup:
+    gsh_free(fso_dup);
+    return ret;
 }
 
-void setglustercreds(struct glusterfs_export *glfs_export, uid_t *uid,
-		     gid_t *gid, unsigned int ngrps, gid_t *groups,
-		     char *file, int line, char *function)
+void setglustercreds(struct glusterfs_export* glfs_export, uid_t* uid,
+                     gid_t* gid, unsigned int ngrps, gid_t* groups,
+                     char* file, int line, char* function)
 {
-	int rc = 0;
+    int rc = 0;
 
-	if (uid) {
-		if (*uid != glfs_export->saveduid)
-			rc = glfs_setfsuid(*uid);
-	} else {
-		rc = glfs_setfsuid(glfs_export->saveduid);
-	}
-	if (rc)
-		goto out;
+    if(uid)
+    {
+        if(*uid != glfs_export->saveduid)
+            rc = glfs_setfsuid(*uid);
+    }
+    else
+    {
+        rc = glfs_setfsuid(glfs_export->saveduid);
+    }
+    if(rc)
+        goto out;
 
-	if (gid) {
-		if (*gid != glfs_export->savedgid)
-			rc = glfs_setfsgid(*gid);
-	} else {
-		rc = glfs_setfsgid(glfs_export->savedgid);
-	}
-	if (rc)
-		goto out;
+    if(gid)
+    {
+        if(*gid != glfs_export->savedgid)
+            rc = glfs_setfsgid(*gid);
+    }
+    else
+    {
+        rc = glfs_setfsgid(glfs_export->savedgid);
+    }
+    if(rc)
+        goto out;
 
-	if (ngrps != 0 && groups)
-		rc = glfs_setfsgroups(ngrps, groups);
-	else
-		rc = glfs_setfsgroups(0, NULL);
+    if(ngrps != 0 && groups)
+        rc = glfs_setfsgroups(ngrps, groups);
+    else
+        rc = glfs_setfsgroups(0, NULL);
 
- out:
-	if (rc != 0) {
-		DisplayLogComponentLevel(COMPONENT_FSAL, file, line, function,
-			 NIV_FATAL,
-			"Could not set Gluster credentials - uid(%d), gid(%d)",
-			*uid, *gid);
-	}
+out:
+    if(rc != 0)
+    {
+        DisplayLogComponentLevel(COMPONENT_FSAL, file, line, function,
+                                 NIV_FATAL,
+                                 "Could not set Gluster credentials - uid(%d), gid(%d)",
+                                 *uid, *gid);
+    }
 }
 
 /*
  * Read the ACL in GlusterFS format and convert it into fsal ACL before
  * storing it in fsalattr
  */
-fsal_status_t glusterfs_get_acl(struct glusterfs_export *glfs_export,
-				struct glfs_object *glhandle,
-				glusterfs_fsal_xstat_t *buffxstat,
-				struct attrlist *fsalattr)
+fsal_status_t glusterfs_get_acl(struct glusterfs_export* glfs_export,
+                                struct glfs_object* glhandle,
+                                glusterfs_fsal_xstat_t* buffxstat,
+                                struct attrlist* fsalattr)
 {
-	fsal_status_t status = { ERR_FSAL_NO_ERROR, 0 };
-	fsal_acl_data_t acldata;
-	fsal_acl_status_t aclstatus;
-	fsal_ace_t *pace = NULL;
-	int e_count = 0, i_count = 0, new_count = 0, new_i_count = 0;
+    fsal_status_t status = { ERR_FSAL_NO_ERROR, 0 };
+    fsal_acl_data_t acldata;
+    fsal_acl_status_t aclstatus;
+    fsal_ace_t* pace = NULL;
+    int e_count = 0, i_count = 0, new_count = 0, new_i_count = 0;
 
-	if (fsalattr->acl != NULL) {
-		/* We should never be passed attributes that have an
-		 * ACL attached, but just in case some future code
-		 * path changes that assumption, let's release the
-		 * old ACL properly.
-		 */
-		int acl_status;
+    if(fsalattr->acl != NULL)
+    {
+        /* We should never be passed attributes that have an
+         * ACL attached, but just in case some future code
+         * path changes that assumption, let's release the
+         * old ACL properly.
+         */
+        int acl_status;
 
-		acl_status = nfs4_acl_release_entry(fsalattr->acl);
+        acl_status = nfs4_acl_release_entry(fsalattr->acl);
 
-		if (acl_status != NFS_V4_ACL_SUCCESS)
-			LogCrit(COMPONENT_FSAL,
-				"Failed to release old acl, status=%d",
-				acl_status);
+        if(acl_status != NFS_V4_ACL_SUCCESS)
+            LogCrit(COMPONENT_FSAL,
+            "Failed to release old acl, status=%d",
+            acl_status);
 
-		fsalattr->acl = NULL;
-	}
+        fsalattr->acl = NULL;
+    }
 
-	if (NFSv4_ACL_SUPPORT) {
+    if(NFSv4_ACL_SUPPORT)
+    {
+        buffxstat->e_acl = glfs_h_acl_get(glfs_export->gl_fs->fs,
+                                          glhandle, ACL_TYPE_ACCESS);
 
-		buffxstat->e_acl = glfs_h_acl_get(glfs_export->gl_fs->fs,
-						glhandle, ACL_TYPE_ACCESS);
+        if(!buffxstat->e_acl)
+        {
+            status = gluster2fsal_error(errno);
+            return status;
+        }
 
-		if (!buffxstat->e_acl) {
-			status = gluster2fsal_error(errno);
-			return status;
-		}
+        e_count = ace_count(buffxstat->e_acl);
 
-		e_count = ace_count(buffxstat->e_acl);
+        if(buffxstat->is_dir)
+        {
+            buffxstat->i_acl =
+                    glfs_h_acl_get(glfs_export->gl_fs->fs,
+                                   glhandle, ACL_TYPE_DEFAULT);
+            i_count = ace_count(buffxstat->i_acl);
+        }
 
-		if (buffxstat->is_dir) {
-			buffxstat->i_acl =
-					 glfs_h_acl_get(glfs_export->gl_fs->fs,
-						glhandle, ACL_TYPE_DEFAULT);
-			i_count = ace_count(buffxstat->i_acl);
-		}
+        /* Allocating memory for both ALLOW and DENY entries */
+        acldata.naces = 2 * (e_count + i_count);
 
-		/* Allocating memory for both ALLOW and DENY entries */
-		acldata.naces = 2 * (e_count  + i_count);
+        LogDebug(COMPONENT_FSAL, "No of aces present in fsal_acl_t = %d"
+            , acldata.naces);
+        if(!acldata.naces)
+            return status;
 
-		LogDebug(COMPONENT_FSAL, "No of aces present in fsal_acl_t = %d"
-					, acldata.naces);
-		if (!acldata.naces)
-			return status;
+        FSAL_SET_MASK(buffxstat->attr_valid, XATTR_ACL);
 
-		FSAL_SET_MASK(buffxstat->attr_valid, XATTR_ACL);
+        acldata.aces = (fsal_ace_t *)nfs4_ace_alloc(acldata.naces);
+        pace = acldata.aces;
 
-		acldata.aces = (fsal_ace_t *) nfs4_ace_alloc(acldata.naces);
-		pace = acldata.aces;
+        new_count = posix_acl_2_fsal_acl(buffxstat->e_acl,
+                                         buffxstat->is_dir, false, &pace);
+        if(new_count < 0)
+            return fsalstat(ERR_FSAL_NO_ACE, -1);
 
-		new_count = posix_acl_2_fsal_acl(buffxstat->e_acl,
-					buffxstat->is_dir, false, &pace);
-		if (new_count < 0)
-			return fsalstat(ERR_FSAL_NO_ACE, -1);
+        if(i_count > 0)
+        {
+            new_i_count = posix_acl_2_fsal_acl(buffxstat->i_acl,
+                                               true, true, &pace);
+            if(new_i_count > 0)
+                new_count += new_i_count;
+            else
+                LogDebug(COMPONENT_FSAL,
+                "Inherit acl is not set for this directory");
+        }
 
-		if (i_count > 0) {
-			new_i_count = posix_acl_2_fsal_acl(buffxstat->i_acl,
-							true, true, &pace);
-			if (new_i_count > 0)
-				new_count += new_i_count;
-			else
-				LogDebug(COMPONENT_FSAL,
-				"Inherit acl is not set for this directory");
-		}
+        /* Reallocating acldata into the required size */
+        acldata.aces = (fsal_ace_t *)gsh_realloc(acldata.aces,
+            new_count*sizeof(fsal_ace_t));
+        acldata.naces = new_count;
 
-		/* Reallocating acldata into the required size */
-		acldata.aces = (fsal_ace_t *) gsh_realloc(acldata.aces,
-				new_count*sizeof(fsal_ace_t));
-		acldata.naces = new_count;
+        fsalattr->acl = nfs4_acl_new_entry(&acldata, &aclstatus);
+        LogDebug(COMPONENT_FSAL, "fsal acl = %p, fsal_acl_status = %u",
+            fsalattr->acl, aclstatus);
+        if(fsalattr->acl == NULL)
+        {
+            LogCrit(COMPONENT_FSAL,
+                "failed to create a new acl entry");
+            return fsalstat(ERR_FSAL_NOMEM, -1);
+        }
 
-		fsalattr->acl = nfs4_acl_new_entry(&acldata, &aclstatus);
-		LogDebug(COMPONENT_FSAL, "fsal acl = %p, fsal_acl_status = %u",
-				fsalattr->acl, aclstatus);
-		if (fsalattr->acl == NULL) {
-			LogCrit(COMPONENT_FSAL,
-			"failed to create a new acl entry");
-			return fsalstat(ERR_FSAL_NOMEM, -1);
-		}
+        fsalattr->valid_mask |= ATTR_ACL;
+    }
+    else
+    {
+        /* We were asked for ACL but do not support. */
+        status = fsalstat(ERR_FSAL_NOTSUPP, 0);
+    }
 
-		fsalattr->valid_mask |= ATTR_ACL;
-	} else {
-		/* We were asked for ACL but do not support. */
-		status = fsalstat(ERR_FSAL_NOTSUPP, 0);
-	}
-
-	return status;
-
+    return status;
 }
 
 /*
  * Store the Glusterfs ACL using setxattr call.
  */
-fsal_status_t glusterfs_set_acl(struct glusterfs_export *glfs_export,
-				struct glusterfs_handle *objhandle,
-				glusterfs_fsal_xstat_t *buffxstat)
+fsal_status_t glusterfs_set_acl(struct glusterfs_export* glfs_export,
+                                struct glusterfs_handle* objhandle,
+                                glusterfs_fsal_xstat_t* buffxstat)
 {
-	int rc = 0;
+    int rc = 0;
 
-	rc = glfs_h_acl_set(glfs_export->gl_fs->fs, objhandle->glhandle,
-				ACL_TYPE_ACCESS, buffxstat->e_acl);
-	if (rc < 0) {
-		/** @todo: check if error is appropriate.*/
-		LogMajor(COMPONENT_FSAL, "failed to set access type posix acl");
-		return fsalstat(ERR_FSAL_INVAL, 0);
-	}
-	/* For directories consider inherited acl too */
-	if (buffxstat->is_dir && buffxstat->i_acl) {
-		rc = glfs_h_acl_set(glfs_export->gl_fs->fs, objhandle->glhandle,
-				ACL_TYPE_DEFAULT, buffxstat->i_acl);
-		if (rc < 0) {
-			LogMajor(COMPONENT_FSAL,
-				 "failed to set default type posix acl");
-			return fsalstat(ERR_FSAL_INVAL, 0);
-		}
-	}
-	return fsalstat(ERR_FSAL_NO_ERROR, 0);
+    rc = glfs_h_acl_set(glfs_export->gl_fs->fs, objhandle->glhandle,
+                        ACL_TYPE_ACCESS, buffxstat->e_acl);
+    if(rc < 0)
+    {
+        /** @todo: check if error is appropriate.*/
+        LogMajor(COMPONENT_FSAL, "failed to set access type posix acl");
+        return fsalstat(ERR_FSAL_INVAL, 0);
+    }
+    /* For directories consider inherited acl too */
+    if(buffxstat->is_dir && buffxstat->i_acl)
+    {
+        rc = glfs_h_acl_set(glfs_export->gl_fs->fs, objhandle->glhandle,
+                            ACL_TYPE_DEFAULT, buffxstat->i_acl);
+        if(rc < 0)
+        {
+            LogMajor(COMPONENT_FSAL,
+                "failed to set default type posix acl");
+            return fsalstat(ERR_FSAL_INVAL, 0);
+        }
+    }
+    return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
 
 /*
  *  Process NFSv4 ACLs passed in setattr call
  */
-fsal_status_t glusterfs_process_acl(struct glfs *fs,
-				    struct glfs_object *object,
-				    struct attrlist *attrs,
-				    glusterfs_fsal_xstat_t *buffxstat)
+fsal_status_t glusterfs_process_acl(struct glfs* fs,
+                                    struct glfs_object* object,
+                                    struct attrlist* attrs,
+                                    glusterfs_fsal_xstat_t* buffxstat)
 {
-	if (attrs->acl) {
-		LogDebug(COMPONENT_FSAL, "setattr acl = %p",
-			 attrs->acl);
+    if(attrs->acl)
+    {
+        LogDebug(COMPONENT_FSAL, "setattr acl = %p",
+            attrs->acl);
 
-		/* Convert FSAL ACL to POSIX ACL */
-		buffxstat->e_acl = fsal_acl_2_posix_acl(attrs->acl,
-						ACL_TYPE_ACCESS);
-		if (!buffxstat->e_acl) {
-			LogMajor(COMPONENT_FSAL,
-				 "failed to set access type posix acl");
-			return fsalstat(ERR_FSAL_FAULT, 0);
-		}
-		/* For directories consider inherited acl too */
-		if (buffxstat->is_dir) {
-			buffxstat->i_acl = fsal_acl_2_posix_acl(attrs->acl,
-							ACL_TYPE_DEFAULT);
-			if (!buffxstat->i_acl)
-				LogDebug(COMPONENT_FSAL,
-				"inherited acl is not defined for directory");
-		}
-
-	} else {
-		LogCrit(COMPONENT_FSAL, "setattr acl is NULL");
-		return fsalstat(ERR_FSAL_FAULT, 0);
-	}
-	return fsalstat(ERR_FSAL_NO_ERROR, 0);
+        /* Convert FSAL ACL to POSIX ACL */
+        buffxstat->e_acl = fsal_acl_2_posix_acl(attrs->acl,
+                                                ACL_TYPE_ACCESS);
+        if(!buffxstat->e_acl)
+        {
+            LogMajor(COMPONENT_FSAL,
+                "failed to set access type posix acl");
+            return fsalstat(ERR_FSAL_FAULT, 0);
+        }
+        /* For directories consider inherited acl too */
+        if(buffxstat->is_dir)
+        {
+            buffxstat->i_acl = fsal_acl_2_posix_acl(attrs->acl,
+                                                    ACL_TYPE_DEFAULT);
+            if(!buffxstat->i_acl)
+                LogDebug(COMPONENT_FSAL,
+                "inherited acl is not defined for directory");
+        }
+    }
+    else
+    {
+        LogCrit(COMPONENT_FSAL, "setattr acl is NULL");
+        return fsalstat(ERR_FSAL_FAULT, 0);
+    }
+    return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
 
-int initiate_up_thread(struct glusterfs_fs *gl_fs)
+int initiate_up_thread(struct glusterfs_fs* gl_fs)
 {
+    pthread_attr_t up_thr_attr;
+    int retval = -1;
+    int err = 0;
+    int retries = 10;
 
-	pthread_attr_t up_thr_attr;
-	int retval  = -1;
-	int err   = 0;
-	int retries = 10;
+    memset(&up_thr_attr, 0, sizeof(up_thr_attr));
 
-	memset(&up_thr_attr, 0, sizeof(up_thr_attr));
+    /* Initialization of thread attributes from nfs_init.c */
+    err = pthread_attr_init(&up_thr_attr);
+    if(err)
+    {
+        LogCrit(COMPONENT_THREAD,
+            "can't init pthread's attributes (%s)",
+            strerror(err));
+        goto out;
+    }
 
-	/* Initialization of thread attributes from nfs_init.c */
-	err = pthread_attr_init(&up_thr_attr);
-	if (err) {
-		LogCrit(COMPONENT_THREAD,
-			"can't init pthread's attributes (%s)",
-			strerror(err));
-		goto out;
-	}
+    err = pthread_attr_setscope(&up_thr_attr,
+                                PTHREAD_SCOPE_SYSTEM);
+    if(err)
+    {
+        LogCrit(COMPONENT_THREAD,
+            "can't set pthread's scope (%s)",
+            strerror(err));
+        goto out;
+    }
 
-	err = pthread_attr_setscope(&up_thr_attr,
-				      PTHREAD_SCOPE_SYSTEM);
-	if (err) {
-		LogCrit(COMPONENT_THREAD,
-			"can't set pthread's scope (%s)",
-			strerror(err));
-		goto out;
-	}
+    err = pthread_attr_setdetachstate(&up_thr_attr,
+                                      PTHREAD_CREATE_JOINABLE);
+    if(err)
+    {
+        LogCrit(COMPONENT_THREAD,
+            "can't set pthread's join state (%s)",
+            strerror(err));
+        goto out;
+    }
 
-	err = pthread_attr_setdetachstate(&up_thr_attr,
-					  PTHREAD_CREATE_JOINABLE);
-	if (err) {
-		LogCrit(COMPONENT_THREAD,
-			"can't set pthread's join state (%s)",
-			strerror(err));
-		goto out;
-	}
+    err = pthread_attr_setstacksize(&up_thr_attr, 2116488);
+    if(err)
+    {
+        LogCrit(COMPONENT_THREAD,
+            "can't set pthread's stack size (%s)",
+            strerror(err));
+        goto out;
+    }
 
-	err = pthread_attr_setstacksize(&up_thr_attr, 2116488);
-	if (err) {
-		LogCrit(COMPONENT_THREAD,
-			"can't set pthread's stack size (%s)",
-			strerror(err));
-		goto out;
-	}
+    do
+    {
+        err = pthread_create(&gl_fs->up_thread,
+                             &up_thr_attr,
+                             GLUSTERFSAL_UP_Thread,
+                             gl_fs);
+        sleep(1);
+    }
+    while(err && (err == EAGAIN) && (retries-- > 0));
 
-	do {
-		err = pthread_create(&gl_fs->up_thread,
-				     &up_thr_attr,
-				     GLUSTERFSAL_UP_Thread,
-				     gl_fs);
-		sleep(1);
-	} while (err && (err == EAGAIN) && (retries-- > 0));
+    if(err)
+    {
+        LogCrit(COMPONENT_THREAD,
+            "can't create upcall pthread (%s)",
+            strerror(err));
+        goto out;
+    }
 
-	if (err) {
-		LogCrit(COMPONENT_THREAD,
-			"can't create upcall pthread (%s)",
-			strerror(err));
-		goto out;
-	}
-
-	retval = 0;
+    retval = 0;
 
 out:
-	err = pthread_attr_destroy(&up_thr_attr);
-	if (err) {
-		LogCrit(COMPONENT_THREAD,
-			"can't destroy pthread's attributes (%s)",
-			strerror(err));
-	}
+    err = pthread_attr_destroy(&up_thr_attr);
+    if(err)
+    {
+        LogCrit(COMPONENT_THREAD,
+            "can't destroy pthread's attributes (%s)",
+            strerror(err));
+    }
 
-	return retval;
+    return retval;
 }
 
 #ifdef GLTIMING
 void latency_update(struct timespec *s_time, struct timespec *e_time, int opnum)
 {
-	atomic_add_uint64_t(&glfsal_latencies[opnum].overall_time,
-			    timespec_diff(s_time, e_time));
-	atomic_add_uint64_t(&glfsal_latencies[opnum].count, 1);
+    atomic_add_uint64_t(&glfsal_latencies[opnum].overall_time,
+                timespec_diff(s_time, e_time));
+    atomic_add_uint64_t(&glfsal_latencies[opnum].count, 1);
 }
 
 void latency_dump(void)
 {
-	int i = 0;
+    int i = 0;
 
-	for (; i < LATENCY_SLOTS; i++) {
-		LogCrit(COMPONENT_FSAL, "Op:%d:Count:%"PRIu64":nsecs:%"PRIu64,
-			i, glfsal_latencies[i].count, glfsal_latencies[i].
-			overall_time);
-	}
+    for (; i < LATENCY_SLOTS; i++) {
+        LogCrit(COMPONENT_FSAL, "Op:%d:Count:%"PRIu64":nsecs:%"PRIu64,
+            i, glfsal_latencies[i].count, glfsal_latencies[i].
+            overall_time);
+    }
 }
 #endif
