@@ -32,67 +32,69 @@
  *
  * Routines used for managing the NFS4/CB COMPOUND functions.
  */
-#include "config.h"
+#include "../../include/config.h"
+#include "../../include/log.h"
+#include "../../include/gsh_rpc.h"
+#include "../../include/nfs4.h"
+#include "../../include/nfs_core.h"
+#include "../../include/nfs_exports.h"
+#include "../../include/nfs_proto_functions.h"
+#include "../../include/nfs_rpc_callback.h"
+#include "../../include/hashtable.h"
 #include <stdio.h>
 #include <string.h>
+#include <sys/file.h>
 #include <pthread.h>
 #include <fcntl.h>
-#include <sys/file.h>
-#include "hashtable.h"
-#include "log.h"
-#include "gsh_rpc.h"
-#include "nfs4.h"
-#include "nfs_core.h"
-#include "nfs_exports.h"
-#include "nfs_proto_functions.h"
-#include "nfs_rpc_callback.h"
 
-static const nfs4_cb_tag_t cbtagtab4[] = {
-	{NFS4_CB_TAG_DEFAULT, "Ganesha CB Compound", 19},
+static const nfs4_cb_tag_t cbtagtab4[] ={
+    { NFS4_CB_TAG_DEFAULT, "Ganesha CB Compound", 19 },
 };
 
 /* Some CITI-inspired compound helper ideas */
 
-void cb_compound_init_v4(nfs4_compound_t *cbt, uint32_t n_ops,
-			 uint32_t minorversion, uint32_t ident, char *tag,
-			 uint32_t tag_len)
+void cb_compound_init_v4(nfs4_compound_t* cbt, uint32_t n_ops,
+                         uint32_t minorversion, uint32_t ident, char* tag,
+                         uint32_t tag_len)
 {
-	/* args */
-	memset(cbt, 0, sizeof(nfs4_compound_t));	/* XDRS */
+    /* args */
+    memset(cbt, 0, sizeof(nfs4_compound_t)); /* XDRS */
 
-	cbt->v_u.v4.args.minorversion = minorversion;
-	cbt->v_u.v4.args.callback_ident = ident;
-	cbt->v_u.v4.args.argarray.argarray_val = alloc_cb_argop(n_ops);
-	cbt->v_u.v4.args.argarray.argarray_len = 0; /* not n_ops, see below */
+    cbt->v_u.v4.args.minorversion = minorversion;
+    cbt->v_u.v4.args.callback_ident = ident;
+    cbt->v_u.v4.args.argarray.argarray_val = alloc_cb_argop(n_ops);
+    cbt->v_u.v4.args.argarray.argarray_len = 0; /* not n_ops, see below */
 
-	if (tag) {
-		/* sender must ensure tag is safe to queue */
-		cbt->v_u.v4.args.tag.utf8string_val = tag;
-		cbt->v_u.v4.args.tag.utf8string_len = tag_len;
-	} else {
-		cbt->v_u.v4.args.tag.utf8string_val =
-		    cbtagtab4[NFS4_CB_TAG_DEFAULT].val;
-		cbt->v_u.v4.args.tag.utf8string_len =
-		    cbtagtab4[NFS4_CB_TAG_DEFAULT].len;
-	}
+    if (tag)
+    {
+        /* sender must ensure tag is safe to queue */
+        cbt->v_u.v4.args.tag.utf8string_val = tag;
+        cbt->v_u.v4.args.tag.utf8string_len = tag_len;
+    }
+    else
+    {
+        cbt->v_u.v4.args.tag.utf8string_val =
+            cbtagtab4[NFS4_CB_TAG_DEFAULT].val;
+        cbt->v_u.v4.args.tag.utf8string_len =
+            cbtagtab4[NFS4_CB_TAG_DEFAULT].len;
+    }
 
-	cbt->v_u.v4.res.resarray.resarray_val = alloc_cb_resop(n_ops);
-	cbt->v_u.v4.res.resarray.resarray_len = 0;
-
+    cbt->v_u.v4.res.resarray.resarray_val = alloc_cb_resop(n_ops);
+    cbt->v_u.v4.res.resarray.resarray_len = 0;
 }
 
-void cb_compound_add_op(nfs4_compound_t *cbt, nfs_cb_argop4 *src)
+void cb_compound_add_op(nfs4_compound_t* cbt, nfs_cb_argop4* src)
 {
-	/* old value */
-	uint32_t ix = (cbt->v_u.v4.args.argarray.argarray_len)++;
-	nfs_cb_argop4 *dst = cbt->v_u.v4.args.argarray.argarray_val + ix;
-	*dst = *src;
-	/* nothing to do for (zero) val region */
-	cbt->v_u.v4.res.resarray.resarray_len++;
+    /* old value */
+    uint32_t ix = (cbt->v_u.v4.args.argarray.argarray_len)++;
+    nfs_cb_argop4* dst = cbt->v_u.v4.args.argarray.argarray_val + ix;
+    *dst = *src;
+    /* nothing to do for (zero) val region */
+    cbt->v_u.v4.res.resarray.resarray_len++;
 }
 
-void cb_compound_free(nfs4_compound_t *cbt)
+void cb_compound_free(nfs4_compound_t* cbt)
 {
-	free_cb_argop(cbt->v_u.v4.args.argarray.argarray_val);
-	free_cb_resop(cbt->v_u.v4.res.resarray.resarray_val);
+    free_cb_argop(cbt->v_u.v4.args.argarray.argarray_val);
+    free_cb_resop(cbt->v_u.v4.res.resarray.resarray_val);
 }

@@ -1,4 +1,4 @@
- /*
+/*
   * vimf:noexpandtab:shiftwidth=8:tabstop=8:
   *
   * Copyright CEA/DAM/DIF  (2008)
@@ -24,35 +24,35 @@
   * ---------------------------------------
   */
 
-/**
- * @file  nfs3_readdir.c
- * @brief Everything you need for a simple READDIR
- *
- */
-#include "config.h"
+  /**
+   * @file  nfs3_readdir.c
+   * @brief Everything you need for a simple READDIR
+   *
+   */
+#include "../../include/config.h"
+#include "../../include/hashtable.h"
+#include "../../include/log.h"
+#include "../../include/fsal.h"
+#include "../../include/nfs_core.h"
+#include "../../include/nfs_exports.h"
+#include "../../include/export_mgr.h"
+#include "../../include/nfs_proto_functions.h"
+#include "../../include/nfs_convert.h"
+#include "../../include/nfs_proto_tools.h"
 #include <stdio.h>
 #include <string.h>
 #include <pthread.h>
-#include <fcntl.h>
-#include "hashtable.h"
-#include "log.h"
-#include "fsal.h"
-#include "nfs_core.h"
-#include "nfs_exports.h"
-#include "export_mgr.h"
-#include "nfs_proto_functions.h"
-#include "nfs_convert.h"
-#include "nfs_proto_tools.h"
+   //#include <fcntl.h>
 #include <assert.h>
 
-fsal_errors_t nfs3_readdir_callback(void *opaque,
-				    struct fsal_obj_handle *obj,
-				    const struct attrlist *attr,
-				    uint64_t mounted_on_fileid,
-				    uint64_t cookie,
-				    enum cb_state cb_state);
+fsal_errors_t nfs3_readdir_callback(void* opaque,
+                                    struct fsal_obj_handle* obj,
+                                    const struct attrlist* attr,
+                                    uint64_t mounted_on_fileid,
+                                    uint64_t cookie,
+                                    enum cb_state cb_state);
 
-static void free_entry3s(entry3 *entry3s);
+static void free_entry3s(entry3* entry3s);
 
 /**
  * @brief Opaque bookkeeping structure for NFSv3 readdir
@@ -61,38 +61,39 @@ static void free_entry3s(entry3 *entry3s);
  * READDIR response between calls to nfs3_readdir_callback.
  */
 
-struct nfs3_readdir_cb_data {
-	entry3 *entries;	/*< The array holding individual entries */
-	size_t mem_left;	/*< The amount of memory remaining before we
-				   hit maxcount */
-	size_t count;		/*< The count of complete entries stored in the
-				   buffer */
-	size_t total_entries;	/*< The total number of entries in the
-				   array */
-	nfsstat3 error;		/*< Set to a value other than NFS_OK if the
-				   callback function finds a fatal error. */
+struct nfs3_readdir_cb_data
+{
+    entry3* entries; /*< The array holding individual entries */
+    size_t mem_left; /*< The amount of memory remaining before we
+                   hit maxcount */
+    size_t count; /*< The count of complete entries stored in the
+                   buffer */
+    size_t total_entries; /*< The total number of entries in the
+                   array */
+    nfsstat3 error; /*< Set to a value other than NFS_OK if the
+                   callback function finds a fatal error. */
 };
 
 static
-nfsstat3 nfs_readdir_dot_entry(struct fsal_obj_handle *obj, const char *name,
-			       uint64_t cookie, helper_readdir_cb cb,
-			       struct nfs3_readdir_cb_data *tracker)
+nfsstat3 nfs_readdir_dot_entry(struct fsal_obj_handle* obj, const char* name,
+                               uint64_t cookie, helper_readdir_cb cb,
+                               struct nfs3_readdir_cb_data* tracker)
 {
-	struct fsal_readdir_cb_parms cb_parms;
-	fsal_status_t fsal_status;
+    struct fsal_readdir_cb_parms cb_parms;
+    fsal_status_t fsal_status;
 
-	cb_parms.opaque = tracker;
-	cb_parms.name = name;
-	cb_parms.attr_allowed = true;
-	cb_parms.in_result = true;
+    cb_parms.opaque = tracker;
+    cb_parms.name = name;
+    cb_parms.attr_allowed = true;
+    cb_parms.in_result = true;
 
-	/* NFS v3 READDIR does not use attributes, so pass NULL */
-	fsal_status.major = cb(&cb_parms, obj, NULL, 0, cookie, CB_ORIGINAL);
+    /* NFS v3 READDIR does not use attributes, so pass NULL */
+    fsal_status.major = cb(&cb_parms, obj, NULL, 0, cookie, CB_ORIGINAL);
 
-	if (FSAL_IS_ERROR(fsal_status))
-		return nfs3_Errno_status(fsal_status);
-	else
-		return tracker->error;
+    if (FSAL_IS_ERROR(fsal_status))
+        return nfs3_Errno_status(fsal_status);
+    else
+        return tracker->error;
 }
 
 /**
@@ -111,245 +112,281 @@ nfsstat3 nfs_readdir_dot_entry(struct fsal_obj_handle *obj, const char *name,
  *
  */
 
-int nfs3_readdir(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
+int nfs3_readdir(nfs_arg_t* arg, struct svc_req* req, nfs_res_t* res)
 {
-	struct fsal_obj_handle *dir_obj = NULL;
-	struct fsal_obj_handle *parent_dir_obj = NULL;
-	unsigned long count = 0;
-	uint64_t cookie = 0;
-	uint64_t fsal_cookie = 0;
-	cookieverf3 cookie_verifier;
-	unsigned int num_entries = 0;
-	unsigned long estimated_num_entries = 0;
-	object_file_type_t dir_filetype = 0;
-	bool eod_met = false;
-	fsal_status_t fsal_status = {0, 0};
-	fsal_status_t fsal_status_gethandle = {0, 0};
-	int rc = NFS_REQ_OK;
-	struct nfs3_readdir_cb_data tracker = { NULL };
-	bool use_cookie_verifier = op_ctx_export_has_option(
-					EXPORT_OPTION_USE_COOKIE_VERIFIER);
+    struct fsal_obj_handle* dir_obj = NULL;
+    struct fsal_obj_handle* parent_dir_obj = NULL;
+    unsigned long count = 0;
+    uint64_t cookie = 0;
+    uint64_t fsal_cookie = 0;
+    cookieverf3 cookie_verifier;
+    unsigned int num_entries = 0;
+    unsigned long estimated_num_entries = 0;
+    object_file_type_t dir_filetype = 0;
+    bool eod_met = false;
+    fsal_status_t fsal_status = { 0, 0 };
+    fsal_status_t fsal_status_gethandle = { 0, 0 };
+    int rc = NFS_REQ_OK;
+    struct nfs3_readdir_cb_data tracker = { NULL };
+    bool use_cookie_verifier = op_ctx_export_has_option(
+        EXPORT_OPTION_USE_COOKIE_VERIFIER);
 
-	if (isDebug(COMPONENT_NFSPROTO) || isDebug(COMPONENT_NFS_READDIR)) {
-		char str[LEN_FH_STR];
+    if (isDebug(COMPONENT_NFSPROTO) || isDebug(COMPONENT_NFS_READDIR))
+    {
+        char str[LEN_FH_STR];
 
-		nfs_FhandleToStr(req->rq_msg.cb_vers,
-				 &(arg->arg_readdir3.dir),
-				 NULL,
-				 str);
+        nfs_FhandleToStr(req->rq_msg.cb_vers,
+                         &(arg->arg_readdir3.dir),
+                         NULL,
+                         str);
 
-		LogDebugAlt(COMPONENT_NFSPROTO, COMPONENT_NFS_READDIR,
-			    "REQUEST PROCESSING: Calling nfs_Readdir handle: %s",
-			    str);
-	}
+        LogDebugAlt(COMPONENT_NFSPROTO, COMPONENT_NFS_READDIR,
+                    "REQUEST PROCESSING: Calling nfs_Readdir handle: %s",
+                    str);
+    }
 
-	READDIR3resok * const RES_READDIR3_OK =
-	    &res->res_readdir3.READDIR3res_u.resok;
+    READDIR3resok* const RES_READDIR3_OK =
+        &res->res_readdir3.READDIR3res_u.resok;
 
-	/* to avoid setting it on each error case */
-	res->res_readdir3.READDIR3res_u.resfail.dir_attributes.
-	    attributes_follow = FALSE;
+    /* to avoid setting it on each error case */
+    res->res_readdir3.READDIR3res_u.resfail.dir_attributes.
+        attributes_follow = FALSE;
 
-	/* Look up object for filehandle */
-	dir_obj = nfs3_FhandleToCache(&(arg->arg_readdir3.dir),
-					&(res->res_readdir3.status),
-					&rc);
-	if (dir_obj == NULL) {
-		/* Status and rc have been set by nfs3_FhandleToCache */
-		goto out;
-	}
+    /* Look up object for filehandle */
+    dir_obj = nfs3_FhandleToCache(&(arg->arg_readdir3.dir),
+                                  &(res->res_readdir3.status),
+                                  &rc);
+    if (dir_obj == NULL)
+    {
+        /* Status and rc have been set by nfs3_FhandleToCache */
+        goto out;
+    }
 
-	/* Extract the filetype */
-	dir_filetype = dir_obj->type;
-	/* Sanity checks -- must be a directory */
-	if (dir_filetype != DIRECTORY) {
-		res->res_readdir3.status = NFS3ERR_NOTDIR;
+    /* Extract the filetype */
+    dir_filetype = dir_obj->type;
+    /* Sanity checks -- must be a directory */
+    if (dir_filetype != DIRECTORY)
+    {
+        res->res_readdir3.status = NFS3ERR_NOTDIR;
 
-		rc = NFS_REQ_OK;
-		goto out;
-	}
+        rc = NFS_REQ_OK;
+        goto out;
+    }
 
-	/* Parse out request arguments and decide how many entries we
-	 * want.  For NFSv3, deal with the cookie verifier.
-	 */
+    /* Parse out request arguments and decide how many entries we
+     * want.  For NFSv3, deal with the cookie verifier.
+     */
 
-	count = arg->arg_readdir3.count;
-	cookie = arg->arg_readdir3.cookie;
-	estimated_num_entries =
-	    MIN(count / (sizeof(entry3) - sizeof(char *)), 120);
-	LogDebug(COMPONENT_NFS_READDIR,
-		 "---> nfs3_readdir: count=%lu  cookie=%" PRIu64
-		 " estimated_num_entries=%lu",
-		 count, cookie, estimated_num_entries);
-	if (estimated_num_entries == 0) {
-		res->res_readdir3.status = NFS3ERR_TOOSMALL;
-		rc = NFS_REQ_OK;
-		goto out;
-	}
+    count = arg->arg_readdir3.count;
+    cookie = arg->arg_readdir3.cookie;
+    estimated_num_entries =
+        MIN(count / (sizeof(entry3) - sizeof(char *)), 120);
+    LogDebug(COMPONENT_NFS_READDIR,
+             "---> nfs3_readdir: count=%lu  cookie=%" PRIu64
+             " estimated_num_entries=%lu",
+             count, cookie, estimated_num_entries);
+    if (estimated_num_entries == 0)
+    {
+        res->res_readdir3.status = NFS3ERR_TOOSMALL;
+        rc = NFS_REQ_OK;
+        goto out;
+    }
 
-	/* To make or check the cookie verifier */
-	memset(cookie_verifier, 0, sizeof(cookieverf3));
+    /* To make or check the cookie verifier */
+    memset(cookie_verifier, 0, sizeof(cookieverf3));
 
-	/* If cookie verifier is used, then a
-	 * non-trivial value is returned to the
-	 * client.
-	 *
-	 * This value is the ctime of the directory. If verifier is
-	 * unused (as in many NFS Servers) then only a set of zeros
-	 * is returned (trivial value).
-	 */
-	if (use_cookie_verifier) {
-		struct attrlist attrs;
+    /* If cookie verifier is used, then a
+     * non-trivial value is returned to the
+     * client.
+     *
+     * This value is the ctime of the directory. If verifier is
+     * unused (as in many NFS Servers) then only a set of zeros
+     * is returned (trivial value).
+     */
+    if (use_cookie_verifier)
+    {
+        struct attrlist attrs;
 
-		fsal_prepare_attrs(&attrs, ATTR_CTIME);
+        fsal_prepare_attrs(&attrs, ATTR_CTIME);
 
-		fsal_status = dir_obj->obj_ops.getattrs(dir_obj, &attrs);
+        fsal_status = dir_obj->obj_ops.getattrs(dir_obj, &attrs);
 
-		if (FSAL_IS_ERROR(fsal_status)) {
-			res->res_readdir3.status =
-						nfs3_Errno_status(fsal_status);
-			LogDebug(COMPONENT_NFS_READDIR,
-				 "getattrs returned %s",
-				 msg_fsal_err(fsal_status.major));
-			goto out;
-		}
+        if (FSAL_IS_ERROR(fsal_status))
+        {
+            res->res_readdir3.status =
+                nfs3_Errno_status(fsal_status);
+            LogDebug(COMPONENT_NFS_READDIR,
+                     "getattrs returned %s",
+                     msg_fsal_err(fsal_status.major));
+            goto out;
+        }
 
-		memcpy(cookie_verifier,
-		       &attrs.ctime.tv_sec,
-		       sizeof(attrs.ctime.tv_sec));
+        memcpy(cookie_verifier,
+               &attrs.ctime.tv_sec,
+               sizeof(attrs.ctime.tv_sec));
 
-		/* Done with the attrs */
-		fsal_release_attrs(&attrs);
-	}
+        /* Done with the attrs */
+        fsal_release_attrs(&attrs);
+    }
 
-	if (cookie != 0 && use_cookie_verifier) {
-		/* Not the first call, so we have to check the cookie
-		 * verifier
-		 */
-		if (memcmp(cookie_verifier,
-			   arg->arg_readdir3.cookieverf,
-			   NFS3_COOKIEVERFSIZE) != 0) {
-			res->res_readdir3.status = NFS3ERR_BAD_COOKIE;
-			rc = NFS_REQ_OK;
-			goto out;
-		}
-	}
+    if (cookie != 0 && use_cookie_verifier)
+    {
+        /* Not the first call, so we have to check the cookie
+         * verifier
+         */
+        if (memcmp(cookie_verifier,
+            arg->arg_readdir3.cookieverf,
+            NFS3_COOKIEVERFSIZE) != 0)
+        {
+            res->res_readdir3.status = NFS3ERR_BAD_COOKIE;
+            rc = NFS_REQ_OK;
+            goto out;
+        }
+    }
 
-	tracker.entries = gsh_calloc(estimated_num_entries, sizeof(entry3));
-	tracker.total_entries = estimated_num_entries;
-	tracker.mem_left = count - sizeof(READDIR3resok);
-	tracker.count = 0;
-	tracker.error = NFS3_OK;
+    tracker.entries = gsh_calloc(estimated_num_entries, sizeof(entry3));
+    tracker.total_entries = estimated_num_entries;
+    tracker.mem_left = count - sizeof(READDIR3resok);
+    tracker.count = 0;
+    tracker.error = NFS3_OK;
 
-	/* Adjust the cookie we supply to fsal */
-	if (cookie > 2) {	/* it is not the cookie for "." nor ".." */
-		fsal_cookie = cookie;
-	} else {
-		fsal_cookie = 0;
-	}
+    /* Adjust the cookie we supply to fsal */
+    if (cookie > 2)
+    {
+        /* it is not the cookie for "." nor ".." */
+        fsal_cookie = cookie;
+    }
+    else
+    {
+        fsal_cookie = 0;
+    }
 
-	/* Fills "."  */
-	if (cookie == 0) {
-		res->res_readdir3.status = nfs_readdir_dot_entry(dir_obj, ".",
-					 1, nfs3_readdir_callback, &tracker);
+    /* Fills "."  */
+    if (cookie == 0)
+    {
+        res->res_readdir3.status = nfs_readdir_dot_entry(dir_obj,
+                                                         ".",
+                                                         1,
+                                                         nfs3_readdir_callback,
+                                                         &tracker);
 
-		if (res->res_readdir3.status != NFS3_OK) {
-			rc = NFS_REQ_OK;
-			goto out;
-		}
-	}
+        if (res->res_readdir3.status != NFS3_OK)
+        {
+            rc = NFS_REQ_OK;
+            goto out;
+        }
+    }
 
-	/* Fills ".." */
-	if ((cookie <= 1) && (estimated_num_entries > 1)) {
-		/* Get parent pentry */
-		fsal_status_gethandle = fsal_lookupp(dir_obj,
-						     &parent_dir_obj,
-						     NULL);
+    /* Fills ".." */
+    if ((cookie <= 1) && (estimated_num_entries > 1))
+    {
+        /* Get parent pentry */
+        fsal_status_gethandle = fsal_lookupp(dir_obj,
+                                             &parent_dir_obj,
+                                             NULL);
 
-		if (parent_dir_obj == NULL) {
-			res->res_readdir3.status =
-			    nfs3_Errno_status(fsal_status_gethandle);
-			rc = NFS_REQ_OK;
-			goto out;
-		}
+        if (parent_dir_obj == NULL)
+        {
+            res->res_readdir3.status =
+                nfs3_Errno_status(fsal_status_gethandle);
+            rc = NFS_REQ_OK;
+            goto out;
+        }
 
-		res->res_readdir3.status = nfs_readdir_dot_entry(parent_dir_obj,
-				"..", 2, nfs3_readdir_callback, &tracker);
+        res->res_readdir3.status = nfs_readdir_dot_entry(parent_dir_obj,
+                                                         "..",
+                                                         2,
+                                                         nfs3_readdir_callback,
+                                                         &tracker);
 
-		if (res->res_readdir3.status != NFS3_OK) {
-			rc = NFS_REQ_OK;
-			goto out;
-		}
+        if (res->res_readdir3.status != NFS3_OK)
+        {
+            rc = NFS_REQ_OK;
+            goto out;
+        }
 
-		parent_dir_obj->obj_ops.put_ref(parent_dir_obj);
-		parent_dir_obj = NULL;
-	}
+        parent_dir_obj->obj_ops.put_ref(parent_dir_obj);
+        parent_dir_obj = NULL;
+    }
 
-	/* Call readdir */
-	fsal_status = fsal_readdir(dir_obj, fsal_cookie, &num_entries, &eod_met,
-				   0,	/* no attr */
-				   nfs3_readdir_callback, &tracker);
+    /* Call readdir */
+    fsal_status = fsal_readdir(dir_obj,
+                               fsal_cookie,
+                               &num_entries,
+                               &eod_met,
+                               0,
+                               /* no attr */
+                               nfs3_readdir_callback,
+                               &tracker);
 
-	if (FSAL_IS_ERROR(fsal_status)) {
-		if (nfs_RetryableError(fsal_status.major)) {
-			rc = NFS_REQ_DROP;
-			goto out;
-		}
+    if (FSAL_IS_ERROR(fsal_status))
+    {
+        if (nfs_RetryableError(fsal_status.major))
+        {
+            rc = NFS_REQ_DROP;
+            goto out;
+        }
 
-		res->res_readdir3.status = nfs3_Errno_status(fsal_status);
-		nfs_SetPostOpAttr(dir_obj,
-				  &res->res_readdir3.READDIR3res_u.resfail.
-					dir_attributes,
-				  NULL);
-		goto out;
-	}
+        res->res_readdir3.status = nfs3_Errno_status(fsal_status);
+        nfs_SetPostOpAttr(dir_obj,
+                          &res->res_readdir3.READDIR3res_u.resfail.
+                          dir_attributes,
+                          NULL);
+        goto out;
+    }
 
-	if (tracker.error != NFS3_OK) {
-		res->res_readdir3.status = tracker.error;
-		nfs_SetPostOpAttr(dir_obj,
-				  &res->res_readdir3.READDIR3res_u.resfail.
-					dir_attributes,
-				  NULL);
-		goto out;
-	}
+    if (tracker.error != NFS3_OK)
+    {
+        res->res_readdir3.status = tracker.error;
+        nfs_SetPostOpAttr(dir_obj,
+                          &res->res_readdir3.READDIR3res_u.resfail.
+                          dir_attributes,
+                          NULL);
+        goto out;
+    }
 
-	LogDebug(COMPONENT_NFS_READDIR,
-		 "-- Readdir -> Call to fsal_readdir(cookie=%"
-		 PRIu64 ")",
-		 fsal_cookie);
+    LogDebug(COMPONENT_NFS_READDIR,
+             "-- Readdir -> Call to fsal_readdir(cookie=%"
+             PRIu64 ")",
+             fsal_cookie);
 
-	if ((num_entries == 0) && (cookie > 1)) {
-		RES_READDIR3_OK->reply.entries = NULL;
-		RES_READDIR3_OK->reply.eof = TRUE;
-	} else {
-		RES_READDIR3_OK->reply.entries = tracker.entries;
-		RES_READDIR3_OK->reply.eof = eod_met;
-	}
-	nfs_SetPostOpAttr(dir_obj, &RES_READDIR3_OK->dir_attributes, NULL);
-	memcpy(RES_READDIR3_OK->cookieverf, cookie_verifier,
-	       sizeof(cookieverf3));
-	res->res_readdir3.status = NFS3_OK;
+    if ((num_entries == 0) && (cookie > 1))
+    {
+        RES_READDIR3_OK->reply.entries = NULL;
+        RES_READDIR3_OK->reply.eof = TRUE;
+    }
+    else
+    {
+        RES_READDIR3_OK->reply.entries = tracker.entries;
+        RES_READDIR3_OK->reply.eof = eod_met;
+    }
+    nfs_SetPostOpAttr(dir_obj, &RES_READDIR3_OK->dir_attributes, NULL);
+    memcpy(RES_READDIR3_OK->cookieverf,
+           cookie_verifier,
+           sizeof(cookieverf3));
+    res->res_readdir3.status = NFS3_OK;
 
-	rc = NFS_REQ_OK;
+    rc = NFS_REQ_OK;
 
- out:
-	/* return references */
-	if (dir_obj)
-		dir_obj->obj_ops.put_ref(dir_obj);
+out:
+    /* return references */
+    if (dir_obj)
+        dir_obj->obj_ops.put_ref(dir_obj);
 
-	if (parent_dir_obj)
-		parent_dir_obj->obj_ops.put_ref(parent_dir_obj);
+    if (parent_dir_obj)
+        parent_dir_obj->obj_ops.put_ref(parent_dir_obj);
 
-	/* Deallocate memory in the event of an error */
-	if (((res->res_readdir3.status != NFS3_OK) || (rc != NFS_REQ_OK) ||
-	    ((num_entries == 0) && (cookie > 1))) &&
-	    (tracker.entries != NULL)) {
-		free_entry3s(tracker.entries);
-		RES_READDIR3_OK->reply.entries = NULL;
-	}
+    /* Deallocate memory in the event of an error */
+    if (((res->res_readdir3.status != NFS3_OK) || (rc != NFS_REQ_OK) ||
+        ((num_entries == 0) && (cookie > 1))) &&
+        (tracker.entries != NULL))
+    {
+        free_entry3s(tracker.entries);
+        RES_READDIR3_OK->reply.entries = NULL;
+    }
 
-	return rc;
-}				/* nfs3_readdir */
+    return rc;
+} /* nfs3_readdir */
 
 /**
  * @brief Free the result structure allocated for nfs3_readdir
@@ -357,13 +394,14 @@ int nfs3_readdir(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
  * @param[in,out] resp Result structure
  *
  */
-void nfs3_readdir_free(nfs_res_t *resp)
+void nfs3_readdir_free(nfs_res_t* resp)
 {
-	if ((resp->res_readdir3.status == NFS3_OK)
-	    && (resp->res_readdir3.READDIR3res_u.resok.reply.entries != NULL)) {
-		free_entry3s(resp->res_readdir3.READDIR3res_u.resok.reply.
-			     entries);
-	}
+    if ((resp->res_readdir3.status == NFS3_OK)
+        && (resp->res_readdir3.READDIR3res_u.resok.reply.entries != NULL))
+    {
+        free_entry3s(resp->res_readdir3.READDIR3res_u.resok.reply.
+                     entries);
+    }
 }
 
 /**
@@ -382,47 +420,49 @@ void nfs3_readdir_free(nfs_res_t *resp)
  * @param cookie [in] The readdir cookie for the current obj
  */
 
-fsal_errors_t nfs3_readdir_callback(void *opaque,
-				    struct fsal_obj_handle *obj,
-				    const struct attrlist *attr,
-				    uint64_t mounted_on_fileid,
-				    uint64_t cookie,
-				    enum cb_state cb_state)
+fsal_errors_t nfs3_readdir_callback(void* opaque,
+                                    struct fsal_obj_handle* obj,
+                                    const struct attrlist* attr,
+                                    uint64_t mounted_on_fileid,
+                                    uint64_t cookie,
+                                    enum cb_state cb_state)
 {
-	/* Not-so-opaque pointer to callback data` */
-	struct fsal_readdir_cb_parms *cb_parms = opaque;
-	struct nfs3_readdir_cb_data *tracker = cb_parms->opaque;
-	/* Length of the current filename */
-	size_t namelen = strlen(cb_parms->name);
-	entry3 *e3 = tracker->entries + tracker->count;
-	size_t need =
-	    sizeof(entry3) + ((namelen + 3) & ~3) + 4 - sizeof(char *) -
-	    sizeof(entry3 *);
+    /* Not-so-opaque pointer to callback data` */
+    struct fsal_readdir_cb_parms* cb_parms = opaque;
+    struct nfs3_readdir_cb_data* tracker = cb_parms->opaque;
+    /* Length of the current filename */
+    size_t namelen = strlen(cb_parms->name);
+    entry3* e3 = tracker->entries + tracker->count;
+    size_t need =
+        sizeof(entry3) + ((namelen + 3) & ~3) + 4 - sizeof(char *) -
+        sizeof(entry3 *);
 
-	if (tracker->count == tracker->total_entries) {
-		cb_parms->in_result = false;
-		return ERR_FSAL_NO_ERROR;
-	}
-	if (tracker->mem_left < need) {
-		if (tracker->count == 0)
-			tracker->error = NFS3ERR_TOOSMALL;
+    if (tracker->count == tracker->total_entries)
+    {
+        cb_parms->in_result = false;
+        return ERR_FSAL_NO_ERROR;
+    }
+    if (tracker->mem_left < need)
+    {
+        if (tracker->count == 0)
+            tracker->error = NFS3ERR_TOOSMALL;
 
-		cb_parms->in_result = false;
-		return ERR_FSAL_NO_ERROR;
-	}
+        cb_parms->in_result = false;
+        return ERR_FSAL_NO_ERROR;
+    }
 
-	e3->fileid = obj->fileid;
-	e3->name = gsh_strdup(cb_parms->name);
-	e3->cookie = cookie;
+    e3->fileid = obj->fileid;
+    e3->name = gsh_strdup(cb_parms->name);
+    e3->cookie = cookie;
 
-	if (tracker->count > 0)
-		tracker->entries[tracker->count - 1].nextentry = e3;
+    if (tracker->count > 0)
+        tracker->entries[tracker->count - 1].nextentry = e3;
 
-	tracker->mem_left -= need;
-	++(tracker->count);
-	cb_parms->in_result = true;
-	return ERR_FSAL_NO_ERROR;
-}				/* */
+    tracker->mem_left -= need;
+    ++(tracker->count);
+    cb_parms->in_result = true;
+    return ERR_FSAL_NO_ERROR;
+} /* */
 
 /**
  * @brief Clean up memory allocated to serve NFSv3 READDIR
@@ -433,12 +473,12 @@ fsal_errors_t nfs3_readdir_callback(void *opaque,
  * @param entry3s [in] Pointer to first obj
  */
 
-static void free_entry3s(entry3 *entry3s)
+static void free_entry3s(entry3* entry3s)
 {
-	entry3 *entry = NULL;
+    entry3* entry = NULL;
 
-	for (entry = entry3s; entry != NULL; entry = entry->nextentry)
-		gsh_free(entry->name);
+    for (entry = entry3s; entry != NULL; entry = entry->nextentry)
+        gsh_free(entry->name);
 
-	gsh_free(entry3s);
+    gsh_free(entry3s);
 }

@@ -30,18 +30,19 @@
  *
  * Routines used for managing the NFS4 COMPOUND functions.
  */
-#include "config.h"
+//#include "../../include/config.h"
+//#include "../../include/log.h"
+//#include "../../include/gsh_rpc.h"
+//#include "../../include/nfs4.h"
+#include "../../include/nfs_core.h"
+//#include "../../include/nfs_exports.h"
+#include "../../include/nfs_proto_functions.h"
+//#include "../../include/hashtable.h"
+
 #include <stdio.h>
 #include <string.h>
 #include <pthread.h>
 #include <fcntl.h>
-#include "hashtable.h"
-#include "log.h"
-#include "gsh_rpc.h"
-#include "nfs4.h"
-#include "nfs_core.h"
-#include "nfs_exports.h"
-#include "nfs_proto_functions.h"
 
 /**
  * @brief NFS4_OP_DELEGPURGE

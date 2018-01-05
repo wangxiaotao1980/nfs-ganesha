@@ -28,25 +28,25 @@
  * @file  nfs3_setattr.c
  * @brief Everything you need for NFSv3 SETATTR
  */
-#include "config.h"
+#include "../../include/config.h"
+#include "../../include/hashtable.h"
+#include "../../include/log.h"
+#include "../../include/gsh_rpc.h"
+#include "../../include/nfs23.h"
+#include "../../include/nfs4.h"
+#include "../../include/mount.h"
+#include "../../include/nfs_core.h"
+#include "../../include/nfs_exports.h"
+#include "../../include/nfs_creds.h"
+#include "../../include/nfs_proto_functions.h"
+#include "../../include/nfs_convert.h"
+#include "../../include/nfs_proto_tools.h"
+#include "../../include/sal_functions.h"
 #include <stdio.h>
 #include <string.h>
 #include <pthread.h>
-#include <fcntl.h>
+//#include <fcntl.h>
 #include <sys/file.h>		/* for having FNDELAY */
-#include "hashtable.h"
-#include "log.h"
-#include "gsh_rpc.h"
-#include "nfs23.h"
-#include "nfs4.h"
-#include "mount.h"
-#include "nfs_core.h"
-#include "nfs_exports.h"
-#include "nfs_creds.h"
-#include "nfs_proto_functions.h"
-#include "nfs_convert.h"
-#include "nfs_proto_tools.h"
-#include "sal_functions.h"
 
 /**
  * @brief The NFSPROC3_SETATTR
@@ -63,181 +63,204 @@
  *
  */
 
-int nfs3_setattr(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
+int nfs3_setattr(nfs_arg_t* arg, struct svc_req* req, nfs_res_t* res)
 {
-	struct attrlist setattr;
-	struct fsal_obj_handle *obj = NULL;
-	pre_op_attr pre_attr = {
-		.attributes_follow = false
-	};
-	fsal_status_t fsal_status = {0, 0};
-	int rc = NFS_REQ_OK;
+    struct attrlist setattr;
+    struct fsal_obj_handle* obj = NULL;
+    pre_op_attr pre_attr = {
+        .attributes_follow = false
+    };
+    fsal_status_t fsal_status = { 0, 0 };
+    int rc = NFS_REQ_OK;
 
-	memset(&setattr, 0, sizeof(setattr));
+    memset(&setattr, 0, sizeof(setattr));
 
-	if (isDebug(COMPONENT_NFSPROTO)) {
-		char str[LEN_FH_STR];
+    if(isDebug(COMPONENT_NFSPROTO))
+    {
+        char str[LEN_FH_STR];
 
-		nfs_FhandleToStr(req->rq_msg.cb_vers,
-				 &arg->arg_setattr3.object,
-				 NULL,
-				 str);
+        nfs_FhandleToStr(req->rq_msg.cb_vers,
+                         &arg->arg_setattr3.object,
+                         NULL,
+                         str);
 
-		LogDebug(COMPONENT_NFSPROTO,
-			 "REQUEST PROCESSING: Calling nfs_Setattr handle: %s",
-			 str);
-	}
+        LogDebug(COMPONENT_NFSPROTO,
+            "REQUEST PROCESSING: Calling nfs_Setattr handle: %s",
+            str);
+    }
 
-	/* to avoid setting it on each error case */
-	res->res_setattr3.SETATTR3res_u.resfail.obj_wcc.before.
-	    attributes_follow = FALSE;
-	res->res_setattr3.SETATTR3res_u.resfail.obj_wcc.after.
-	    attributes_follow = FALSE;
+    /* to avoid setting it on each error case */
+    res->res_setattr3.SETATTR3res_u.resfail.obj_wcc.before.
+         attributes_follow = FALSE;
+    res->res_setattr3.SETATTR3res_u.resfail.obj_wcc.after.
+         attributes_follow = FALSE;
 
-	obj = nfs3_FhandleToCache(&arg->arg_setattr3.object,
-				    &res->res_setattr3.status,
-				    &rc);
+    obj = nfs3_FhandleToCache(&arg->arg_setattr3.object,
+                              &res->res_setattr3.status,
+                              &rc);
 
-	if (obj == NULL) {
-		/* Status and rc have been set by nfs3_FhandleToCache */
-		LogFullDebug(COMPONENT_NFSPROTO,
-			     "nfs3_FhandleToCache failed");
-		goto out;
-	}
+    if(obj == NULL)
+    {
+        /* Status and rc have been set by nfs3_FhandleToCache */
+        LogFullDebug(COMPONENT_NFSPROTO,
+            "nfs3_FhandleToCache failed");
+        goto out;
+    }
 
-	/* Don't allow attribute change while we are in grace period.
-	 * Required for delegation reclaims and may be needed for other
-	 * reclaimable states as well. No NFS4ERR_GRACE in NFS v3, so
-	 * send jukebox error.
-	 */
-	if (nfs_in_grace()) {
-		res->res_setattr3.status = NFS3ERR_JUKEBOX;
-		rc = NFS_REQ_OK;
-		LogFullDebug(COMPONENT_NFSPROTO,
-			     "nfs_in_grace is true");
-		goto out;
-	}
+    /* Don't allow attribute change while we are in grace period.
+     * Required for delegation reclaims and may be needed for other
+     * reclaimable states as well. No NFS4ERR_GRACE in NFS v3, so
+     * send jukebox error.
+     */
+    if(nfs_in_grace())
+    {
+        res->res_setattr3.status = NFS3ERR_JUKEBOX;
+        rc = NFS_REQ_OK;
+        LogFullDebug(COMPONENT_NFSPROTO,
+            "nfs_in_grace is true");
+        goto out;
+    }
 
-	nfs_SetPreOpAttr(obj, &pre_attr);
+    nfs_SetPreOpAttr(obj, &pre_attr);
 
-	if (arg->arg_setattr3.guard.check) {
-		/* This pack of lines implements the "guard check" setattr. This
-		 * feature of nfsv3 is used to avoid several setattr to occur
-		 * concurently on the same object, from different clients
-		 */
-		LogFullDebug(COMPONENT_NFSPROTO, "css=%d acs=%d csn=%d acn=%d",
-			     arg->arg_setattr3.guard.sattrguard3_u.obj_ctime.
-			     tv_sec,
-			     pre_attr.pre_op_attr_u.attributes.ctime.tv_sec,
-			     arg->arg_setattr3.guard.sattrguard3_u.obj_ctime.
-			     tv_nsec,
-			     pre_attr.pre_op_attr_u.attributes.ctime.tv_nsec);
+    if(arg->arg_setattr3.guard.check)
+    {
+        /* This pack of lines implements the "guard check" setattr. This
+         * feature of nfsv3 is used to avoid several setattr to occur
+         * concurently on the same object, from different clients
+         */
+        LogFullDebug(COMPONENT_NFSPROTO, "css=%d acs=%d csn=%d acn=%d",
+            arg->arg_setattr3.guard.sattrguard3_u.obj_ctime.
+            tv_sec,
+            pre_attr.pre_op_attr_u.attributes.ctime.tv_sec,
+            arg->arg_setattr3.guard.sattrguard3_u.obj_ctime.
+            tv_nsec,
+            pre_attr.pre_op_attr_u.attributes.ctime.tv_nsec)
+             
+             
+             
+             
+        
+        ;
 
-		if ((arg->arg_setattr3.guard.sattrguard3_u.obj_ctime.tv_sec !=
-		     pre_attr.pre_op_attr_u.attributes.ctime.tv_sec) ||
-		    (arg->arg_setattr3.guard.sattrguard3_u.obj_ctime.tv_nsec !=
-		     pre_attr.pre_op_attr_u.attributes.ctime.tv_nsec)) {
+        if((arg->arg_setattr3.guard.sattrguard3_u.obj_ctime.tv_sec !=
+                pre_attr.pre_op_attr_u.attributes.ctime.tv_sec) ||
+            (arg->arg_setattr3.guard.sattrguard3_u.obj_ctime.tv_nsec !=
+                pre_attr.pre_op_attr_u.attributes.ctime.tv_nsec))
+        {
+            res->res_setattr3.status = NFS3ERR_NOT_SYNC;
+            rc = NFS_REQ_OK;
+            LogFullDebug(COMPONENT_NFSPROTO,
+                "guard check failed");
+            goto out;
+        }
+    }
 
-			res->res_setattr3.status = NFS3ERR_NOT_SYNC;
-			rc = NFS_REQ_OK;
-			LogFullDebug(COMPONENT_NFSPROTO,
-				     "guard check failed");
-			goto out;
-		}
-	}
+    /* Conversion to FSAL attributes */
+    if(!nfs3_Sattr_To_FSALattr(&setattr,
+                               &arg->arg_setattr3.new_attributes))
+    {
+        res->res_setattr3.status = NFS3ERR_INVAL;
+        rc = NFS_REQ_OK;
+        LogFullDebug(COMPONENT_NFSPROTO,
+            "nfs3_Sattr_To_FSALattr failed");
+        goto out;
+    }
 
-	/* Conversion to FSAL attributes */
-	if (!nfs3_Sattr_To_FSALattr(&setattr,
-				    &arg->arg_setattr3.new_attributes)) {
-		res->res_setattr3.status = NFS3ERR_INVAL;
-		rc = NFS_REQ_OK;
-		LogFullDebug(COMPONENT_NFSPROTO,
-			     "nfs3_Sattr_To_FSALattr failed");
-		goto out;
-	}
+    if(setattr.valid_mask != 0)
+    {
+        /* If owner or owner_group are set, and the credential was
+         * squashed, then we must squash the set owner and owner_group.
+         */
+        squash_setattr(&setattr);
 
-	if (setattr.valid_mask != 0) {
-		/* If owner or owner_group are set, and the credential was
-		 * squashed, then we must squash the set owner and owner_group.
-		 */
-		squash_setattr(&setattr);
+        if(arg->arg_setattr3.new_attributes.size.set_it)
+        {
+            res->res_setattr3.status = nfs3_Errno_state(
+                                                        state_share_anonymous_io_start(
+                                                                                       obj,
+                                                                                       OPEN4_SHARE_ACCESS_WRITE,
+                                                                                       SHARE_BYPASS_V3_WRITE));
 
-		if (arg->arg_setattr3.new_attributes.size.set_it) {
-			res->res_setattr3.status = nfs3_Errno_state(
-					state_share_anonymous_io_start(
-						obj,
-						OPEN4_SHARE_ACCESS_WRITE,
-						SHARE_BYPASS_V3_WRITE));
+            if(res->res_setattr3.status != NFS3_OK)
+            {
+                LogFullDebug(COMPONENT_NFSPROTO,
+                    "state_share_anonymous_io_start failed");
+                goto out_fail;
+            }
+        }
 
-			if (res->res_setattr3.status != NFS3_OK) {
-				LogFullDebug(COMPONENT_NFSPROTO,
-					     "state_share_anonymous_io_start failed");
-				goto out_fail;
-			}
-		}
+        /* For now we don't look for states, so indicate bypass so
+         * we will get through an NLM_SHARE with deny.
+         */
+        fsal_status = fsal_setattr(obj, true, NULL, &setattr);
 
-		/* For now we don't look for states, so indicate bypass so
-		 * we will get through an NLM_SHARE with deny.
-		 */
-		fsal_status = fsal_setattr(obj, true, NULL, &setattr);
+        if(arg->arg_setattr3.new_attributes.size.set_it)
+            state_share_anonymous_io_done(obj,
+                                          OPEN4_SHARE_ACCESS_WRITE);
 
-		if (arg->arg_setattr3.new_attributes.size.set_it)
-			state_share_anonymous_io_done(obj,
-						      OPEN4_SHARE_ACCESS_WRITE);
+        if(FSAL_IS_ERROR(fsal_status))
+        {
+            res->res_setattr3.status =
+                    nfs3_Errno_status(fsal_status);
+            LogFullDebug(COMPONENT_NFSPROTO,
+                "fsal_setattr failed");
+            goto out_fail;
+        }
+    }
 
-		if (FSAL_IS_ERROR(fsal_status)) {
-			res->res_setattr3.status =
-				nfs3_Errno_status(fsal_status);
-			LogFullDebug(COMPONENT_NFSPROTO,
-				     "fsal_setattr failed");
-			goto out_fail;
-		}
-	}
+    /* Set the NFS return */
+    /* Build Weak Cache Coherency data */
+    res->res_setattr3.status = NFS3_OK;
+    if(arg->arg_setattr3.new_attributes.size.set_it
+        && !(setattr.valid_mask ^ (ATTR_SPACEUSED | ATTR_SIZE)))
+    {
+        res->res_setattr3.SETATTR3res_u.resfail.obj_wcc.before.
+             attributes_follow = FALSE;
+        res->res_setattr3.SETATTR3res_u.resfail.obj_wcc.after.
+             attributes_follow = FALSE;
+    }
+    else
+    {
+        nfs_SetWccData(&pre_attr,
+                       obj,
+                       &res->res_setattr3.SETATTR3res_u.resok.obj_wcc);
+    }
 
-	/* Set the NFS return */
-	/* Build Weak Cache Coherency data */
-	res->res_setattr3.status = NFS3_OK;
-	if (arg->arg_setattr3.new_attributes.size.set_it
-	    && !(setattr.valid_mask ^ (ATTR_SPACEUSED | ATTR_SIZE))) {
-		res->res_setattr3.SETATTR3res_u.resfail.obj_wcc.before.
-		    attributes_follow = FALSE;
-		res->res_setattr3.SETATTR3res_u.resfail.obj_wcc.after.
-		    attributes_follow = FALSE;
-	} else {
-		nfs_SetWccData(&pre_attr, obj,
-			       &res->res_setattr3.SETATTR3res_u.resok.obj_wcc);
-	}
+    rc = NFS_REQ_OK;
 
-	rc = NFS_REQ_OK;
+out:
 
- out:
+    /* Release the attributes (may release an inherited ACL) */
+    fsal_release_attrs(&setattr);
 
-	/* Release the attributes (may release an inherited ACL) */
-	fsal_release_attrs(&setattr);
+    /* return references */
+    if(obj)
+        obj->obj_ops.put_ref(obj);
 
-	/* return references */
-	if (obj)
-		obj->obj_ops.put_ref(obj);
+    LogDebug(COMPONENT_NFSPROTO,
+        "Result %s%s",
+        nfsstat3_to_str(res->res_setattr3.status),
+        rc == NFS_REQ_DROP ? " Dropping response" : "")
+    
+    ;
 
-	LogDebug(COMPONENT_NFSPROTO,
-		 "Result %s%s",
-		 nfsstat3_to_str(res->res_setattr3.status),
-		 rc == NFS_REQ_DROP ? " Dropping response" : "");
+    return rc;
 
-	return rc;
+out_fail:
 
- out_fail:
+    nfs_SetWccData(&pre_attr,
+                   obj,
+                   &res->res_setattr3.SETATTR3res_u.resfail.obj_wcc);
 
-	nfs_SetWccData(&pre_attr, obj,
-		       &res->res_setattr3.SETATTR3res_u.resfail.obj_wcc);
+    if(nfs_RetryableError(fsal_status.major))
+    {
+        /* Drop retryable request. */
+        rc = NFS_REQ_DROP;
+    }
 
-	if (nfs_RetryableError(fsal_status.major)) {
-		/* Drop retryable request. */
-		rc = NFS_REQ_DROP;
-	}
-
-	goto out;
-}				/* nfs3_setattr */
+    goto out;
+} /* nfs3_setattr */
 
 /**
  * @brief Free the result structure allocated for nfs3_setattr.
@@ -247,7 +270,7 @@ int nfs3_setattr(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
  * @param[in,out] res Result structure
  */
 
-void nfs3_setattr_free(nfs_res_t *res)
+void nfs3_setattr_free(nfs_res_t* res)
 {
-	/* Nothing to do here */
+    /* Nothing to do here */
 }

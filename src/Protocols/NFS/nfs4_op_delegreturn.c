@@ -32,20 +32,20 @@
  *
  *
  */
-#include "config.h"
+#include "../../include/config.h"
+#include "../../include/hashtable.h"
+#include "../../include/log.h"
+#include "../../include/gsh_rpc.h"
+#include "../../include/nfs4.h"
+#include "../../include/nfs_core.h"
+#include "../../include/nfs_exports.h"
+#include "../../include/nfs_file_handle.h"
+#include "../../include/nfs_proto_functions.h"
+#include "../../include/sal_functions.h"
 #include <stdio.h>
-#include <string.h>
+//#include <string.h>
 #include <pthread.h>
-#include <fcntl.h>
-#include "hashtable.h"
-#include "log.h"
-#include "gsh_rpc.h"
-#include "nfs4.h"
-#include "nfs_core.h"
-#include "nfs_exports.h"
-#include "nfs_file_handle.h"
-#include "nfs_proto_functions.h"
-#include "sal_functions.h"
+//#include <fcntl.h>
 
 /**
  * @brief NFS4_OP_DELEGRETURN
@@ -58,89 +58,92 @@
  *
  * @return per RFC 5661, p. 364
  */
-int nfs4_op_delegreturn(struct nfs_argop4 *op, compound_data_t *data,
-			struct nfs_resop4 *resp)
+int nfs4_op_delegreturn(struct nfs_argop4* op, compound_data_t* data,
+                        struct nfs_resop4* resp)
 {
-	DELEGRETURN4args * const arg_DELEGRETURN4 =
-	    &op->nfs_argop4_u.opdelegreturn;
-	DELEGRETURN4res * const res_DELEGRETURN4 =
-	    &resp->nfs_resop4_u.opdelegreturn;
+    DELEGRETURN4args* const arg_DELEGRETURN4 =
+            &op->nfs_argop4_u.opdelegreturn;
+    DELEGRETURN4res* const res_DELEGRETURN4 =
+            &resp->nfs_resop4_u.opdelegreturn;
 
-	state_status_t state_status;
-	state_t *state_found;
-	const char *tag = "DELEGRETURN";
-	state_owner_t *owner;
+    state_status_t state_status;
+    state_t* state_found;
+    const char* tag = "DELEGRETURN";
+    state_owner_t* owner;
 
-	LogDebug(COMPONENT_NFS_V4_LOCK,
-		 "Entering NFS v4 DELEGRETURN handler -----------------------------------------------------");
+    LogDebug(COMPONENT_NFS_V4_LOCK,
+        "Entering NFS v4 DELEGRETURN handler -----------------------------------------------------");
 
-	/* Initialize to sane default */
-	resp->resop = NFS4_OP_DELEGRETURN;
+    /* Initialize to sane default */
+    resp->resop = NFS4_OP_DELEGRETURN;
 
-	/* If the filehandle is invalid. Delegations are only supported on
-	 * regular files at the moment.
-	 */
-	res_DELEGRETURN4->status = nfs4_sanity_check_FH(data,
-							REGULAR_FILE,
-							false);
+    /* If the filehandle is invalid. Delegations are only supported on
+     * regular files at the moment.
+     */
+    res_DELEGRETURN4->status = nfs4_sanity_check_FH(data,
+                                                    REGULAR_FILE,
+                                                    false);
 
-	if (res_DELEGRETURN4->status != NFS4_OK) {
-		if (res_DELEGRETURN4->status == NFS4ERR_ISDIR)
-			res_DELEGRETURN4->status = NFS4ERR_INVAL;
-		return res_DELEGRETURN4->status;
-	}
+    if(res_DELEGRETURN4->status != NFS4_OK)
+    {
+        if(res_DELEGRETURN4->status == NFS4ERR_ISDIR)
+            res_DELEGRETURN4->status = NFS4ERR_INVAL;
+        return res_DELEGRETURN4->status;
+    }
 
-	/* Check stateid correctness and get pointer to state */
-	res_DELEGRETURN4->status = nfs4_Check_Stateid(&arg_DELEGRETURN4->
-						      deleg_stateid,
-						      data->current_obj,
-						      &state_found,
-						      data,
-						      STATEID_SPECIAL_FOR_LOCK,
-						      0,
-						      false,
-						      tag);
+    /* Check stateid correctness and get pointer to state */
+    res_DELEGRETURN4->status = nfs4_Check_Stateid(&arg_DELEGRETURN4->
+                                                  deleg_stateid,
+                                                  data->current_obj,
+                                                  &state_found,
+                                                  data,
+                                                  STATEID_SPECIAL_FOR_LOCK,
+                                                  0,
+                                                  false,
+                                                  tag);
 
-	if (res_DELEGRETURN4->status != NFS4_OK)
-		return res_DELEGRETURN4->status;
+    if(res_DELEGRETURN4->status != NFS4_OK)
+        return res_DELEGRETURN4->status;
 
-	owner = get_state_owner_ref(state_found);
+    owner = get_state_owner_ref(state_found);
 
-	if (owner == NULL) {
-		/* Something has gone stale. */
-		LogDebug(COMPONENT_NFS_V4_LOCK, "Stale state");
-		res_DELEGRETURN4->status = NFS4ERR_STALE;
-		goto out_unlock;
-	}
+    if(owner == NULL)
+    {
+        /* Something has gone stale. */
+        LogDebug(COMPONENT_NFS_V4_LOCK, "Stale state");
+        res_DELEGRETURN4->status = NFS4ERR_STALE;
+        goto out_unlock;
+    }
 
-	deleg_heuristics_recall(data->current_obj, owner, state_found);
+    deleg_heuristics_recall(data->current_obj, owner, state_found);
 
-	/* Release reference taken above. */
-	dec_state_owner_ref(owner);
+    /* Release reference taken above. */
+    dec_state_owner_ref(owner);
 
-	PTHREAD_RWLOCK_wrlock(&data->current_obj->state_hdl->state_lock);
-	/* Now we have a lock owner and a stateid.
-	 * Go ahead and push unlock into SAL (and FSAL) to return
-	 * the delegation.
-	 */
-	state_status = release_lease_lock(data->current_obj, state_found);
+    PTHREAD_RWLOCK_wrlock(&data->current_obj->state_hdl->state_lock);
+    /* Now we have a lock owner and a stateid.
+     * Go ahead and push unlock into SAL (and FSAL) to return
+     * the delegation.
+     */
+    state_status = release_lease_lock(data->current_obj, state_found);
 
-	res_DELEGRETURN4->status = nfs4_Errno_state(state_status);
+    res_DELEGRETURN4->status = nfs4_Errno_state(state_status);
 
-	if (state_status == STATE_SUCCESS) {
-		/* Successful exit */
-		LogDebug(COMPONENT_NFS_V4_LOCK, "Successful exit");
+    if(state_status == STATE_SUCCESS)
+    {
+        /* Successful exit */
+        LogDebug(COMPONENT_NFS_V4_LOCK, "Successful exit");
 
-		state_del_locked(state_found);
-	}
-	PTHREAD_RWLOCK_unlock(&data->current_obj->state_hdl->state_lock);
+        state_del_locked(state_found);
+    }
+    PTHREAD_RWLOCK_unlock(&data->current_obj->state_hdl->state_lock);
 
- out_unlock:
+out_unlock:
 
-	dec_state_t_ref(state_found);
+    dec_state_t_ref(state_found);
 
-	return res_DELEGRETURN4->status;
-}				/* nfs4_op_delegreturn */
+    return res_DELEGRETURN4->status;
+} /* nfs4_op_delegreturn */
 
 /**
  * @brief Free memory allocated for DELEGRETURN result
@@ -150,7 +153,7 @@ int nfs4_op_delegreturn(struct nfs_argop4 *op, compound_data_t *data,
  *
  * @param resp  [INOUT]    Pointer to nfs4_op results
  */
-void nfs4_op_delegreturn_Free(nfs_resop4 *resp)
+void nfs4_op_delegreturn_Free(nfs_resop4* resp)
 {
-	/* Nothing to be done */
+    /* Nothing to be done */
 }

@@ -30,11 +30,11 @@
  * mnt_Null.c : MOUNTPROC_NULL in V1, V3.
  *
  */
-#include "config.h"
-#include "log.h"
-#include "nfs_core.h"
-#include "mount.h"
-#include "nfs_proto_functions.h"
+  //#include "../../include/config.h"
+#include "../../include/log.h"
+#include "../../include/nfs_core.h"
+#include "../../include/mount.h"
+#include "../../include/nfs_proto_functions.h"
 
 /**
  * @brief The Mount proc null function, for all versions.
@@ -47,11 +47,11 @@
  *
  */
 
-int mnt_Null(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
+int mnt_Null(nfs_arg_t* arg, struct svc_req* req, nfs_res_t* res)
 {
-	LogDebug(COMPONENT_NFSPROTO, "REQUEST PROCESSING: Calling mnt_Null");
-	return MNT3_OK;
-}				/* mnt_Null */
+    LogDebug(COMPONENT_NFSPROTO, "REQUEST PROCESSING: Calling mnt_Null");
+    return MNT3_OK;
+} /* mnt_Null */
 
 /**
  * @brief Frees the result structure allocated for mnt_Null
@@ -59,7 +59,7 @@ int mnt_Null(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
  * @param res        [INOUT]   Pointer to the result structure.
  *
  */
-void mnt_Null_Free(nfs_res_t *res)
+void mnt_Null_Free(nfs_res_t* res)
 {
-	/* return */
+    /* return */
 }

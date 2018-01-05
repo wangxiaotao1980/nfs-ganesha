@@ -29,12 +29,12 @@
  *
  *
  */
-#include "config.h"
-#include "log.h"
-#include "nfs_core.h"
-#include "nfs_exports.h"
-#include "mount.h"
-#include "nfs_proto_functions.h"
+#include "../../include/config.h"
+#include "../../include/log.h"
+#include "../../include/nfs_core.h"
+#include "../../include/nfs_exports.h"
+  //#include "../../include/mount.h"
+#include "../../include/nfs_proto_functions.h"
 
 /**
  * @brief The Mount proc umount_all function, for all versions.
@@ -45,14 +45,14 @@
  *
  */
 
-int mnt_UmntAll(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
+int mnt_UmntAll(nfs_arg_t* arg, struct svc_req* req, nfs_res_t* res)
 {
-	LogDebug(COMPONENT_NFSPROTO, "REQUEST PROCESSING: Calling mnt_UmntAll");
+    LogDebug(COMPONENT_NFSPROTO, "REQUEST PROCESSING: Calling mnt_UmntAll");
 
-	/* Ganesha does not support the mount list so this is a NOOP */
+    /* Ganesha does not support the mount list so this is a NOOP */
 
-	return NFS_REQ_OK;
-}				/* mnt_UmntAll */
+    return NFS_REQ_OK;
+} /* mnt_UmntAll */
 
 /**
  * mnt_UmntAll_Free: Frees the result structure allocated for mnt_UmntAll.
@@ -62,7 +62,7 @@ int mnt_UmntAll(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
  * @param res        [INOUT]   Pointer to the result structure.
  *
  */
-void mnt_UmntAll_Free(nfs_res_t *res)
+void mnt_UmntAll_Free(nfs_res_t* res)
 {
-	/* Nothing to do */
+    /* Nothing to do */
 }

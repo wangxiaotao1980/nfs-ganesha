@@ -27,23 +27,23 @@
  * @file  nfs3_remove.c
  * @brief Everything you need for NFSv3 REMOVE
  */
-#include "config.h"
+#include "../../include/config.h"
+#include "../../include/hashtable.h"
+#include "../../include/log.h"
+#include "../../include/gsh_rpc.h"
+#include "../../include/nfs23.h"
+#include "../../include/nfs4.h"
+#include "../../include/mount.h"
+#include "../../include/nfs_core.h"
+#include "../../include/nfs_exports.h"
+#include "../../include/nfs_proto_functions.h"
+#include "../../include/nfs_convert.h"
+#include "../../include/nfs_proto_tools.h"
 #include <stdio.h>
-#include <string.h>
+//#include <string.h>
 #include <pthread.h>
 #include <fcntl.h>
-#include <sys/file.h>		/* for having FNDELAY */
-#include "hashtable.h"
-#include "log.h"
-#include "gsh_rpc.h"
-#include "nfs23.h"
-#include "nfs4.h"
-#include "mount.h"
-#include "nfs_core.h"
-#include "nfs_exports.h"
-#include "nfs_proto_functions.h"
-#include "nfs_convert.h"
-#include "nfs_proto_tools.h"
+//#include <sys/file.h>		/* for having FNDELAY */
 
 /**
  *
@@ -61,112 +61,119 @@
  *
  */
 
-int nfs3_remove(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
+int nfs3_remove(nfs_arg_t* arg, struct svc_req* req, nfs_res_t* res)
 {
-	struct fsal_obj_handle *parent_obj = NULL;
-	struct fsal_obj_handle *child_obj = NULL;
-	pre_op_attr pre_parent = {
-		.attributes_follow = false
-	};
-	fsal_status_t fsal_status;
-	const char *name = arg->arg_remove3.object.name;
-	int rc = NFS_REQ_OK;
+    struct fsal_obj_handle* parent_obj = NULL;
+    struct fsal_obj_handle* child_obj = NULL;
+    pre_op_attr pre_parent = {
+        .attributes_follow = false
+    };
+    fsal_status_t fsal_status;
+    const char* name = arg->arg_remove3.object.name;
+    int rc = NFS_REQ_OK;
 
-	if (isDebug(COMPONENT_NFSPROTO)) {
-		char str[LEN_FH_STR];
+    if(isDebug(COMPONENT_NFSPROTO))
+    {
+        char str[LEN_FH_STR];
 
-		nfs_FhandleToStr(req->rq_msg.cb_vers,
-				 &arg->arg_create3.where.dir,
-				 NULL,
-				 str);
+        nfs_FhandleToStr(req->rq_msg.cb_vers,
+                         &arg->arg_create3.where.dir,
+                         NULL,
+                         str);
 
-		LogDebug(COMPONENT_NFSPROTO,
-			 "REQUEST PROCESSING: Calling nfs_Remove handle: %s name: %s",
-			 str, name);
-	}
+        LogDebug(COMPONENT_NFSPROTO,
+            "REQUEST PROCESSING: Calling nfs_Remove handle: %s name: %s",
+            str, name);
+    }
 
-	/* Convert file handle into a pentry */
-	/* to avoid setting it on each error case */
-	res->res_remove3.REMOVE3res_u.resfail.dir_wcc.before.attributes_follow =
-	    FALSE;
-	res->res_remove3.REMOVE3res_u.resfail.dir_wcc.after.attributes_follow =
-	    FALSE;
+    /* Convert file handle into a pentry */
+    /* to avoid setting it on each error case */
+    res->res_remove3.REMOVE3res_u.resfail.dir_wcc.before.attributes_follow =
+            FALSE;
+    res->res_remove3.REMOVE3res_u.resfail.dir_wcc.after.attributes_follow =
+            FALSE;
 
-	parent_obj = nfs3_FhandleToCache(&arg->arg_remove3.object.dir,
-					   &res->res_remove3.status,
-					   &rc);
+    parent_obj = nfs3_FhandleToCache(&arg->arg_remove3.object.dir,
+                                     &res->res_remove3.status,
+                                     &rc);
 
-	if (parent_obj == NULL) {
-		/* Status and rc have been set by nfs3_FhandleToCache */
-		goto out;
-	}
+    if(parent_obj == NULL)
+    {
+        /* Status and rc have been set by nfs3_FhandleToCache */
+        goto out;
+    }
 
-	nfs_SetPreOpAttr(parent_obj, &pre_parent);
+    nfs_SetPreOpAttr(parent_obj, &pre_parent);
 
-	/* Sanity checks: file name must be non-null; parent must be a
-	 * directory.
-	 */
-	if (parent_obj->type != DIRECTORY) {
-		res->res_remove3.status = NFS3ERR_NOTDIR;
-		rc = NFS_REQ_OK;
-		goto out;
-	}
+    /* Sanity checks: file name must be non-null; parent must be a
+     * directory.
+     */
+    if(parent_obj->type != DIRECTORY)
+    {
+        res->res_remove3.status = NFS3ERR_NOTDIR;
+        rc = NFS_REQ_OK;
+        goto out;
+    }
 
-	if (name == NULL || *name == '\0') {
-		fsal_status = fsalstat(ERR_FSAL_INVAL, 0);
-		goto out_fail;
-	}
+    if(name == NULL || *name == '\0')
+    {
+        fsal_status = fsalstat(ERR_FSAL_INVAL, 0);
+        goto out_fail;
+    }
 
-	/* Lookup the child entry to verify that it is not a directory */
-	fsal_status = fsal_lookup(parent_obj, name, &child_obj, NULL);
+    /* Lookup the child entry to verify that it is not a directory */
+    fsal_status = fsal_lookup(parent_obj, name, &child_obj, NULL);
 
-	if (!FSAL_IS_ERROR(fsal_status)) {
-		/* Sanity check: make sure we are not removing a
-		 * directory
-		 */
-		if (child_obj->type == DIRECTORY) {
-			res->res_remove3.status = NFS3ERR_ISDIR;
-			rc = NFS_REQ_OK;
-			goto out;
-		}
-	}
+    if(!FSAL_IS_ERROR(fsal_status))
+    {
+        /* Sanity check: make sure we are not removing a
+         * directory
+         */
+        if(child_obj->type == DIRECTORY)
+        {
+            res->res_remove3.status = NFS3ERR_ISDIR;
+            rc = NFS_REQ_OK;
+            goto out;
+        }
+    }
 
-	LogFullDebug(COMPONENT_NFSPROTO, "Trying to remove file %s", name);
+    LogFullDebug(COMPONENT_NFSPROTO, "Trying to remove file %s", name);
 
-	/* Remove the entry. */
-	fsal_status = fsal_remove(parent_obj, name);
+    /* Remove the entry. */
+    fsal_status = fsal_remove(parent_obj, name);
 
-	if (FSAL_IS_ERROR(fsal_status))
-		goto out_fail;
+    if(FSAL_IS_ERROR(fsal_status))
+        goto out_fail;
 
-	/* Build Weak Cache Coherency data */
-	nfs_SetWccData(&pre_parent, parent_obj,
-		       &res->res_remove3.REMOVE3res_u.resok.dir_wcc);
+    /* Build Weak Cache Coherency data */
+    nfs_SetWccData(&pre_parent,
+                   parent_obj,
+                   &res->res_remove3.REMOVE3res_u.resok.dir_wcc);
 
-	res->res_remove3.status = NFS3_OK;
-	rc = NFS_REQ_OK;
+    res->res_remove3.status = NFS3_OK;
+    rc = NFS_REQ_OK;
 
-	goto out;
+    goto out;
 
- out_fail:
-	res->res_remove3.status = nfs3_Errno_status(fsal_status);
-	nfs_SetWccData(&pre_parent, parent_obj,
-		       &res->res_remove3.REMOVE3res_u.resfail.dir_wcc);
+out_fail:
+    res->res_remove3.status = nfs3_Errno_status(fsal_status);
+    nfs_SetWccData(&pre_parent,
+                   parent_obj,
+                   &res->res_remove3.REMOVE3res_u.resfail.dir_wcc);
 
-	if (nfs_RetryableError(fsal_status.major))
-		rc = NFS_REQ_DROP;
+    if(nfs_RetryableError(fsal_status.major))
+        rc = NFS_REQ_DROP;
 
- out:
-	/* return references */
-	if (child_obj)
-		child_obj->obj_ops.put_ref(child_obj);
+out:
+    /* return references */
+    if(child_obj)
+        child_obj->obj_ops.put_ref(child_obj);
 
-	if (parent_obj)
-		parent_obj->obj_ops.put_ref(parent_obj);
+    if(parent_obj)
+        parent_obj->obj_ops.put_ref(parent_obj);
 
-	return rc;
-
-}				/* nfs3_remove */
+    return rc;
+} /* nfs3_remove */
 
 /**
  * @brief Free the result structure allocated for nfs3_remove.
@@ -176,7 +183,7 @@ int nfs3_remove(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
  * @param[in,out] res Result structure
  *
  */
-void nfs3_remove_free(nfs_res_t *res)
+void nfs3_remove_free(nfs_res_t* res)
 {
-	/* Nothing to do here */
+    /* Nothing to do here */
 }

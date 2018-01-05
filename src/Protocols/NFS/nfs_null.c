@@ -24,23 +24,23 @@
  * ---------------------------------------
  */
 
-/**
- * @file  nfs_null.c
- * @brief NFS NULL procedure for all versions
- */
-#include "config.h"
-#include <stdio.h>
-#include <string.h>
+ /**
+  * @file  nfs_null.c
+  * @brief NFS NULL procedure for all versions
+  */
+  //#include "../../include/config.h"
+#include "../../include/hashtable.h"
+#include "../../include/log.h"
+#include "../../include/gsh_rpc.h"
+//#include "../../include/nfs4.h"
+#include "../../include/nfs_core.h"
+//#include "../../include/nfs_exports.h"
+#include "../../include/nfs_proto_functions.h"
+//#include <stdio.h>
+//#include <string.h>
 #include <pthread.h>
-#include <fcntl.h>
+//#include <fcntl.h>
 #include <sys/file.h>		/* for having FNDELAY */
-#include "hashtable.h"
-#include "log.h"
-#include "gsh_rpc.h"
-#include "nfs4.h"
-#include "nfs_core.h"
-#include "nfs_exports.h"
-#include "nfs_proto_functions.h"
 
 /**
  * @brief The NFS proc null function, for all versions.
@@ -50,10 +50,10 @@
  * @param[out] res     ignored
  */
 
-int nfs_null(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
+int nfs_null(nfs_arg_t* arg, struct svc_req* req, nfs_res_t* res)
 {
-	LogDebug(COMPONENT_NFSPROTO, "REQUEST PROCESSING: Calling nfs_null");
-	return NFS3_OK;
+    LogDebug(COMPONENT_NFSPROTO, "REQUEST PROCESSING: Calling nfs_null");
+    return NFS3_OK;
 }
 
 /**n
@@ -65,7 +65,7 @@ int nfs_null(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
  * @param[in,out] res Result structure
  *
  */
-void nfs_null_free(nfs_res_t *res)
+void nfs_null_free(nfs_res_t* res)
 {
-	/* Nothing to do here */
+    /* Nothing to do here */
 }

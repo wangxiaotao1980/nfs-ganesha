@@ -29,13 +29,13 @@
  * @brief Provides NFS4_OP_DESTROY_CLIENTID implementation
  */
 
-#include "config.h"
+#include "../../include/config.h"
+#include "../../include/log.h"
+#include "../../include/nfs4.h"
+#include "../../include/sal_functions.h"
+#include "../../include/nfs_proto_functions.h"
+#include "../../include/nfs_core.h"
 #include <pthread.h>
-#include "log.h"
-#include "nfs4.h"
-#include "sal_functions.h"
-#include "nfs_proto_functions.h"
-#include "nfs_core.h"
 
 /**
  *
@@ -50,160 +50,177 @@
  *
  */
 
-int nfs4_op_destroy_clientid(struct nfs_argop4 *op, compound_data_t *data,
-			     struct nfs_resop4 *resp)
+int nfs4_op_destroy_clientid(struct nfs_argop4* op, compound_data_t* data,
+                             struct nfs_resop4* resp)
 {
-	DESTROY_CLIENTID4args * const arg_DESTROY_CLIENTID4 =
-	    &op->nfs_argop4_u.opdestroy_clientid;
-	DESTROY_CLIENTID4res * const res_DESTROY_CLIENTID4 =
-	    &resp->nfs_resop4_u.opdestroy_clientid;
-	nfs_client_record_t *client_record = NULL;
-	nfs_client_id_t *conf = NULL, *unconf = NULL, *found = NULL;
-	clientid4 clientid;
-	int rc;
+    DESTROY_CLIENTID4args* const arg_DESTROY_CLIENTID4 =
+            &op->nfs_argop4_u.opdestroy_clientid;
+    DESTROY_CLIENTID4res* const res_DESTROY_CLIENTID4 =
+            &resp->nfs_resop4_u.opdestroy_clientid;
+    nfs_client_record_t* client_record = NULL;
+    nfs_client_id_t* conf = NULL, * unconf = NULL, * found = NULL;
+    clientid4 clientid;
+    int rc;
 
-	resp->resop = NFS4_OP_DESTROY_CLIENTID;
+    resp->resop = NFS4_OP_DESTROY_CLIENTID;
 
-	clientid = arg_DESTROY_CLIENTID4->dca_clientid;
+    clientid = arg_DESTROY_CLIENTID4->dca_clientid;
 
-	if (isDebug(COMPONENT_CLIENTID)) {
-		char str[LOG_BUFF_LEN] = "\0";
-		struct display_buffer dspbuf = {sizeof(str), str, str};
+    if(isDebug(COMPONENT_CLIENTID))
+    {
+        char str[LOG_BUFF_LEN] = "\0";
+        struct display_buffer dspbuf = { sizeof(str), str, str };
 
-		display_clientid(&dspbuf, clientid);
+        display_clientid(&dspbuf, clientid);
 
-		LogDebug(COMPONENT_CLIENTID,
-			 "DESTROY_CLIENTID clientid=%s",
-			 str);
-	}
+        LogDebug(COMPONENT_CLIENTID,
+            "DESTROY_CLIENTID clientid=%s",
+            str);
+    }
 
-	res_DESTROY_CLIENTID4->dcr_status = NFS4_OK;
+    res_DESTROY_CLIENTID4->dcr_status = NFS4_OK;
 
-	/* First try to look up confirmed record */
-	rc = nfs_client_id_get_confirmed(clientid, &conf);
+    /* First try to look up confirmed record */
+    rc = nfs_client_id_get_confirmed(clientid, &conf);
 
-	if (rc == CLIENT_ID_SUCCESS) {
-		client_record = conf->cid_client_record;
-		found = conf;
-	} else {
-		/* fall back to unconfirmed */
-		rc = nfs_client_id_get_unconfirmed(clientid, &unconf);
+    if(rc == CLIENT_ID_SUCCESS)
+    {
+        client_record = conf->cid_client_record;
+        found = conf;
+    }
+    else
+    {
+        /* fall back to unconfirmed */
+        rc = nfs_client_id_get_unconfirmed(clientid, &unconf);
 
-		if (rc == CLIENT_ID_SUCCESS) {
-			client_record = unconf->cid_client_record;
-			found = unconf;
-		}
+        if(rc == CLIENT_ID_SUCCESS)
+        {
+            client_record = unconf->cid_client_record;
+            found = unconf;
+        }
 
-		/* handle the perverse case of a clientid being confirmed
-		 * in the above interval */
-		rc = nfs_client_id_get_confirmed(clientid, &conf);
+        /* handle the perverse case of a clientid being confirmed
+         * in the above interval */
+        rc = nfs_client_id_get_confirmed(clientid, &conf);
 
-		if (rc == CLIENT_ID_SUCCESS) {
-			if (found != NULL)
-				dec_client_id_ref(found);
-			client_record = conf->cid_client_record;
-			found = conf;
-		}
-	}
+        if(rc == CLIENT_ID_SUCCESS)
+        {
+            if(found != NULL)
+                dec_client_id_ref(found);
+            client_record = conf->cid_client_record;
+            found = conf;
+        }
+    }
 
-	/* ref +1 */
-	if (client_record == NULL) {
-		/* Fine.  We're done. */
-		res_DESTROY_CLIENTID4->dcr_status = NFS4ERR_STALE_CLIENTID;
-		goto out;
-	}
+    /* ref +1 */
+    if(client_record == NULL)
+    {
+        /* Fine.  We're done. */
+        res_DESTROY_CLIENTID4->dcr_status = NFS4ERR_STALE_CLIENTID;
+        goto out;
+    }
 
-	(void) inc_client_record_ref(client_record);
+    (void)inc_client_record_ref(client_record);
 
-	PTHREAD_MUTEX_lock(&client_record->cr_mutex);
+    PTHREAD_MUTEX_lock(&client_record->cr_mutex);
 
-	if (isFullDebug(COMPONENT_CLIENTID)) {
-		char str[LOG_BUFF_LEN] = "\0";
-		struct display_buffer dspbuf = {sizeof(str), str, str};
+    if(isFullDebug(COMPONENT_CLIENTID))
+    {
+        char str[LOG_BUFF_LEN] = "\0";
+        struct display_buffer dspbuf = { sizeof(str), str, str };
 
-		display_client_record(&dspbuf, client_record);
+        display_client_record(&dspbuf, client_record);
 
-		LogFullDebug(COMPONENT_CLIENTID,
-			     "Client Record %s cr_confirmed_rec=%p cr_unconfirmed_rec=%p",
-			     str,
-			     client_record->cr_confirmed_rec,
-			     client_record->cr_unconfirmed_rec);
-	}
+        LogFullDebug(COMPONENT_CLIENTID,
+            "Client Record %s cr_confirmed_rec=%p cr_unconfirmed_rec=%p",
+            str,
+            client_record->cr_confirmed_rec,
+            client_record->cr_unconfirmed_rec)
+             
+        
+        ;
+    }
 
-	/* per Frank, we must check the confirmed and unconfirmed
-	 * state of client_record again now that we hold cr_mutex
-	 */
-	conf = client_record->cr_confirmed_rec;
-	unconf = client_record->cr_unconfirmed_rec;
+    /* per Frank, we must check the confirmed and unconfirmed
+     * state of client_record again now that we hold cr_mutex
+     */
+    conf = client_record->cr_confirmed_rec;
+    unconf = client_record->cr_unconfirmed_rec;
 
-	if ((!conf) && (!unconf)) {
-		/* We raced a thread destroying clientid, and lost.
-		 * We're done. */
-		goto cleanup;
-	}
+    if((!conf) && (!unconf))
+    {
+        /* We raced a thread destroying clientid, and lost.
+         * We're done. */
+        goto cleanup;
+    }
 
-	if (conf) {
-		/* We MUST NOT destroy a clientid that has nfsv41 sessions or
-		 * state. Since the minorversion is 4.1 or higher, this is
-		 * equivalent to a session check.
-		 */
-		PTHREAD_MUTEX_lock(&conf->cid_mutex);
-		if (!glist_empty(&conf->cid_cb.v41.cb_session_list)) {
-			res_DESTROY_CLIENTID4->dcr_status =
-							NFS4ERR_CLIENTID_BUSY;
-			PTHREAD_MUTEX_unlock(&conf->cid_mutex);
-			goto cleanup;
-		}
-		PTHREAD_MUTEX_unlock(&conf->cid_mutex);
+    if(conf)
+    {
+        /* We MUST NOT destroy a clientid that has nfsv41 sessions or
+         * state. Since the minorversion is 4.1 or higher, this is
+         * equivalent to a session check.
+         */
+        PTHREAD_MUTEX_lock(&conf->cid_mutex);
+        if(!glist_empty(&conf->cid_cb.v41.cb_session_list))
+        {
+            res_DESTROY_CLIENTID4->dcr_status =
+                    NFS4ERR_CLIENTID_BUSY;
+            PTHREAD_MUTEX_unlock(&conf->cid_mutex);
+            goto cleanup;
+        }
+        PTHREAD_MUTEX_unlock(&conf->cid_mutex);
 
-		/* Delete the confirmed clientid record. Because we
-		 * have the cr_mutex, we have won any race to deal
-		 * with this clientid record.
-		 */
-		if (isFullDebug(COMPONENT_CLIENTID)) {
-			char str[LOG_BUFF_LEN] = "\0";
-			struct display_buffer dspbuf = {sizeof(str), str, str};
+        /* Delete the confirmed clientid record. Because we
+         * have the cr_mutex, we have won any race to deal
+         * with this clientid record.
+         */
+        if(isFullDebug(COMPONENT_CLIENTID))
+        {
+            char str[LOG_BUFF_LEN] = "\0";
+            struct display_buffer dspbuf = { sizeof(str), str, str };
 
-			display_client_id_rec(&dspbuf, conf);
+            display_client_id_rec(&dspbuf, conf);
 
-			LogDebug(COMPONENT_CLIENTID,
-				 "Removing confirmed clientid %s", str);
-		}
+            LogDebug(COMPONENT_CLIENTID,
+                "Removing confirmed clientid %s", str);
+        }
 
-		/* unhash the clientid record */
-		(void)remove_confirmed_client_id(conf);
-	}
+        /* unhash the clientid record */
+        (void)remove_confirmed_client_id(conf);
+    }
 
-	if (unconf) {
-		/* Delete the unconfirmed clientid record. Because we
-		 * have the cr_mutex, we have won any race to deal
-		 * with this clientid record.
-		 */
-		if (isFullDebug(COMPONENT_CLIENTID)) {
-			char str[LOG_BUFF_LEN] = "\0";
-			struct display_buffer dspbuf = {sizeof(str), str, str};
+    if(unconf)
+    {
+        /* Delete the unconfirmed clientid record. Because we
+         * have the cr_mutex, we have won any race to deal
+         * with this clientid record.
+         */
+        if(isFullDebug(COMPONENT_CLIENTID))
+        {
+            char str[LOG_BUFF_LEN] = "\0";
+            struct display_buffer dspbuf = { sizeof(str), str, str };
 
-			display_client_id_rec(&dspbuf, unconf);
+            display_client_id_rec(&dspbuf, unconf);
 
-			LogDebug(COMPONENT_CLIENTID,
-				 "Removing unconfirmed clientid %s", str);
-		}
+            LogDebug(COMPONENT_CLIENTID,
+                "Removing unconfirmed clientid %s", str);
+        }
 
-		/* unhash the clientid record */
-		(void)remove_unconfirmed_client_id(unconf);
-	}
+        /* unhash the clientid record */
+        (void)remove_unconfirmed_client_id(unconf);
+    }
 
- cleanup:
+cleanup:
 
-	PTHREAD_MUTEX_unlock(&client_record->cr_mutex);
-	dec_client_record_ref(client_record);	/* ref +0 */
+    PTHREAD_MUTEX_unlock(&client_record->cr_mutex);
+    dec_client_record_ref(client_record); /* ref +0 */
 
-	if (found != NULL)
-		dec_client_id_ref(found);
+    if(found != NULL)
+        dec_client_id_ref(found);
 
- out:
+out:
 
-	return res_DESTROY_CLIENTID4->dcr_status;
+    return res_DESTROY_CLIENTID4->dcr_status;
 }
 
 /**
@@ -212,7 +229,7 @@ int nfs4_op_destroy_clientid(struct nfs_argop4 *op, compound_data_t *data,
  * @param[in,out] resp nfs4_op results
  */
 
-void nfs4_op_destroy_clientid_Free(nfs_resop4 *resp)
+void nfs4_op_destroy_clientid_Free(nfs_resop4* resp)
 {
-	/* Nothing to be done */
+    /* Nothing to be done */
 }

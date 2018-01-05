@@ -30,19 +30,19 @@
  *
  * Routines used for managing the NFS4 COMPOUND functions.
  */
-#include "config.h"
+#include "../../include/config.h"
+#include "../../include/hashtable.h"
+#include "../../include/log.h"
+#include "../../include/fsal.h"
+#include "../../include/nfs_core.h"
+#include "../../include/nfs_exports.h"
+#include "../../include/nfs_proto_functions.h"
+#include "../../include/nfs_proto_tools.h"
 #include <stdio.h>
-#include <string.h>
+  //#include <string.h>
 #include <pthread.h>
 #include <fcntl.h>
-#include <sys/file.h>		/* for having FNDELAY */
-#include "hashtable.h"
-#include "log.h"
-#include "fsal.h"
-#include "nfs_core.h"
-#include "nfs_exports.h"
-#include "nfs_proto_functions.h"
-#include "nfs_proto_tools.h"
+//#include <sys/file.h>		/* for having FNDELAY */
 
 /**
  * @brief Implements NFSPROC3_PATHCONF
@@ -58,61 +58,63 @@
  * @retval NFS_REQ_FAILED if failed and not retryable
  */
 
-int nfs3_pathconf(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
+int nfs3_pathconf(nfs_arg_t* arg, struct svc_req* req, nfs_res_t* res)
 {
-	struct fsal_obj_handle *obj = NULL;
-	int rc = NFS_REQ_OK;
-	struct fsal_export *exp_hdl = op_ctx->fsal_export;
+    struct fsal_obj_handle* obj = NULL;
+    int rc = NFS_REQ_OK;
+    struct fsal_export* exp_hdl = op_ctx->fsal_export;
 
-	if (isDebug(COMPONENT_NFSPROTO)) {
-		char str[LEN_FH_STR];
+    if (isDebug(COMPONENT_NFSPROTO))
+    {
+        char str[LEN_FH_STR];
 
-		sprint_fhandle3(str, &(arg->arg_pathconf3.object));
-		LogDebug(COMPONENT_NFSPROTO,
-			 "REQUEST PROCESSING: Calling nfs3_pathconf handle: %s",
-			 str);
-	}
+        sprint_fhandle3(str, &(arg->arg_pathconf3.object));
+        LogDebug(COMPONENT_NFSPROTO,
+                 "REQUEST PROCESSING: Calling nfs3_pathconf handle: %s",
+                 str);
+    }
 
-	/* to avoid setting it on each error case */
-	res->res_pathconf3.PATHCONF3res_u.resfail.obj_attributes.
-	    attributes_follow = FALSE;
+    /* to avoid setting it on each error case */
+    res->res_pathconf3.PATHCONF3res_u.resfail.obj_attributes.
+        attributes_follow = FALSE;
 
-	/* Convert file handle into a fsal_handle */
-	obj = nfs3_FhandleToCache(&arg->arg_pathconf3.object,
-				    &res->res_pathconf3.status,
-				    &rc);
+    /* Convert file handle into a fsal_handle */
+    obj = nfs3_FhandleToCache(&arg->arg_pathconf3.object,
+                              &res->res_pathconf3.status,
+                              &rc);
 
-	if (obj == NULL) {
-		/* Status and rc have been set by nfs3_FhandleToCache */
-		goto out;
-	}
+    if (obj == NULL)
+    {
+        /* Status and rc have been set by nfs3_FhandleToCache */
+        goto out;
+    }
 
-	res->res_pathconf3.PATHCONF3res_u.resok.linkmax =
-	    exp_hdl->exp_ops.fs_maxlink(exp_hdl);
-	res->res_pathconf3.PATHCONF3res_u.resok.name_max =
-	    exp_hdl->exp_ops.fs_maxnamelen(exp_hdl);
-	res->res_pathconf3.PATHCONF3res_u.resok.no_trunc =
-	    exp_hdl->exp_ops.fs_supports(exp_hdl, fso_no_trunc);
-	res->res_pathconf3.PATHCONF3res_u.resok.chown_restricted =
-	    exp_hdl->exp_ops.fs_supports(exp_hdl, fso_chown_restricted);
-	res->res_pathconf3.PATHCONF3res_u.resok.case_insensitive =
-	    exp_hdl->exp_ops.fs_supports(exp_hdl, fso_case_insensitive);
-	res->res_pathconf3.PATHCONF3res_u.resok.case_preserving =
-	    exp_hdl->exp_ops.fs_supports(exp_hdl, fso_case_preserving);
+    res->res_pathconf3.PATHCONF3res_u.resok.linkmax =
+        exp_hdl->exp_ops.fs_maxlink(exp_hdl);
+    res->res_pathconf3.PATHCONF3res_u.resok.name_max =
+        exp_hdl->exp_ops.fs_maxnamelen(exp_hdl);
+    res->res_pathconf3.PATHCONF3res_u.resok.no_trunc =
+        exp_hdl->exp_ops.fs_supports(exp_hdl, fso_no_trunc);
+    res->res_pathconf3.PATHCONF3res_u.resok.chown_restricted =
+        exp_hdl->exp_ops.fs_supports(exp_hdl, fso_chown_restricted);
+    res->res_pathconf3.PATHCONF3res_u.resok.case_insensitive =
+        exp_hdl->exp_ops.fs_supports(exp_hdl, fso_case_insensitive);
+    res->res_pathconf3.PATHCONF3res_u.resok.case_preserving =
+        exp_hdl->exp_ops.fs_supports(exp_hdl, fso_case_preserving);
 
-	/* Build post op file attributes */
-	nfs_SetPostOpAttr(obj,
-			  &res->res_pathconf3.PATHCONF3res_u.resok.
-			    obj_attributes,
-			  NULL);
+    /* Build post op file attributes */
+    nfs_SetPostOpAttr(obj,
+                      &res->res_pathconf3.PATHCONF3res_u.resok.
+                      obj_attributes,
+                      NULL);
 
- out:
+out:
 
-	if (obj)
-		obj->obj_ops.put_ref(obj);
+    if (obj)
+        obj->obj_ops.put_ref(obj);
 
-	return rc;
-}				/* nfs3_pathconf */
+    return rc;
+} /* nfs3_pathconf */
 
 /**
  * @brief Free the result structure allocated for nfs3_pathconf.
@@ -122,7 +124,7 @@ int nfs3_pathconf(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
  * @param[in,out] res Result structure.
  *
  */
-void nfs3_pathconf_free(nfs_res_t *res)
+void nfs3_pathconf_free(nfs_res_t* res)
 {
-	/* Nothing to do here */
+    /* Nothing to do here */
 }

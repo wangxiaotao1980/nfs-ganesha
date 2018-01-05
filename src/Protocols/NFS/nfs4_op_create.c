@@ -1,4 +1,4 @@
- /*
+/*
   * vim:noexpandtab:shiftwidth=8:tabstop=8:
   *
   * Copyright CEA/DAM/DIF  (2008)
@@ -31,22 +31,22 @@
  * Routines used for managing the NFS4 COMPOUND functions.
  *
  */
-#include "config.h"
+#include "../../include/config.h"
+#include "../../include/log.h"
+#include "../../include/fsal.h"
+#include "../../include/nfs_core.h"
+#include "../../include/nfs_exports.h"
+#include "../../include/nfs_creds.h"
+#include "../../include/nfs_proto_functions.h"
+#include "../../include/nfs_proto_tools.h"
+#include "../../include/nfs_convert.h"
+#include "../../include/nfs_file_handle.h"
+#include "../../include/export_mgr.h"
 #include <stdio.h>
 #include <string.h>
 #include <pthread.h>
 #include <fcntl.h>
-#include <sys/file.h>
-#include "log.h"
-#include "fsal.h"
-#include "nfs_core.h"
-#include "nfs_exports.h"
-#include "nfs_creds.h"
-#include "nfs_proto_functions.h"
-#include "nfs_proto_tools.h"
-#include "nfs_convert.h"
-#include "nfs_file_handle.h"
-#include "export_mgr.h"
+   //#include <sys/file.h>
 
 /**
  * @brief NFS4_OP_CREATE, creates a non-regular entry
@@ -61,244 +61,262 @@
  * @return per RFC5661, p. 363
  */
 
-int nfs4_op_create(struct nfs_argop4 *op, compound_data_t *data,
-		   struct nfs_resop4 *resp)
+int nfs4_op_create(struct nfs_argop4* op, compound_data_t* data,
+                   struct nfs_resop4* resp)
 {
-	CREATE4args * const arg_CREATE4 = &op->nfs_argop4_u.opcreate;
-	CREATE4res * const res_CREATE4 = &resp->nfs_resop4_u.opcreate;
+    CREATE4args* const arg_CREATE4 = &op->nfs_argop4_u.opcreate;
+    CREATE4res* const res_CREATE4 = &resp->nfs_resop4_u.opcreate;
 
-	struct fsal_obj_handle *obj_parent = NULL;
-	struct fsal_obj_handle *obj_new = NULL;
-	struct attrlist sattr;
-	int convrc = 0;
-	char *name = NULL;
-	char *link_content = NULL;
-	struct fsal_export *exp_hdl;
-	fsal_status_t fsal_status;
-	object_file_type_t type;
+    struct fsal_obj_handle* obj_parent = NULL;
+    struct fsal_obj_handle* obj_new = NULL;
+    struct attrlist sattr;
+    int convrc = 0;
+    char* name = NULL;
+    char* link_content = NULL;
+    struct fsal_export* exp_hdl;
+    fsal_status_t fsal_status;
+    object_file_type_t type;
 
-	memset(&sattr, 0, sizeof(sattr));
+    memset(&sattr, 0, sizeof(sattr));
 
-	resp->resop = NFS4_OP_CREATE;
-	res_CREATE4->status = NFS4_OK;
+    resp->resop = NFS4_OP_CREATE;
+    res_CREATE4->status = NFS4_OK;
 
-	/* Do basic checks on a filehandle */
-	res_CREATE4->status = nfs4_sanity_check_FH(data, DIRECTORY, false);
-	if (res_CREATE4->status != NFS4_OK)
-		goto out;
+    /* Do basic checks on a filehandle */
+    res_CREATE4->status = nfs4_sanity_check_FH(data, DIRECTORY, false);
+    if (res_CREATE4->status != NFS4_OK)
+        goto out;
 
-	/* if quota support is active, then we should check is the FSAL allows
-	 * inode creation or not */
-	exp_hdl = op_ctx->fsal_export;
+    /* if quota support is active, then we should check is the FSAL allows
+     * inode creation or not */
+    exp_hdl = op_ctx->fsal_export;
 
-	fsal_status = exp_hdl->exp_ops.check_quota(exp_hdl,
-						op_ctx->ctx_export->fullpath,
-						FSAL_QUOTA_INODES);
+    fsal_status = exp_hdl->exp_ops.check_quota(exp_hdl,
+                                               op_ctx->ctx_export->fullpath,
+                                               FSAL_QUOTA_INODES);
 
-	if (FSAL_IS_ERROR(fsal_status)) {
-		res_CREATE4->status = NFS4ERR_DQUOT;
-		goto out;
-	}
+    if (FSAL_IS_ERROR(fsal_status))
+    {
+        res_CREATE4->status = NFS4ERR_DQUOT;
+        goto out;
+    }
 
-	/* Ask only for supported attributes */
-	if (!nfs4_Fattr_Supported(&arg_CREATE4->createattrs)) {
-		res_CREATE4->status = NFS4ERR_ATTRNOTSUPP;
-		goto out;
-	}
+    /* Ask only for supported attributes */
+    if (!nfs4_Fattr_Supported(&arg_CREATE4->createattrs))
+    {
+        res_CREATE4->status = NFS4ERR_ATTRNOTSUPP;
+        goto out;
+    }
 
-	/* Do not use READ attr, use WRITE attr */
-	if (!nfs4_Fattr_Check_Access
-	    (&arg_CREATE4->createattrs, FATTR4_ATTR_WRITE)) {
-		res_CREATE4->status = NFS4ERR_INVAL;
-		goto out;
-	}
+    /* Do not use READ attr, use WRITE attr */
+    if (!nfs4_Fattr_Check_Access(&arg_CREATE4->createattrs, FATTR4_ATTR_WRITE))
+    {
+        res_CREATE4->status = NFS4ERR_INVAL;
+        goto out;
+    }
 
-	/* This operation is used to create a non-regular file,
-	 * this means: - a symbolic link
-	 *             - a block device file
-	 *             - a character device file
-	 *             - a socket file
-	 *             - a fifo
-	 *             - a directory
-	 *
-	 * You can't use this operation to create a regular file,
-	 * you have to use NFS4_OP_OPEN for this
-	 */
+    /* This operation is used to create a non-regular file,
+     * this means: - a symbolic link
+     *             - a block device file
+     *             - a character device file
+     *             - a socket file
+     *             - a fifo
+     *             - a directory
+     *
+     * You can't use this operation to create a regular file,
+     * you have to use NFS4_OP_OPEN for this
+     */
 
-	/* Validate and convert the UFT8 objname to a regular string */
-	res_CREATE4->status = nfs4_utf8string2dynamic(&arg_CREATE4->objname,
-						      UTF8_SCAN_ALL,
-						      &name);
+     /* Validate and convert the UFT8 objname to a regular string */
+    res_CREATE4->status = nfs4_utf8string2dynamic(&arg_CREATE4->objname,
+                                                  UTF8_SCAN_ALL,
+                                                  &name);
 
-	if (res_CREATE4->status != NFS4_OK)
-		goto out;
+    if (res_CREATE4->status != NFS4_OK)
+        goto out;
 
-	/* Convert current FH into a obj, the current_obj
-	   (assocated with the current FH will be used for this */
-	obj_parent = data->current_obj;
+    /* Convert current FH into a obj, the current_obj
+       (assocated with the current FH will be used for this */
+    obj_parent = data->current_obj;
 
-	/* The currentFH must point to a directory
-	 * (objects are always created within a directory)
-	 */
-	if (data->current_filetype != DIRECTORY) {
-		res_CREATE4->status = NFS4ERR_NOTDIR;
-		goto out;
-	}
+    /* The currentFH must point to a directory
+     * (objects are always created within a directory)
+     */
+    if (data->current_filetype != DIRECTORY)
+    {
+        res_CREATE4->status = NFS4ERR_NOTDIR;
+        goto out;
+    }
 
-	res_CREATE4->CREATE4res_u.resok4.cinfo.before =
-		fsal_get_changeid4(obj_parent);
+    res_CREATE4->CREATE4res_u.resok4.cinfo.before =
+        fsal_get_changeid4(obj_parent);
 
-	/* Convert the incoming fattr4 to a vattr structure,
-	 * if such arguments are supplied
-	 */
-	if (arg_CREATE4->createattrs.attrmask.bitmap4_len != 0) {
-		/* Arguments were supplied, extract them */
-		convrc = nfs4_Fattr_To_FSAL_attr(&sattr,
-						 &arg_CREATE4->createattrs,
-						 data);
+    /* Convert the incoming fattr4 to a vattr structure,
+     * if such arguments are supplied
+     */
+    if (arg_CREATE4->createattrs.attrmask.bitmap4_len != 0)
+    {
+        /* Arguments were supplied, extract them */
+        convrc = nfs4_Fattr_To_FSAL_attr(&sattr,
+                                         &arg_CREATE4->createattrs,
+                                         data);
 
-		if (convrc != NFS4_OK) {
-			res_CREATE4->status = convrc;
-			goto out;
-		}
-	}
+        if (convrc != NFS4_OK)
+        {
+            res_CREATE4->status = convrc;
+            goto out;
+        }
+    }
 
-	/* Create either a symbolic link or a directory */
-	switch (arg_CREATE4->objtype.type) {
-	case NF4LNK:
-		/* Convert the name to link from into a regular string */
-		type = SYMBOLIC_LINK;
-		res_CREATE4->status = nfs4_utf8string2dynamic(
-				&arg_CREATE4->objtype.createtype4_u.linkdata,
-				UTF8_SCAN_SYMLINK,
-				&link_content);
+    /* Create either a symbolic link or a directory */
+    switch (arg_CREATE4->objtype.type)
+    {
+    case NF4LNK:
+        /* Convert the name to link from into a regular string */
+        type = SYMBOLIC_LINK;
+        res_CREATE4->status = nfs4_utf8string2dynamic(
+            &arg_CREATE4->objtype.createtype4_u.linkdata,
+            UTF8_SCAN_SYMLINK,
+            &link_content);
 
-		if (res_CREATE4->status != NFS4_OK)
-			goto out;
-		break;
+        if (res_CREATE4->status != NFS4_OK)
+            goto out;
+        break;
 
-	case NF4DIR:
-		/* Create a new directory */
-		type = DIRECTORY;
-		break;
+    case NF4DIR:
+        /* Create a new directory */
+        type = DIRECTORY;
+        break;
 
-	case NF4SOCK:
-		/* Create a new socket file */
-		type = SOCKET_FILE;
-		break;
+    case NF4SOCK:
+        /* Create a new socket file */
+        type = SOCKET_FILE;
+        break;
 
-	case NF4FIFO:
-		/* Create a new socket file */
-		type = FIFO_FILE;
-		break;
+    case NF4FIFO:
+        /* Create a new socket file */
+        type = FIFO_FILE;
+        break;
 
-	case NF4CHR:
-		/* Create a new socket file */
-		type = CHARACTER_FILE;
-		sattr.rawdev.major =
-		    arg_CREATE4->objtype.createtype4_u.devdata.specdata1;
-		sattr.rawdev.minor =
-		    arg_CREATE4->objtype.createtype4_u.devdata.specdata2;
-		sattr.valid_mask |= ATTR_RAWDEV;
-		break;
+    case NF4CHR:
+        /* Create a new socket file */
+        type = CHARACTER_FILE;
+        sattr.rawdev.major =
+            arg_CREATE4->objtype.createtype4_u.devdata.specdata1;
+        sattr.rawdev.minor =
+            arg_CREATE4->objtype.createtype4_u.devdata.specdata2;
+        sattr.valid_mask |= ATTR_RAWDEV;
+        break;
 
-	case NF4BLK:
-		/* Create a new socket file */
-		type = BLOCK_FILE;
-		sattr.rawdev.major =
-		    arg_CREATE4->objtype.createtype4_u.devdata.specdata1;
-		sattr.rawdev.minor =
-		    arg_CREATE4->objtype.createtype4_u.devdata.specdata2;
-		sattr.valid_mask |= ATTR_RAWDEV;
-		break;
+    case NF4BLK:
+        /* Create a new socket file */
+        type = BLOCK_FILE;
+        sattr.rawdev.major =
+            arg_CREATE4->objtype.createtype4_u.devdata.specdata1;
+        sattr.rawdev.minor =
+            arg_CREATE4->objtype.createtype4_u.devdata.specdata2;
+        sattr.valid_mask |= ATTR_RAWDEV;
+        break;
 
-	default:
-		/* Should never happen, but return NFS4ERR_BADTYPE
-		 *in this case
-		 */
-		res_CREATE4->status = NFS4ERR_BADTYPE;
-		goto out;
-	}			/* switch( arg_CREATE4.objtype.type ) */
+    default:
+        /* Should never happen, but return NFS4ERR_BADTYPE
+         *in this case
+         */
+        res_CREATE4->status = NFS4ERR_BADTYPE;
+        goto out;
+    } /* switch( arg_CREATE4.objtype.type ) */
 
-	if (!(sattr.valid_mask & ATTR_MODE)) {
-		/* Make sure mode is set. */
-		if (type == DIRECTORY)
-			sattr.mode = 0700;
-		else
-			sattr.mode = 0600;
-		sattr.valid_mask |= ATTR_MODE;
-	}
+    if (!(sattr.valid_mask & ATTR_MODE))
+    {
+        /* Make sure mode is set. */
+        if (type == DIRECTORY)
+            sattr.mode = 0700;
+        else
+            sattr.mode = 0600;
+        sattr.valid_mask |= ATTR_MODE;
+    }
 
-	fsal_status = fsal_create(obj_parent, name, type, &sattr, link_content,
-				  &obj_new, NULL);
+    fsal_status = fsal_create(obj_parent,
+                              name,
+                              type,
+                              &sattr,
+                              link_content,
+                              &obj_new,
+                              NULL);
 
-	/* Release the attributes (may release an inherited ACL) */
-	fsal_release_attrs(&sattr);
+    /* Release the attributes (may release an inherited ACL) */
+    fsal_release_attrs(&sattr);
 
-	if (FSAL_IS_ERROR(fsal_status)) {
-		res_CREATE4->status = nfs4_Errno_status(fsal_status);
-		goto out;
-	}
+    if (FSAL_IS_ERROR(fsal_status))
+    {
+        res_CREATE4->status = nfs4_Errno_status(fsal_status);
+        goto out;
+    }
 
-	/* Building the new file handle to replace the current FH */
-	if (!nfs4_FSALToFhandle(false, &data->currentFH, obj_new,
-					op_ctx->ctx_export)) {
-		res_CREATE4->status = NFS4ERR_SERVERFAULT;
-		goto out;
-	}
+    /* Building the new file handle to replace the current FH */
+    if (!nfs4_FSALToFhandle(false,
+        &data->currentFH,
+        obj_new,
+        op_ctx->ctx_export))
+    {
+        res_CREATE4->status = NFS4ERR_SERVERFAULT;
+        goto out;
+    }
 
-	/* Mark current_stateid as invalid */
-	data->current_stateid_valid = false;
+    /* Mark current_stateid as invalid */
+    data->current_stateid_valid = false;
 
-	/* Set the mode if requested */
-	/* Use the same fattr mask for reply, if one attribute was not
-	   settable, NFS4ERR_ATTRNOTSUPP was replyied */
-	res_CREATE4->CREATE4res_u.resok4.attrset.bitmap4_len =
-	    arg_CREATE4->createattrs.attrmask.bitmap4_len;
+    /* Set the mode if requested */
+    /* Use the same fattr mask for reply, if one attribute was not
+       settable, NFS4ERR_ATTRNOTSUPP was replyied */
+    res_CREATE4->CREATE4res_u.resok4.attrset.bitmap4_len =
+        arg_CREATE4->createattrs.attrmask.bitmap4_len;
 
-	if (arg_CREATE4->createattrs.attrmask.bitmap4_len != 0) {
-		/* copy over bitmap */
-		res_CREATE4->CREATE4res_u.resok4.attrset =
-		    arg_CREATE4->createattrs.attrmask;
-	}
+    if (arg_CREATE4->createattrs.attrmask.bitmap4_len != 0)
+    {
+        /* copy over bitmap */
+        res_CREATE4->CREATE4res_u.resok4.attrset =
+            arg_CREATE4->createattrs.attrmask;
+    }
 
-	memset(&res_CREATE4->CREATE4res_u.resok4.cinfo.after,
-	       0,
-	       sizeof(changeid4));
+    memset(&res_CREATE4->CREATE4res_u.resok4.cinfo.after,
+           0,
+           sizeof(changeid4));
 
-	res_CREATE4->CREATE4res_u.resok4.cinfo.after =
-		fsal_get_changeid4(obj_parent);
+    res_CREATE4->CREATE4res_u.resok4.cinfo.after =
+        fsal_get_changeid4(obj_parent);
 
-	/* Operation is supposed to be atomic .... */
-	res_CREATE4->CREATE4res_u.resok4.cinfo.atomic = FALSE;
+    /* Operation is supposed to be atomic .... */
+    res_CREATE4->CREATE4res_u.resok4.cinfo.atomic = FALSE;
 
-	LogFullDebug(COMPONENT_NFS_V4,
-		     "CREATE CINFO before = %" PRIu64 "  after = %" PRIu64
-		     "  atomic = %d",
-		     res_CREATE4->CREATE4res_u.resok4.cinfo.before,
-		     res_CREATE4->CREATE4res_u.resok4.cinfo.after,
-		     res_CREATE4->CREATE4res_u.resok4.cinfo.atomic);
+    LogFullDebug(COMPONENT_NFS_V4,
+                 "CREATE CINFO before = %" PRIu64 "  after = %" PRIu64
+                 "  atomic = %d",
+                 res_CREATE4->CREATE4res_u.resok4.cinfo.before,
+                 res_CREATE4->CREATE4res_u.resok4.cinfo.after,
+                 res_CREATE4->CREATE4res_u.resok4.cinfo.atomic);
 
-	/* @todo : BUGAZOMEU: fair ele free dans cette fonction */
+    /* @todo : BUGAZOMEU: fair ele free dans cette fonction */
 
-	/* Keep the vnode entry for the file in the compound data */
-	set_current_entry(data, obj_new);
+    /* Keep the vnode entry for the file in the compound data */
+    set_current_entry(data, obj_new);
 
-	/* If you reach this point, then no error occured */
-	res_CREATE4->status = NFS4_OK;
+    /* If you reach this point, then no error occured */
+    res_CREATE4->status = NFS4_OK;
 
- out:
+out:
 
-	if (obj_new) {
-		/* Put our ref */
-		obj_new->obj_ops.put_ref(obj_new);
-	}
+    if (obj_new)
+    {
+        /* Put our ref */
+        obj_new->obj_ops.put_ref(obj_new);
+    }
 
-	gsh_free(name);
-	gsh_free(link_content);
+    gsh_free(name);
+    gsh_free(link_content);
 
-	return res_CREATE4->status;
-}				/* nfs4_op_create */
+    return res_CREATE4->status;
+} /* nfs4_op_create */
 
 /**
  * @brief Free memory allocated for CREATE result
@@ -308,7 +326,7 @@ int nfs4_op_create(struct nfs_argop4 *op, compound_data_t *data,
  *
  * @param[in,out] resp nfs4_op results
  */
-void nfs4_op_create_Free(nfs_resop4 *resp)
+void nfs4_op_create_Free(nfs_resop4* resp)
 {
-	/* Nothing to be done */
+    /* Nothing to be done */
 }

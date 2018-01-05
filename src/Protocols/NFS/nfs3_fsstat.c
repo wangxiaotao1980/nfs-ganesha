@@ -28,23 +28,23 @@
  * @file  nfs3_fsstat.c
  * @brief Routines used for managing the NFS4 COMPOUND functions.
  */
-#include "config.h"
+#include "../../include/config.h"
+#include "../../include/hashtable.h"
+#include "../../include/log.h"
+#include "../../include/gsh_rpc.h"
+#include "../../include/nfs23.h"
+#include "../../include/nfs4.h"
+#include "../../include/mount.h"
+#include "../../include/nfs_core.h"
+#include "../../include/nfs_exports.h"
+#include "../../include/nfs_proto_functions.h"
+#include "../../include/nfs_convert.h"
+#include "../../include/nfs_proto_tools.h"
 #include <stdio.h>
-#include <string.h>
+  //#include <string.h>
 #include <pthread.h>
-#include <fcntl.h>
+//#include <fcntl.h>
 #include <sys/file.h>		/* for having FNDELAY */
-#include "hashtable.h"
-#include "log.h"
-#include "gsh_rpc.h"
-#include "nfs23.h"
-#include "nfs4.h"
-#include "mount.h"
-#include "nfs_core.h"
-#include "nfs_exports.h"
-#include "nfs_proto_functions.h"
-#include "nfs_convert.h"
-#include "nfs_proto_tools.h"
 
 /**
  *
@@ -62,106 +62,123 @@
  *
  */
 
-int nfs3_fsstat(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
+int nfs3_fsstat(nfs_arg_t* arg, struct svc_req* req, nfs_res_t* res)
 {
-	fsal_dynamicfsinfo_t dynamicinfo;
-	fsal_status_t fsal_status;
-	struct fsal_obj_handle *obj = NULL;
-	int rc = NFS_REQ_OK;
+    fsal_dynamicfsinfo_t dynamicinfo;
+    fsal_status_t fsal_status;
+    struct fsal_obj_handle* obj = NULL;
+    int rc = NFS_REQ_OK;
 
-	if (isDebug(COMPONENT_NFSPROTO)) {
-		char str[LEN_FH_STR];
+    if (isDebug(COMPONENT_NFSPROTO))
+    {
+        char str[LEN_FH_STR];
 
-		nfs_FhandleToStr(req->rq_msg.cb_vers,
-				 &(arg->arg_fsstat3.fsroot),
-				 NULL, str);
-		LogDebug(COMPONENT_NFSPROTO,
-			 "REQUEST PROCESSING: Calling nfs3_fsstat handle: %s",
-			 str);
-	}
+        nfs_FhandleToStr(req->rq_msg.cb_vers,
+                         &(arg->arg_fsstat3.fsroot),
+                         NULL,
+                         str);
+        LogDebug(COMPONENT_NFSPROTO,
+                 "REQUEST PROCESSING: Calling nfs3_fsstat handle: %s",
+                 str);
+    }
 
-	/* to avoid setting it on each error case */
-	res->res_fsstat3.FSSTAT3res_u.resfail.obj_attributes.attributes_follow =
-	    FALSE;
+    /* to avoid setting it on each error case */
+    res->res_fsstat3.FSSTAT3res_u.resfail.obj_attributes.attributes_follow =
+        FALSE;
 
-	obj = nfs3_FhandleToCache(&arg->arg_fsstat3.fsroot,
-				    &res->res_fsstat3.status,
-				    &rc);
+    obj = nfs3_FhandleToCache(&arg->arg_fsstat3.fsroot,
+                              &res->res_fsstat3.status,
+                              &rc);
 
-	if (obj == NULL) {
-		/* Status and rc have been set by nfs3_FhandleToCache */
-		return rc;
-	}
+    if (obj == NULL)
+    {
+        /* Status and rc have been set by nfs3_FhandleToCache */
+        return rc;
+    }
 
-	/* Get statistics and convert from FSAL */
-	fsal_status = fsal_statfs(obj, &dynamicinfo);
+    /* Get statistics and convert from FSAL */
+    fsal_status = fsal_statfs(obj, &dynamicinfo);
 
-	if (FSAL_IS_ERROR(fsal_status)) {
-		/* At this point we met an error */
-		LogFullDebug(COMPONENT_NFSPROTO,
-			     "failed statfs: fsal_status=%s",
-			     fsal_err_txt(fsal_status));
+    if (FSAL_IS_ERROR(fsal_status))
+    {
+        /* At this point we met an error */
+        LogFullDebug(COMPONENT_NFSPROTO,
+                     "failed statfs: fsal_status=%s",
+                     fsal_err_txt(fsal_status));
 
-		if (nfs_RetryableError(fsal_status.major)) {
-			/* Drop retryable errors. */
-			rc = NFS_REQ_DROP;
-		} else {
-			res->res_fsstat3.status =
-						nfs3_Errno_status(fsal_status);
-			rc = NFS_REQ_OK;
-		}
+        if (nfs_RetryableError(fsal_status.major))
+        {
+            /* Drop retryable errors. */
+            rc = NFS_REQ_DROP;
+        }
+        else
+        {
+            res->res_fsstat3.status =
+                nfs3_Errno_status(fsal_status);
+            rc = NFS_REQ_OK;
+        }
 
-		goto out;
-	}
+        goto out;
+    }
 
-	LogFullDebug(COMPONENT_NFSPROTO,
-		     "nfs_Fsstat --> dynamicinfo.total_bytes=%" PRIu64
-		     " dynamicinfo.free_bytes=%" PRIu64
-		     " dynamicinfo.avail_bytes=%" PRIu64,
-		     dynamicinfo.total_bytes, dynamicinfo.free_bytes,
-		     dynamicinfo.avail_bytes);
-	LogFullDebug(COMPONENT_NFSPROTO,
-		     "nfs_Fsstat --> dynamicinfo.total_files=%" PRIu64
-		     " dynamicinfo.free_files=%" PRIu64
-		     " dynamicinfo.avail_files=%" PRIu64,
-		     dynamicinfo.total_files, dynamicinfo.free_files,
-		     dynamicinfo.avail_files);
+    LogFullDebug(COMPONENT_NFSPROTO,
+                 "nfs_Fsstat --> dynamicinfo.total_bytes=%" PRIu64
+                 " dynamicinfo.free_bytes=%" PRIu64
+                 " dynamicinfo.avail_bytes=%" PRIu64,
+                 dynamicinfo.total_bytes, dynamicinfo.free_bytes,
+                 dynamicinfo.avail_bytes)
 
-	nfs_SetPostOpAttr(obj,
-			  &res->res_fsstat3.FSSTAT3res_u.resok.obj_attributes,
-			  NULL);
+        ;
+    LogFullDebug(COMPONENT_NFSPROTO,
+                 "nfs_Fsstat --> dynamicinfo.total_files=%" PRIu64
+                 " dynamicinfo.free_files=%" PRIu64
+                 " dynamicinfo.avail_files=%" PRIu64,
+                 dynamicinfo.total_files, dynamicinfo.free_files,
+                 dynamicinfo.avail_files)
 
-	res->res_fsstat3.FSSTAT3res_u.resok.tbytes = dynamicinfo.total_bytes;
-	res->res_fsstat3.FSSTAT3res_u.resok.fbytes = dynamicinfo.free_bytes;
-	res->res_fsstat3.FSSTAT3res_u.resok.abytes = dynamicinfo.avail_bytes;
-	res->res_fsstat3.FSSTAT3res_u.resok.tfiles = dynamicinfo.total_files;
-	res->res_fsstat3.FSSTAT3res_u.resok.ffiles = dynamicinfo.free_files;
-	res->res_fsstat3.FSSTAT3res_u.resok.afiles = dynamicinfo.avail_files;
-	/* volatile FS */
-	res->res_fsstat3.FSSTAT3res_u.resok.invarsec = 0;
+        ;
 
-	res->res_fsstat3.status = NFS3_OK;
+    nfs_SetPostOpAttr(obj,
+                      &res->res_fsstat3.FSSTAT3res_u.resok.obj_attributes,
+                      NULL);
 
-	LogFullDebug(COMPONENT_NFSPROTO,
-		     "nfs_Fsstat --> tbytes=%llu fbytes=%llu abytes=%llu",
-		     res->res_fsstat3.FSSTAT3res_u.resok.tbytes,
-		     res->res_fsstat3.FSSTAT3res_u.resok.fbytes,
-		     res->res_fsstat3.FSSTAT3res_u.resok.abytes);
+    res->res_fsstat3.FSSTAT3res_u.resok.tbytes = dynamicinfo.total_bytes;
+    res->res_fsstat3.FSSTAT3res_u.resok.fbytes = dynamicinfo.free_bytes;
+    res->res_fsstat3.FSSTAT3res_u.resok.abytes = dynamicinfo.avail_bytes;
+    res->res_fsstat3.FSSTAT3res_u.resok.tfiles = dynamicinfo.total_files;
+    res->res_fsstat3.FSSTAT3res_u.resok.ffiles = dynamicinfo.free_files;
+    res->res_fsstat3.FSSTAT3res_u.resok.afiles = dynamicinfo.avail_files;
+    /* volatile FS */
+    res->res_fsstat3.FSSTAT3res_u.resok.invarsec = 0;
 
-	LogFullDebug(COMPONENT_NFSPROTO,
-		     "nfs_Fsstat --> tfiles=%llu fffiles=%llu afiles=%llu",
-		     res->res_fsstat3.FSSTAT3res_u.resok.tfiles,
-		     res->res_fsstat3.FSSTAT3res_u.resok.ffiles,
-		     res->res_fsstat3.FSSTAT3res_u.resok.afiles);
+    res->res_fsstat3.status = NFS3_OK;
 
-	rc = NFS_REQ_OK;
+    LogFullDebug(COMPONENT_NFSPROTO,
+                 "nfs_Fsstat --> tbytes=%llu fbytes=%llu abytes=%llu",
+                 res->res_fsstat3.FSSTAT3res_u.resok.tbytes,
+                 res->res_fsstat3.FSSTAT3res_u.resok.fbytes,
+                 res->res_fsstat3.FSSTAT3res_u.resok.abytes)
 
- out:
-	/* return references */
-	obj->obj_ops.put_ref(obj);
 
-	return rc;
-}				/* nfs3_fsstat */
+        ;
+
+    LogFullDebug(COMPONENT_NFSPROTO,
+                 "nfs_Fsstat --> tfiles=%llu fffiles=%llu afiles=%llu",
+                 res->res_fsstat3.FSSTAT3res_u.resok.tfiles,
+                 res->res_fsstat3.FSSTAT3res_u.resok.ffiles,
+                 res->res_fsstat3.FSSTAT3res_u.resok.afiles)
+
+
+        ;
+
+    rc = NFS_REQ_OK;
+
+out:
+    /* return references */
+    obj->obj_ops.put_ref(obj);
+
+    return rc;
+} /* nfs3_fsstat */
 
 /**
  * @brief Free the result structure allocated for nfs3_fsstat
@@ -171,7 +188,7 @@ int nfs3_fsstat(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
  * @param[in] res Result structure
  *
  */
-void nfs3_fsstat_free(nfs_res_t *res)
+void nfs3_fsstat_free(nfs_res_t* res)
 {
-	/* Nothing to do here */
+    /* Nothing to do here */
 }

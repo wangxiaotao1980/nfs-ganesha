@@ -30,18 +30,18 @@
  *
  * Routines used for managing the NFS4 COMPOUND functions.
  */
-#include "config.h"
+#include "../../include/config.h"
+#include "../../include/hashtable.h"
+#include "../../include/log.h"
+#include "../../include/fsal.h"
+#include "../../include/nfs_core.h"
+#include "../../include/nfs_exports.h"
+#include "../../include/export_mgr.h"
+#include "../../include/nfs_proto_functions.h"
+#include "../../include/nfs_proto_tools.h"
 #include <stdio.h>
-#include <string.h>
+  //#include <string.h>
 #include <pthread.h>
-#include "hashtable.h"
-#include "log.h"
-#include "fsal.h"
-#include "nfs_core.h"
-#include "nfs_exports.h"
-#include "export_mgr.h"
-#include "nfs_proto_functions.h"
-#include "nfs_proto_tools.h"
 
 /**
  * @brief Implement NFSPROC3_FSINFO
@@ -60,89 +60,94 @@
  * @retval NFS_REQ_FAILED if failed and not retryable
  */
 
-int nfs3_fsinfo(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
+int nfs3_fsinfo(nfs_arg_t* arg, struct svc_req* req, nfs_res_t* res)
 {
-	struct fsal_obj_handle *obj = NULL;
-	int rc = NFS_REQ_OK;
+    struct fsal_obj_handle* obj = NULL;
+    int rc = NFS_REQ_OK;
 
-	if (isDebug(COMPONENT_NFSPROTO)) {
-		char str[LEN_FH_STR];
+    if (isDebug(COMPONENT_NFSPROTO))
+    {
+        char str[LEN_FH_STR];
 
-		sprint_fhandle3(str, &(arg->arg_fsinfo3.fsroot));
-		LogDebug(COMPONENT_NFSPROTO,
-			 "REQUEST PROCESSING: Calling nfs3_fsinfo handle: %s",
-			 str);
-	}
+        sprint_fhandle3(str, &(arg->arg_fsinfo3.fsroot));
+        LogDebug(COMPONENT_NFSPROTO,
+                 "REQUEST PROCESSING: Calling nfs3_fsinfo handle: %s",
+                 str);
+    }
 
-	/* To avoid setting it on each error case */
-	res->res_fsinfo3.FSINFO3res_u.resfail.obj_attributes.attributes_follow =
-	    FALSE;
+    /* To avoid setting it on each error case */
+    res->res_fsinfo3.FSINFO3res_u.resfail.obj_attributes.attributes_follow =
+        FALSE;
 
-	obj = nfs3_FhandleToCache(&arg->arg_fsinfo3.fsroot,
-				    &res->res_fsinfo3.status,
-				    &rc);
+    obj = nfs3_FhandleToCache(&arg->arg_fsinfo3.fsroot,
+                              &res->res_fsinfo3.status,
+                              &rc);
 
-	if (obj == NULL) {
-		/* Status and rc have been set by nfs3_FhandleToCache */
-		goto out;
-	}
+    if (obj == NULL)
+    {
+        /* Status and rc have been set by nfs3_FhandleToCache */
+        goto out;
+    }
 
-	/* New fields were added to nfs_config_t to handle this
-	   value. We use them */
+    /* New fields were added to nfs_config_t to handle this
+       value. We use them */
 
-	FSINFO3resok * const FSINFO_FIELD =
-		&res->res_fsinfo3.FSINFO3res_u.resok;
+    FSINFO3resok* const FSINFO_FIELD =
+        &res->res_fsinfo3.FSINFO3res_u.resok;
 
-	FSINFO_FIELD->rtmax =
-		atomic_fetch_uint64_t(&op_ctx->ctx_export->MaxRead);
-	FSINFO_FIELD->rtpref =
-		atomic_fetch_uint64_t(&op_ctx->ctx_export->PrefRead);
-	/* This field is generally unused, it will be removed in V4 */
-	FSINFO_FIELD->rtmult = DEV_BSIZE;
+    FSINFO_FIELD->rtmax =
+        atomic_fetch_uint64_t(&op_ctx->ctx_export->MaxRead);
+    FSINFO_FIELD->rtpref =
+        atomic_fetch_uint64_t(&op_ctx->ctx_export->PrefRead);
+    /* This field is generally unused, it will be removed in V4 */
+    FSINFO_FIELD->rtmult = DEV_BSIZE;
 
-	FSINFO_FIELD->wtmax =
-		atomic_fetch_uint64_t(&op_ctx->ctx_export->MaxWrite);
-	FSINFO_FIELD->wtpref =
-		atomic_fetch_uint64_t(&op_ctx->ctx_export->PrefWrite);
-	/* This field is generally unused, it will be removed in V4 */
-	FSINFO_FIELD->wtmult = DEV_BSIZE;
+    FSINFO_FIELD->wtmax =
+        atomic_fetch_uint64_t(&op_ctx->ctx_export->MaxWrite);
+    FSINFO_FIELD->wtpref =
+        atomic_fetch_uint64_t(&op_ctx->ctx_export->PrefWrite);
+    /* This field is generally unused, it will be removed in V4 */
+    FSINFO_FIELD->wtmult = DEV_BSIZE;
 
-	FSINFO_FIELD->dtpref =
-		atomic_fetch_uint64_t(&op_ctx->ctx_export->PrefReaddir);
-	FSINFO_FIELD->maxfilesize =
-	    op_ctx->fsal_export->exp_ops.fs_maxfilesize(op_ctx->fsal_export);
-	FSINFO_FIELD->time_delta.tv_sec = 1;
-	FSINFO_FIELD->time_delta.tv_nsec = 0;
+    FSINFO_FIELD->dtpref =
+        atomic_fetch_uint64_t(&op_ctx->ctx_export->PrefReaddir);
+    FSINFO_FIELD->maxfilesize =
+        op_ctx->fsal_export->exp_ops.fs_maxfilesize(op_ctx->fsal_export);
+    FSINFO_FIELD->time_delta.tv_sec = 1;
+    FSINFO_FIELD->time_delta.tv_nsec = 0;
 
-	LogFullDebug(COMPONENT_NFSPROTO,
-		     "rtmax = %d | rtpref = %d | trmult = %d",
-		     FSINFO_FIELD->rtmax, FSINFO_FIELD->rtpref,
-		     FSINFO_FIELD->rtmult);
-	LogFullDebug(COMPONENT_NFSPROTO,
-		     "wtmax = %d | wtpref = %d | wrmult = %d",
-		     FSINFO_FIELD->wtmax, FSINFO_FIELD->wtpref,
-		     FSINFO_FIELD->wtmult);
-	LogFullDebug(COMPONENT_NFSPROTO, "dtpref = %d | maxfilesize = %llu ",
-		     FSINFO_FIELD->dtpref, FSINFO_FIELD->maxfilesize);
+    LogFullDebug(COMPONENT_NFSPROTO,
+                 "rtmax = %d | rtpref = %d | trmult = %d",
+                 FSINFO_FIELD->rtmax, FSINFO_FIELD->rtpref,
+                 FSINFO_FIELD->rtmult)
 
-	/* Allow all kinds of operations to be performed on the server
-	   through NFS v3 */
-	FSINFO_FIELD->properties =
-	    FSF3_LINK | FSF3_SYMLINK | FSF3_HOMOGENEOUS | FSF3_CANSETTIME;
+        ;
+    LogFullDebug(COMPONENT_NFSPROTO,
+                 "wtmax = %d | wtpref = %d | wrmult = %d",
+                 FSINFO_FIELD->wtmax, FSINFO_FIELD->wtpref,
+                 FSINFO_FIELD->wtmult)
+        ;
+    LogFullDebug(COMPONENT_NFSPROTO, "dtpref = %d | maxfilesize = %llu ",
+                 FSINFO_FIELD->dtpref, FSINFO_FIELD->maxfilesize);
 
-	nfs_SetPostOpAttr(obj,
-			  &res->res_fsinfo3.FSINFO3res_u.resok.
-			    obj_attributes,
-			  NULL);
-	res->res_fsinfo3.status = NFS3_OK;
+    /* Allow all kinds of operations to be performed on the server
+       through NFS v3 */
+    FSINFO_FIELD->properties =
+        FSF3_LINK | FSF3_SYMLINK | FSF3_HOMOGENEOUS | FSF3_CANSETTIME;
 
- out:
+    nfs_SetPostOpAttr(obj,
+                      &res->res_fsinfo3.FSINFO3res_u.resok.
+                      obj_attributes,
+                      NULL);
+    res->res_fsinfo3.status = NFS3_OK;
 
-	if (obj)
-		obj->obj_ops.put_ref(obj);
+out:
 
-	return rc;
-}				/* nfs3_fsinfo */
+    if (obj)
+        obj->obj_ops.put_ref(obj);
+
+    return rc;
+} /* nfs3_fsinfo */
 
 /**
  * @brief Free the result structure allocated for nfs3_fsinfo.
@@ -152,7 +157,7 @@ int nfs3_fsinfo(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
  * @param[in,out] res The result structure
  *
  */
-void nfs3_fsinfo_free(nfs_res_t *res)
+void nfs3_fsinfo_free(nfs_res_t* res)
 {
-	/* Nothing to do here */
+    /* Nothing to do here */
 }

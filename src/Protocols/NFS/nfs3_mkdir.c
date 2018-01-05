@@ -28,23 +28,23 @@
  * @file  nfs3_mkdir.c
  * @brief Evrythinhg you need to handle NFSv3 MKDIR
  */
-#include "config.h"
+#include "../../include/config.h"
+#include "../../include/hashtable.h"
+#include "../../include/log.h"
+#include "../../include/fsal.h"
+#include "../../include/nfs_core.h"
+#include "../../include/nfs_exports.h"
+#include "../../include/nfs_creds.h"
+#include "../../include/nfs_proto_functions.h"
+#include "../../include/nfs_convert.h"
+#include "../../include/nfs_file_handle.h"
+#include "../../include/nfs_proto_tools.h"
+#include "../../include/export_mgr.h"
 #include <stdio.h>
 #include <string.h>
 #include <pthread.h>
-#include <fcntl.h>
+  //#include <fcntl.h>
 #include <sys/file.h>		/* for having FNDELAY */
-#include "hashtable.h"
-#include "log.h"
-#include "fsal.h"
-#include "nfs_core.h"
-#include "nfs_exports.h"
-#include "nfs_creds.h"
-#include "nfs_proto_functions.h"
-#include "nfs_convert.h"
-#include "nfs_file_handle.h"
-#include "nfs_proto_tools.h"
-#include "export_mgr.h"
 
 /**
  *
@@ -62,148 +62,163 @@
  *
  */
 
-int nfs3_mkdir(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
+int nfs3_mkdir(nfs_arg_t* arg, struct svc_req* req, nfs_res_t* res)
 {
-	const char *dir_name = arg->arg_mkdir3.where.name;
-	struct fsal_obj_handle *dir_obj = NULL;
-	struct fsal_obj_handle *parent_obj = NULL;
-	pre_op_attr pre_parent = {
-		.attributes_follow = false
-	};
-	fsal_status_t fsal_status = {0, 0};
-	int rc = NFS_REQ_OK;
-	struct attrlist sattr, attrs;
+    const char* dir_name = arg->arg_mkdir3.where.name;
+    struct fsal_obj_handle* dir_obj = NULL;
+    struct fsal_obj_handle* parent_obj = NULL;
+    pre_op_attr pre_parent = {
+        .attributes_follow = false
+    };
+    fsal_status_t fsal_status = { 0, 0 };
+    int rc = NFS_REQ_OK;
+    struct attrlist sattr, attrs;
 
-	/* We have the option of not sending attributes, so set ATTR_RDATTR_ERR.
-	 */
-	fsal_prepare_attrs(&attrs, ATTRS_NFS3 | ATTR_RDATTR_ERR);
+    /* We have the option of not sending attributes, so set ATTR_RDATTR_ERR.
+     */
+    fsal_prepare_attrs(&attrs, ATTRS_NFS3 | ATTR_RDATTR_ERR);
 
-	memset(&sattr, 0, sizeof(sattr));
+    memset(&sattr, 0, sizeof(sattr));
 
-	if (isDebug(COMPONENT_NFSPROTO)) {
-		char str[LEN_FH_STR];
+    if (isDebug(COMPONENT_NFSPROTO))
+    {
+        char str[LEN_FH_STR];
 
-		nfs_FhandleToStr(req->rq_msg.cb_vers,
-				 &(arg->arg_mkdir3.where.dir),
-				 NULL, str);
+        nfs_FhandleToStr(req->rq_msg.cb_vers,
+                         &(arg->arg_mkdir3.where.dir),
+                         NULL,
+                         str);
 
-		LogDebug(COMPONENT_NFSPROTO,
-			 "REQUEST PROCESSING: Calling nfs3_mkdir handle: %s name: %s",
-			 str, dir_name);
-	}
+        LogDebug(COMPONENT_NFSPROTO,
+                 "REQUEST PROCESSING: Calling nfs3_mkdir handle: %s name: %s",
+                 str, dir_name);
+    }
 
-	/* to avoid setting it on each error case */
-	res->res_mkdir3.MKDIR3res_u.resfail.dir_wcc.before.attributes_follow =
-	    FALSE;
-	res->res_mkdir3.MKDIR3res_u.resfail.dir_wcc.after.attributes_follow =
-	    FALSE;
+    /* to avoid setting it on each error case */
+    res->res_mkdir3.MKDIR3res_u.resfail.dir_wcc.before.attributes_follow =
+        FALSE;
+    res->res_mkdir3.MKDIR3res_u.resfail.dir_wcc.after.attributes_follow =
+        FALSE;
 
-	parent_obj = nfs3_FhandleToCache(&arg->arg_mkdir3.where.dir,
-					   &res->res_mkdir3.status,
-					   &rc);
+    parent_obj = nfs3_FhandleToCache(&arg->arg_mkdir3.where.dir,
+                                     &res->res_mkdir3.status,
+                                     &rc);
 
-	if (parent_obj == NULL) {
-		/* Status and rc have been set by nfs3_FhandleToCache */
-		goto out;
-	}
+    if (parent_obj == NULL)
+    {
+        /* Status and rc have been set by nfs3_FhandleToCache */
+        goto out;
+    }
 
-	/* Sanity checks */
-	if (parent_obj->type != DIRECTORY) {
-		res->res_mkdir3.status = NFS3ERR_NOTDIR;
+    /* Sanity checks */
+    if (parent_obj->type != DIRECTORY)
+    {
+        res->res_mkdir3.status = NFS3ERR_NOTDIR;
 
-		rc = NFS_REQ_OK;
-		goto out;
-	}
+        rc = NFS_REQ_OK;
+        goto out;
+    }
 
-	/* if quota support is active, then we should check is the
-	   FSAL allows inode creation or not */
-	fsal_status =
-	    op_ctx->fsal_export->exp_ops.check_quota(op_ctx->fsal_export,
-						   op_ctx->ctx_export->fullpath,
-						   FSAL_QUOTA_INODES);
+    /* if quota support is active, then we should check is the
+       FSAL allows inode creation or not */
+    fsal_status =
+        op_ctx->fsal_export->exp_ops.check_quota(op_ctx->fsal_export,
+                                                 op_ctx->ctx_export->fullpath,
+                                                 FSAL_QUOTA_INODES);
 
-	if (FSAL_IS_ERROR(fsal_status)) {
-		res->res_mkdir3.status = NFS3ERR_DQUOT;
+    if (FSAL_IS_ERROR(fsal_status))
+    {
+        res->res_mkdir3.status = NFS3ERR_DQUOT;
 
-		rc = NFS_REQ_OK;
-		goto out;
-	}
+        rc = NFS_REQ_OK;
+        goto out;
+    }
 
-	if (dir_name == NULL || *dir_name == '\0') {
-		fsal_status = fsalstat(ERR_FSAL_INVAL, 0);
-		goto out_fail;
-	}
+    if (dir_name == NULL || *dir_name == '\0')
+    {
+        fsal_status = fsalstat(ERR_FSAL_INVAL, 0);
+        goto out_fail;
+    }
 
-	if (nfs3_Sattr_To_FSALattr(&sattr, &arg->arg_mkdir3.attributes) == 0) {
-		fsal_status = fsalstat(ERR_FSAL_INVAL, 0);
-		goto out_fail;
-	}
+    if (nfs3_Sattr_To_FSALattr(&sattr, &arg->arg_mkdir3.attributes) == 0)
+    {
+        fsal_status = fsalstat(ERR_FSAL_INVAL, 0);
+        goto out_fail;
+    }
 
-	squash_setattr(&sattr);
+    squash_setattr(&sattr);
 
-	if (!(sattr.valid_mask & ATTR_MODE)) {
-		/* Make sure mode is set. */
-		sattr.mode = 0;
-		sattr.valid_mask |= ATTR_MODE;
-	}
+    if (!(sattr.valid_mask & ATTR_MODE))
+    {
+        /* Make sure mode is set. */
+        sattr.mode = 0;
+        sattr.valid_mask |= ATTR_MODE;
+    }
 
-	/* Try to create the directory */
-	fsal_status = fsal_create(parent_obj, dir_name, DIRECTORY, &sattr, NULL,
-				  &dir_obj, &attrs);
+    /* Try to create the directory */
+    fsal_status = fsal_create(parent_obj,
+                              dir_name,
+                              DIRECTORY,
+                              &sattr,
+                              NULL,
+                              &dir_obj,
+                              &attrs);
 
-	/* Release the attributes (may release an inherited ACL) */
-	fsal_release_attrs(&sattr);
+    /* Release the attributes (may release an inherited ACL) */
+    fsal_release_attrs(&sattr);
 
-	if (FSAL_IS_ERROR(fsal_status))
-		goto out_fail;
+    if (FSAL_IS_ERROR(fsal_status))
+        goto out_fail;
 
-	MKDIR3resok *d3ok = &res->res_mkdir3.MKDIR3res_u.resok;
+    MKDIR3resok* d3ok = &res->res_mkdir3.MKDIR3res_u.resok;
 
-	/* Build file handle */
-	if (!nfs3_FSALToFhandle(true,
-				&d3ok->obj.post_op_fh3_u.handle,
-				dir_obj,
-				op_ctx->ctx_export)) {
-		res->res_mkdir3.status = NFS3ERR_BADHANDLE;
-		rc = NFS_REQ_OK;
-		goto out;
-	}
+    /* Build file handle */
+    if (!nfs3_FSALToFhandle(true,
+        &d3ok->obj.post_op_fh3_u.handle,
+        dir_obj,
+        op_ctx->ctx_export))
+    {
+        res->res_mkdir3.status = NFS3ERR_BADHANDLE;
+        rc = NFS_REQ_OK;
+        goto out;
+    }
 
-	/* Set Post Op Fh3 structure */
-	d3ok->obj.handle_follows = true;
+    /* Set Post Op Fh3 structure */
+    d3ok->obj.handle_follows = true;
 
-	/* Build entry attributes */
-	nfs_SetPostOpAttr(dir_obj, &d3ok->obj_attributes, &attrs);
+    /* Build entry attributes */
+    nfs_SetPostOpAttr(dir_obj, &d3ok->obj_attributes, &attrs);
 
-	/* Build Weak Cache Coherency data */
-	nfs_SetWccData(&pre_parent, parent_obj, &d3ok->dir_wcc);
+    /* Build Weak Cache Coherency data */
+    nfs_SetWccData(&pre_parent, parent_obj, &d3ok->dir_wcc);
 
-	res->res_mkdir3.status = NFS3_OK;
-	rc = NFS_REQ_OK;
+    res->res_mkdir3.status = NFS3_OK;
+    rc = NFS_REQ_OK;
 
-	goto out;
+    goto out;
 
- out_fail:
-	res->res_mkdir3.status = nfs3_Errno_status(fsal_status);
-	nfs_SetWccData(&pre_parent, parent_obj,
-		       &res->res_mkdir3.MKDIR3res_u.resfail.dir_wcc);
+out_fail:
+    res->res_mkdir3.status = nfs3_Errno_status(fsal_status);
+    nfs_SetWccData(&pre_parent,
+                   parent_obj,
+                   &res->res_mkdir3.MKDIR3res_u.resfail.dir_wcc);
 
-	if (nfs_RetryableError(fsal_status.major))
-		rc = NFS_REQ_DROP;
+    if (nfs_RetryableError(fsal_status.major))
+        rc = NFS_REQ_DROP;
 
- out:
+out:
 
-	/* Release the attributes. */
-	fsal_release_attrs(&attrs);
+    /* Release the attributes. */
+    fsal_release_attrs(&attrs);
 
-	/* return references */
-	if (dir_obj)
-		dir_obj->obj_ops.put_ref(dir_obj);
+    /* return references */
+    if (dir_obj)
+        dir_obj->obj_ops.put_ref(dir_obj);
 
-	if (parent_obj)
-		parent_obj->obj_ops.put_ref(parent_obj);
+    if (parent_obj)
+        parent_obj->obj_ops.put_ref(parent_obj);
 
-	return rc;
+    return rc;
 }
 
 /**
@@ -214,11 +229,12 @@ int nfs3_mkdir(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
  * @param[in,out] res Result structure
  *
  */
-void nfs3_mkdir_free(nfs_res_t *res)
+void nfs3_mkdir_free(nfs_res_t* res)
 {
-	if ((res->res_mkdir3.status == NFS3_OK)
-	    && (res->res_mkdir3.MKDIR3res_u.resok.obj.handle_follows)) {
-		gsh_free(res->res_mkdir3.MKDIR3res_u.resok.obj.post_op_fh3_u.
-			 handle.data.data_val);
-	}
+    if ((res->res_mkdir3.status == NFS3_OK)
+        && (res->res_mkdir3.MKDIR3res_u.resok.obj.handle_follows))
+    {
+        gsh_free(res->res_mkdir3.MKDIR3res_u.resok.obj.post_op_fh3_u.
+                 handle.data.data_val);
+    }
 }

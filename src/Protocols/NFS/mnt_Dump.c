@@ -29,12 +29,12 @@
  * brief   MOUNTPROC_Dump for Mount protocol v1 and v3.
  *
  */
-#include "config.h"
-#include "log.h"
-#include "nfs_core.h"
-#include "nfs_exports.h"
-#include "mount.h"
-#include "nfs_proto_functions.h"
+#include "../../include/config.h"
+#include "../../include/log.h"
+#include "../../include/nfs_core.h"
+#include "../../include/nfs_exports.h"
+//#include "../../include/mount.h"
+#include "../../include/nfs_proto_functions.h"
 
 /**
  * @brief The Mount proc Dump function, for all versions.
@@ -45,16 +45,16 @@
  *
  */
 
-int mnt_Dump(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
+int mnt_Dump(nfs_arg_t* arg, struct svc_req* req, nfs_res_t* res)
 {
-	LogDebug(COMPONENT_NFSPROTO, "REQUEST PROCESSING: Calling mnt_Dump");
+    LogDebug(COMPONENT_NFSPROTO, "REQUEST PROCESSING: Calling mnt_Dump");
 
-	/* Ganesha does not support the mount list so this is a NOOP */
+    /* Ganesha does not support the mount list so this is a NOOP */
 
-	res->res_dump = NULL;
+    res->res_dump = NULL;
 
-	return NFS_REQ_OK;
-}				/* mnt_Null */
+    return NFS_REQ_OK;
+} /* mnt_Null */
 
 /**
  * mnt_Dump_Free: Frees the result structure allocated for mnt_Dump.
@@ -64,7 +64,7 @@ int mnt_Dump(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
  * @param res        [INOUT]   Pointer to the result structure.
  *
  */
-void mnt_Dump_Free(nfs_res_t *res)
+void mnt_Dump_Free(nfs_res_t* res)
 {
-	/* Nothing to do */
+    /* Nothing to do */
 }

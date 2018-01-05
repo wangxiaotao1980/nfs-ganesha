@@ -30,22 +30,22 @@
  * nfs3_commit.c : Routines used for managing the NFS4 COMPOUND functions.
  *
  */
-#include "config.h"
+#include "../../include/config.h"
+#include "../../include/hashtable.h"
+#include "../../include/log.h"
+#include "../../include/nfs23.h"
+#include "../../include/nfs4.h"
+#include "../../include/mount.h"
+#include "../../include/nfs_core.h"
+#include "../../include/nfs_exports.h"
+#include "../../include/nfs_proto_functions.h"
+#include "../../include/nfs_proto_tools.h"
+#include "../../include/nfs_convert.h"
 #include <stdio.h>
 #include <string.h>
 #include <pthread.h>
-#include <fcntl.h>
+  //#include <fcntl.h>
 #include <sys/file.h>		/* for having FNDELAY */
-#include "hashtable.h"
-#include "log.h"
-#include "nfs23.h"
-#include "nfs4.h"
-#include "mount.h"
-#include "nfs_core.h"
-#include "nfs_exports.h"
-#include "nfs_proto_functions.h"
-#include "nfs_proto_tools.h"
-#include "nfs_convert.h"
 
 /**
  * @brief Implements NFSPROC3_COMMIT
@@ -62,65 +62,72 @@
  *
  */
 
-int nfs3_commit(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
+int nfs3_commit(nfs_arg_t* arg, struct svc_req* req, nfs_res_t* res)
 {
-	fsal_status_t fsal_status;
-	struct fsal_obj_handle *obj = NULL;
-	int rc = NFS_REQ_OK;
+    fsal_status_t fsal_status;
+    struct fsal_obj_handle* obj = NULL;
+    int rc = NFS_REQ_OK;
 
-	if (isDebug(COMPONENT_NFSPROTO)) {
-		char str[LEN_FH_STR];
+    if (isDebug(COMPONENT_NFSPROTO))
+    {
+        char str[LEN_FH_STR];
 
-		sprint_fhandle3(str, &(arg->arg_commit3.file));
-		LogDebug(COMPONENT_NFSPROTO,
-			 "REQUEST PROCESSING: Calling nfs3_commit handle: %s",
-			 str);
-	}
+        sprint_fhandle3(str, &(arg->arg_commit3.file));
+        LogDebug(COMPONENT_NFSPROTO,
+                 "REQUEST PROCESSING: Calling nfs3_commit handle: %s",
+                 str);
+    }
 
-	/* To avoid setting it on each error case */
-	res->res_commit3.COMMIT3res_u.resfail.file_wcc.before.
-	    attributes_follow = FALSE;
-	res->res_commit3.COMMIT3res_u.resfail.file_wcc.after.attributes_follow =
-	    FALSE;
+    /* To avoid setting it on each error case */
+    res->res_commit3.COMMIT3res_u.resfail.file_wcc.before.
+        attributes_follow = FALSE;
+    res->res_commit3.COMMIT3res_u.resfail.file_wcc.after.attributes_follow =
+        FALSE;
 
-	obj = nfs3_FhandleToCache(&arg->arg_commit3.file,
-				    &res->res_commit3.status,
-				    &rc);
+    obj = nfs3_FhandleToCache(&arg->arg_commit3.file,
+                              &res->res_commit3.status,
+                              &rc);
 
-	if (obj == NULL) {
-		/* Status and rc have been set by nfs3_FhandleToCache */
-		goto out;
-	}
+    if (obj == NULL)
+    {
+        /* Status and rc have been set by nfs3_FhandleToCache */
+        goto out;
+    }
 
-	fsal_status = fsal_commit(obj, arg->arg_commit3.offset,
-				  arg->arg_commit3.count);
+    fsal_status = fsal_commit(obj,
+                              arg->arg_commit3.offset,
+                              arg->arg_commit3.count);
 
-	if (FSAL_IS_ERROR(fsal_status)) {
-		res->res_commit3.status = nfs3_Errno_status(fsal_status);
+    if (FSAL_IS_ERROR(fsal_status))
+    {
+        res->res_commit3.status = nfs3_Errno_status(fsal_status);
 
-		nfs_SetWccData(NULL, obj,
-			       &(res->res_commit3.COMMIT3res_u.resfail.
-				 file_wcc));
+        nfs_SetWccData(NULL,
+                       obj,
+                       &(res->res_commit3.COMMIT3res_u.resfail.
+                       file_wcc));
 
-		rc = NFS_REQ_OK;
-		goto out;
-	}
+        rc = NFS_REQ_OK;
+        goto out;
+    }
 
-	nfs_SetWccData(NULL, obj,
-		       &(res->res_commit3.COMMIT3res_u.resok.file_wcc));
+    nfs_SetWccData(NULL,
+                   obj,
+                   &(res->res_commit3.COMMIT3res_u.resok.file_wcc));
 
-	/* Set the write verifier */
-	memcpy(res->res_commit3.COMMIT3res_u.resok.verf, NFS3_write_verifier,
-	       sizeof(writeverf3));
-	res->res_commit3.status = NFS3_OK;
+    /* Set the write verifier */
+    memcpy(res->res_commit3.COMMIT3res_u.resok.verf,
+           NFS3_write_verifier,
+           sizeof(writeverf3));
+    res->res_commit3.status = NFS3_OK;
 
- out:
+out:
 
-	if (obj)
-		obj->obj_ops.put_ref(obj);
+    if (obj)
+        obj->obj_ops.put_ref(obj);
 
-	return rc;
-}				/* nfs3_commit */
+    return rc;
+} /* nfs3_commit */
 
 /**
  * @brief Free the result structure allocated for nfs3_commit.
@@ -130,7 +137,7 @@ int nfs3_commit(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
  * @param[in,out] res Result structure
  *
  */
-void nfs3_commit_free(nfs_res_t *res)
+void nfs3_commit_free(nfs_res_t* res)
 {
-	/* Nothing to do here */
+    /* Nothing to do here */
 }

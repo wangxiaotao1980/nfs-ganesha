@@ -24,143 +24,153 @@
  * ---------------------------------------
  */
 
-/**
- * file    mnt_Export.c
- * brief   MOUNTPROC_EXPORT for Mount protocol v1 and v3.
- *
- * mnt_Null.c : MOUNTPROC_EXPORT in V1, V3.
- *
- * Exporting client hosts and networks OK.
- *
- */
-#include "config.h"
-#include <arpa/inet.h>
-#include "log.h"
-#include "nfs_core.h"
-#include "nfs_exports.h"
-#include "fsal.h"
-#include "nfs_proto_functions.h"
-#include "export_mgr.h"
+ /**
+  * file    mnt_Export.c
+  * brief   MOUNTPROC_EXPORT for Mount protocol v1 and v3.
+  *
+  * mnt_Null.c : MOUNTPROC_EXPORT in V1, V3.
+  *
+  * Exporting client hosts and networks OK.
+  *
+  */
+#include "../../include/config.h"
+#include "../../include/log.h"
+#include "../../include/nfs_core.h"
+#include "../../include/nfs_exports.h"
+  //#include "../../include/fsal.h"
+#include "../../include/nfs_proto_functions.h"
+#include "../../include/export_mgr.h"
 
-struct proc_state {
-	exports head;
-	exports tail;
-	int retval;
+#include <arpa/inet.h>
+
+
+struct proc_state
+{
+    exports head;
+    exports tail;
+    int retval;
 };
 
-static bool proc_export(struct gsh_export *export, void *arg)
+static bool proc_export(struct gsh_export* export, void* arg)
 {
-	struct proc_state *state = arg;
-	struct exportnode *new_expnode;
-	struct glist_head *glist_item;
-	exportlist_client_entry_t *client;
-	struct groupnode *group, *grp_tail = NULL;
-	const char *grp_name;
-	char addr_buf[INET6_ADDRSTRLEN + 1];
-	uint32_t naddr;
+    struct proc_state* state = arg;
+    struct exportnode* new_expnode;
+    struct glist_head* glist_item;
+    exportlist_client_entry_t* client;
+    struct groupnode* group, *grp_tail = NULL;
+    const char* grp_name;
+    char addr_buf[INET6_ADDRSTRLEN + 1];
+    uint32_t naddr;
 
-	state->retval = 0;
+    state->retval = 0;
 
-	/* If client does not have any access to the export,
-	 * don't add it to the list
-	 */
-	op_ctx->ctx_export = export;
-	op_ctx->fsal_export = export->fsal_export;
-	export_check_access();
-	if (!(op_ctx->export_perms->options & EXPORT_OPTION_ACCESS_MASK)) {
-		LogFullDebug(COMPONENT_NFSPROTO,
-			     "Client is not allowed to access Export_Id %d %s",
-			     export->export_id, export_path(export));
+    /* If client does not have any access to the export,
+     * don't add it to the list
+     */
+    op_ctx->ctx_export = export;
+    op_ctx->fsal_export = export->fsal_export;
+    export_check_access();
+    if (!(op_ctx->export_perms->options & EXPORT_OPTION_ACCESS_MASK))
+    {
+        LogFullDebug(COMPONENT_NFSPROTO,
+                     "Client is not allowed to access Export_Id %d %s",
+                     export->export_id, export_path(export));
 
-		return true;
-	}
+        return true;
+    }
 
-	if (!(op_ctx->export_perms->options & EXPORT_OPTION_NFSV3)) {
-		LogFullDebug(COMPONENT_NFSPROTO,
-			     "Not exported for NFSv3, Export_Id %d %s",
-			     export->export_id, export_path(export));
+    if (!(op_ctx->export_perms->options & EXPORT_OPTION_NFSV3))
+    {
+        LogFullDebug(COMPONENT_NFSPROTO,
+                     "Not exported for NFSv3, Export_Id %d %s",
+                     export->export_id, export_path(export));
 
-		return true;
-	}
+        return true;
+    }
 
-	new_expnode = gsh_calloc(1, sizeof(struct exportnode));
-	new_expnode->ex_dir = gsh_strdup(export_path(export));
+    new_expnode = gsh_calloc(1, sizeof(struct exportnode));
+    new_expnode->ex_dir = gsh_strdup(export_path(export));
 
-	PTHREAD_RWLOCK_rdlock(&op_ctx->ctx_export->lock);
+    PTHREAD_RWLOCK_rdlock(&op_ctx->ctx_export->lock);
 
-	glist_for_each(glist_item, &export->clients) {
-		client =
-		    glist_entry(glist_item, exportlist_client_entry_t,
-				cle_list);
-		group = gsh_calloc(1, sizeof(struct groupnode));
+    glist_for_each(glist_item, &export->clients)
+    {
+        client =
+            glist_entry(glist_item, exportlist_client_entry_t,
+                        cle_list);
+        group = gsh_calloc(1, sizeof(struct groupnode));
 
-		if (grp_tail == NULL)
-			new_expnode->ex_groups = group;
-		else
-			grp_tail->gr_next = group;
+        if (grp_tail == NULL)
+            new_expnode->ex_groups = group;
+        else
+            grp_tail->gr_next = group;
 
-		grp_tail = group;
-		switch (client->type) {
-		case HOSTIF_CLIENT:
-			grp_name =
-			    inet_ntop(AF_INET,
-				      &client->client.hostif.clientaddr,
-				      addr_buf, INET6_ADDRSTRLEN);
-			if (grp_name == NULL) {
-				state->retval = errno;
-				grp_name = "Invalid Host Address";
-			}
-			break;
-		case NETWORK_CLIENT:
-			naddr = htonl(client->client.network.netaddr);
-			grp_name =
-			    inet_ntop(AF_INET, &naddr,
-				      addr_buf, INET6_ADDRSTRLEN);
-			if (grp_name == NULL) {
-				state->retval = errno;
-				grp_name = "Invalid Network Address";
-			}
-			break;
-		case NETGROUP_CLIENT:
-			grp_name = client->client.netgroup.netgroupname;
-			break;
-		case GSSPRINCIPAL_CLIENT:
-			grp_name = client->client.gssprinc.princname;
-			break;
-		case MATCH_ANY_CLIENT:
-			grp_name = "*";
-			break;
-		case WILDCARDHOST_CLIENT:
-			grp_name = client->client.wildcard.wildcard;
-			break;
-		case HOSTIF_CLIENT_V6:
-			grp_name =
-			    inet_ntop(AF_INET6,
-				      &client->client.hostif.clientaddr6,
-				      addr_buf, INET6_ADDRSTRLEN);
-			if (grp_name == NULL) {
-				state->retval = errno;
-				grp_name = "Invalid Host Address";
-			}
-			break;
-		default:
-			grp_name = "<unknown>";
-		}
-		LogFullDebug(COMPONENT_NFSPROTO,
-			     "Export %s client %s",
-			     export_path(export), grp_name);
-		group->gr_name = gsh_strdup(grp_name);
-	}
+        grp_tail = group;
+        switch (client->type)
+        {
+            case HOSTIF_CLIENT:
+                grp_name =
+                    inet_ntop(AF_INET,
+                              &client->client.hostif.clientaddr,
+                              addr_buf, INET6_ADDRSTRLEN);
+                if (grp_name == NULL)
+                {
+                    state->retval = errno;
+                    grp_name = "Invalid Host Address";
+                }
+                break;
+            case NETWORK_CLIENT:
+                naddr = htonl(client->client.network.netaddr);
+                grp_name =
+                    inet_ntop(AF_INET, &naddr,
+                              addr_buf, INET6_ADDRSTRLEN);
+                if (grp_name == NULL)
+                {
+                    state->retval = errno;
+                    grp_name = "Invalid Network Address";
+                }
+                break;
+            case NETGROUP_CLIENT:
+                grp_name = client->client.netgroup.netgroupname;
+                break;
+            case GSSPRINCIPAL_CLIENT:
+                grp_name = client->client.gssprinc.princname;
+                break;
+            case MATCH_ANY_CLIENT:
+                grp_name = "*";
+                break;
+            case WILDCARDHOST_CLIENT:
+                grp_name = client->client.wildcard.wildcard;
+                break;
+            case HOSTIF_CLIENT_V6:
+                grp_name =
+                    inet_ntop(AF_INET6,
+                              &client->client.hostif.clientaddr6,
+                              addr_buf, INET6_ADDRSTRLEN);
+                if (grp_name == NULL)
+                {
+                    state->retval = errno;
+                    grp_name = "Invalid Host Address";
+                }
+                break;
+            default:
+                grp_name = "<unknown>";
+        }
+        LogFullDebug(COMPONENT_NFSPROTO,
+                     "Export %s client %s",
+                     export_path(export), grp_name);
+        group->gr_name = gsh_strdup(grp_name);
+    }
 
-	PTHREAD_RWLOCK_unlock(&op_ctx->ctx_export->lock);
+    PTHREAD_RWLOCK_unlock(&op_ctx->ctx_export->lock);
 
-	if (state->head == NULL)
-		state->head = new_expnode;
-	else
-		state->tail->ex_next = new_expnode;
+    if (state->head == NULL)
+        state->head = new_expnode;
+    else
+        state->tail->ex_next = new_expnode;
 
-	state->tail = new_expnode;
-	return true;
+    state->tail = new_expnode;
+    return true;
 }
 
 /**
@@ -174,25 +184,26 @@ static bool proc_export(struct gsh_export *export, void *arg)
  *
  */
 
-int mnt_Export(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
+int mnt_Export(nfs_arg_t* arg, struct svc_req* req, nfs_res_t* res)
 {
-	struct proc_state proc_state;
+    struct proc_state proc_state;
 
-	/* init everything of interest to good state. */
-	memset(res, 0, sizeof(nfs_res_t));
-	memset(&proc_state, 0, sizeof(proc_state));
+    /* init everything of interest to good state. */
+    memset(res, 0, sizeof(nfs_res_t));
+    memset(&proc_state, 0, sizeof(proc_state));
 
-	(void)foreach_gsh_export(proc_export, false, &proc_state);
-	if (proc_state.retval != 0) {
-		LogCrit(COMPONENT_NFSPROTO,
-			"Processing exports failed. error = \"%s\" (%d)",
-			strerror(proc_state.retval), proc_state.retval);
-	}
-	op_ctx->ctx_export = NULL;
-	op_ctx->fsal_export = NULL;
-	res->res_mntexport = proc_state.head;
-	return NFS_REQ_OK;
-}				/* mnt_Export */
+    (void)foreach_gsh_export(proc_export, false, &proc_state);
+    if (proc_state.retval != 0)
+    {
+        LogCrit(COMPONENT_NFSPROTO,
+                "Processing exports failed. error = \"%s\" (%d)",
+                strerror(proc_state.retval), proc_state.retval);
+    }
+    op_ctx->ctx_export = NULL;
+    op_ctx->fsal_export = NULL;
+    res->res_mntexport = proc_state.head;
+    return NFS_REQ_OK;
+} /* mnt_Export */
 
 /**
  * mnt_Export_Free: Frees the result structure allocated for mnt_Export.
@@ -202,23 +213,25 @@ int mnt_Export(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
  * @param res	[INOUT]   Pointer to the result structure.
  *
  */
-void mnt_Export_Free(nfs_res_t *res)
+void mnt_Export_Free(nfs_res_t* res)
 {
-	struct exportnode *exp, *next_exp;
-	struct groupnode *grp, *next_grp;
+    struct exportnode* exp, *next_exp;
+    struct groupnode* grp, *next_grp;
 
-	exp = res->res_mntexport;
-	while (exp != NULL) {
-		next_exp = exp->ex_next;
-		grp = exp->ex_groups;
-		while (grp != NULL) {
-			next_grp = grp->gr_next;
-			if (grp->gr_name != NULL)
-				gsh_free(grp->gr_name);
-			gsh_free(grp);
-			grp = next_grp;
-		}
-		gsh_free(exp);
-		exp = next_exp;
-	}
-}				/* mnt_Export_Free */
+    exp = res->res_mntexport;
+    while (exp != NULL)
+    {
+        next_exp = exp->ex_next;
+        grp = exp->ex_groups;
+        while (grp != NULL)
+        {
+            next_grp = grp->gr_next;
+            if (grp->gr_name != NULL)
+                gsh_free(grp->gr_name);
+            gsh_free(grp);
+            grp = next_grp;
+        }
+        gsh_free(exp);
+        exp = next_exp;
+    }
+} /* mnt_Export_Free */
