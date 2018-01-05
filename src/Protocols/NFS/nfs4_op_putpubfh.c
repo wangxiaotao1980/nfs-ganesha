@@ -31,11 +31,11 @@
  * Routines used for managing the NFS4_OP_PUTPUBFH operation.
  *
  */
-#include "config.h"
-#include "log.h"
-#include "nfs4.h"
-#include "nfs_core.h"
-#include "nfs_proto_functions.h"
+//#include "../../include/config.h"
+//#include "../../include/log.h"
+//#include "../../include/nfs4.h"
+#include "../../include/nfs_core.h"
+#include "../../include/nfs_proto_functions.h"
 
 /**
  * @brief The NFS4_OP_PUTFH operation
@@ -53,17 +53,17 @@
  *
  */
 
-int nfs4_op_putpubfh(struct nfs_argop4 *op, compound_data_t *data,
-		     struct nfs_resop4 *resp)
+int nfs4_op_putpubfh(struct nfs_argop4* op, compound_data_t* data,
+                     struct nfs_resop4* resp)
 {
-	PUTPUBFH4res * const res_PUTPUBFH4 = &resp->nfs_resop4_u.opputpubfh;
+    PUTPUBFH4res* const res_PUTPUBFH4 = &resp->nfs_resop4_u.opputpubfh;
 
-	/* PUTPUBFH really isn't used, just make PUTROOTFH do our work and
-	 * call it our own...
-	 */
-	res_PUTPUBFH4->status = nfs4_op_putrootfh(op, data, resp);
-	resp->resop = NFS4_OP_PUTPUBFH;
-	return res_PUTPUBFH4->status;
+    /* PUTPUBFH really isn't used, just make PUTROOTFH do our work and
+     * call it our own...
+     */
+    res_PUTPUBFH4->status = nfs4_op_putrootfh(op, data, resp);
+    resp->resop = NFS4_OP_PUTPUBFH;
+    return res_PUTPUBFH4->status;
 }
 
 /**
@@ -74,7 +74,7 @@ int nfs4_op_putpubfh(struct nfs_argop4 *op, compound_data_t *data,
  *
  * @param[in,out] resp nfs4_op results
  */
-void nfs4_op_putpubfh_Free(nfs_resop4 *resp)
+void nfs4_op_putpubfh_Free(nfs_resop4* resp)
 {
-	/* Nothing to be done */
+    /* Nothing to be done */
 }

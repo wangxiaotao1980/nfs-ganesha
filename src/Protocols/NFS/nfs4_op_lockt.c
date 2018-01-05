@@ -30,17 +30,17 @@
  *
  * Routines used for managing the NFS4 COMPOUND functions.
  */
-#include "config.h"
+#include "../../include/config.h"
+#include "../../include/log.h"
+#include "../../include/fsal.h"
+#include "../../include/nfs_core.h"
+#include "../../include/sal_functions.h"
+#include "../../include/nfs_proto_functions.h"
+#include "../../include/nfs_proto_tools.h"
 #include <stdio.h>
-#include <string.h>
+  //#include <string.h>
 #include <pthread.h>
 #include "hashtable.h"
-#include "log.h"
-#include "fsal.h"
-#include "nfs_core.h"
-#include "sal_functions.h"
-#include "nfs_proto_functions.h"
-#include "nfs_proto_tools.h"
 
 /**
  *
@@ -57,194 +57,204 @@
  * @see nfs4_Compound
  */
 
-int nfs4_op_lockt(struct nfs_argop4 *op, compound_data_t *data,
-		  struct nfs_resop4 *resp)
+int nfs4_op_lockt(struct nfs_argop4* op, compound_data_t* data,
+                  struct nfs_resop4* resp)
 {
-	/* Alias for arguments */
-	LOCKT4args * const arg_LOCKT4 = &op->nfs_argop4_u.oplockt;
-	/* Alias for response */
-	LOCKT4res * const res_LOCKT4 = &resp->nfs_resop4_u.oplockt;
-	/* Return code from state calls */
-	state_status_t state_status = STATE_SUCCESS;
-	/* Client id record */
-	nfs_client_id_t *clientid = NULL;
-	/* Lock owner name */
-	state_nfs4_owner_name_t owner_name;
-	/* Lock owner record */
-	state_owner_t *lock_owner = NULL;
-	/* Owner of conflicting lock */
-	state_owner_t *conflict_owner = NULL;
-	/* Description of lock to test */
-	fsal_lock_param_t lock_desc = {
-				FSAL_POSIX_LOCK, FSAL_NO_LOCK, 0, 0, false };
-	/* Description of conflicting lock */
-	fsal_lock_param_t conflict_desc;
-	/* return code from id confirm calls */
-	int rc;
-	/* stateid if available matching owner and entry */
-	state_t *state;
+    /* Alias for arguments */
+    LOCKT4args* const arg_LOCKT4 = &op->nfs_argop4_u.oplockt;
+    /* Alias for response */
+    LOCKT4res* const res_LOCKT4 = &resp->nfs_resop4_u.oplockt;
+    /* Return code from state calls */
+    state_status_t state_status = STATE_SUCCESS;
+    /* Client id record */
+    nfs_client_id_t* clientid = NULL;
+    /* Lock owner name */
+    state_nfs4_owner_name_t owner_name;
+    /* Lock owner record */
+    state_owner_t* lock_owner = NULL;
+    /* Owner of conflicting lock */
+    state_owner_t* conflict_owner = NULL;
+    /* Description of lock to test */
+    fsal_lock_param_t lock_desc = {
+        FSAL_POSIX_LOCK, FSAL_NO_LOCK, 0, 0, false
+    };
+    /* Description of conflicting lock */
+    fsal_lock_param_t conflict_desc;
+    /* return code from id confirm calls */
+    int rc;
+    /* stateid if available matching owner and entry */
+    state_t* state;
 
-	LogDebug(COMPONENT_NFS_V4_LOCK,
-		 "Entering NFS v4 LOCKT handler ----------------------------");
+    LogDebug(COMPONENT_NFS_V4_LOCK,
+             "Entering NFS v4 LOCKT handler ----------------------------");
 
-	/* Initialize to sane default */
-	resp->resop = NFS4_OP_LOCKT;
+    /* Initialize to sane default */
+    resp->resop = NFS4_OP_LOCKT;
 
-	res_LOCKT4->status = nfs4_sanity_check_FH(data, REGULAR_FILE, false);
+    res_LOCKT4->status = nfs4_sanity_check_FH(data, REGULAR_FILE, false);
 
-	if (res_LOCKT4->status != NFS4_OK)
-		return res_LOCKT4->status;
+    if (res_LOCKT4->status != NFS4_OK)
+        return res_LOCKT4->status;
 
 
-	/* Lock length should not be 0 */
-	if (arg_LOCKT4->length == 0LL) {
-		res_LOCKT4->status = NFS4ERR_INVAL;
-		return res_LOCKT4->status;
-	}
+    /* Lock length should not be 0 */
+    if (arg_LOCKT4->length == 0LL)
+    {
+        res_LOCKT4->status = NFS4ERR_INVAL;
+        return res_LOCKT4->status;
+    }
 
-	if (nfs_in_grace()) {
-		res_LOCKT4->status = NFS4ERR_GRACE;
-		return res_LOCKT4->status;
-	}
+    if (nfs_in_grace())
+    {
+        res_LOCKT4->status = NFS4ERR_GRACE;
+        return res_LOCKT4->status;
+    }
 
-	/* Convert lock parameters to internal types */
-	switch (arg_LOCKT4->locktype) {
-	case READ_LT:
-	case READW_LT:
-		lock_desc.lock_type = FSAL_LOCK_R;
-		break;
+    /* Convert lock parameters to internal types */
+    switch (arg_LOCKT4->locktype)
+    {
+        case READ_LT:
+        case READW_LT:
+            lock_desc.lock_type = FSAL_LOCK_R;
+            break;
 
-	case WRITE_LT:
-	case WRITEW_LT:
-		lock_desc.lock_type = FSAL_LOCK_W;
-		break;
-	default:
-		LogDebug(COMPONENT_NFS_V4_LOCK,
-			 "Invalid lock type");
-		res_LOCKT4->status = NFS4ERR_INVAL;
-		return res_LOCKT4->status;
-	}
+        case WRITE_LT:
+        case WRITEW_LT:
+            lock_desc.lock_type = FSAL_LOCK_W;
+            break;
+        default:
+            LogDebug(COMPONENT_NFS_V4_LOCK,
+                     "Invalid lock type");
+            res_LOCKT4->status = NFS4ERR_INVAL;
+            return res_LOCKT4->status;
+    }
 
-	lock_desc.lock_start = arg_LOCKT4->offset;
+    lock_desc.lock_start = arg_LOCKT4->offset;
 
-	if (arg_LOCKT4->length != STATE_LOCK_OFFSET_EOF)
-		lock_desc.lock_length = arg_LOCKT4->length;
-	else
-		lock_desc.lock_length = 0;
+    if (arg_LOCKT4->length != STATE_LOCK_OFFSET_EOF)
+        lock_desc.lock_length = arg_LOCKT4->length;
+    else
+        lock_desc.lock_length = 0;
 
-	/* Check for range overflow.  Comparing beyond 2^64 is not
-	 * possible in 64 bit precision, but off+len > 2^64-1 is
-	 * equivalent to len > 2^64-1 - off
-	 */
+    /* Check for range overflow.  Comparing beyond 2^64 is not
+     * possible in 64 bit precision, but off+len > 2^64-1 is
+     * equivalent to len > 2^64-1 - off
+     */
 
-	if (lock_desc.lock_length >
-	    (STATE_LOCK_OFFSET_EOF - lock_desc.lock_start)) {
-		res_LOCKT4->status = NFS4ERR_INVAL;
-		return res_LOCKT4->status;
-	}
+    if (lock_desc.lock_length >
+        (STATE_LOCK_OFFSET_EOF - lock_desc.lock_start))
+    {
+        res_LOCKT4->status = NFS4ERR_INVAL;
+        return res_LOCKT4->status;
+    }
 
-	/* Check clientid */
-	rc = nfs_client_id_get_confirmed(data->minorversion == 0 ?
-						arg_LOCKT4->owner.clientid :
-						data->session->clientid,
-					 &clientid);
+    /* Check clientid */
+    rc = nfs_client_id_get_confirmed(data->minorversion == 0 ? arg_LOCKT4->owner.clientid : data->session->clientid,
+                                     &clientid);
 
-	if (rc != CLIENT_ID_SUCCESS) {
-		res_LOCKT4->status = clientid_error_to_nfsstat(rc);
-		return res_LOCKT4->status;
-	}
+    if (rc != CLIENT_ID_SUCCESS)
+    {
+        res_LOCKT4->status = clientid_error_to_nfsstat(rc);
+        return res_LOCKT4->status;
+    }
 
-	PTHREAD_MUTEX_lock(&clientid->cid_mutex);
+    PTHREAD_MUTEX_lock(&clientid->cid_mutex);
 
-	if (data->minorversion == 0 && !reserve_lease(clientid)) {
-		PTHREAD_MUTEX_unlock(&clientid->cid_mutex);
-		dec_client_id_ref(clientid);
-		res_LOCKT4->status = NFS4ERR_EXPIRED;
-		return res_LOCKT4->status;
-	}
+    if (data->minorversion == 0 && !reserve_lease(clientid))
+    {
+        PTHREAD_MUTEX_unlock(&clientid->cid_mutex);
+        dec_client_id_ref(clientid);
+        res_LOCKT4->status = NFS4ERR_EXPIRED;
+        return res_LOCKT4->status;
+    }
 
-	PTHREAD_MUTEX_unlock(&clientid->cid_mutex);
+    PTHREAD_MUTEX_unlock(&clientid->cid_mutex);
 
-	/* Is this lock_owner known ? */
-	convert_nfs4_lock_owner(&arg_LOCKT4->owner, &owner_name);
+    /* Is this lock_owner known ? */
+    convert_nfs4_lock_owner(&arg_LOCKT4->owner, &owner_name);
 
-	/* This lock owner is not known yet, allocated and set up a new one */
-	lock_owner = create_nfs4_owner(&owner_name,
-				       clientid,
-				       STATE_LOCK_OWNER_NFSV4,
-				       NULL,
-				       0,
-				       NULL,
-				       CARE_ALWAYS, true);
+    /* This lock owner is not known yet, allocated and set up a new one */
+    lock_owner = create_nfs4_owner(&owner_name,
+                                   clientid,
+                                   STATE_LOCK_OWNER_NFSV4,
+                                   NULL,
+                                   0,
+                                   NULL,
+                                   CARE_ALWAYS,
+                                   true);
 
-	LogStateOwner("Lock: ", lock_owner);
+    LogStateOwner("Lock: ", lock_owner);
 
-	if (lock_owner == NULL) {
-		LogEvent(COMPONENT_NFS_V4_LOCK,
-			 "LOCKT unable to create lock owner");
-		res_LOCKT4->status = NFS4ERR_SERVERFAULT;
-		goto out;
-	}
+    if (lock_owner == NULL)
+    {
+        LogEvent(COMPONENT_NFS_V4_LOCK,
+                 "LOCKT unable to create lock owner");
+        res_LOCKT4->status = NFS4ERR_SERVERFAULT;
+        goto out;
+    }
 
-	LogLock(COMPONENT_NFS_V4_LOCK, NIV_FULL_DEBUG, "LOCKT",
-		data->current_obj, lock_owner, &lock_desc);
+    LogLock(COMPONENT_NFS_V4_LOCK, NIV_FULL_DEBUG, "LOCKT",
+            data->current_obj, lock_owner, &lock_desc);
 
-	if (data->minorversion == 0) {
-		op_ctx->clientid =
-		    &lock_owner->so_owner.so_nfs4_owner.so_clientid;
-	}
+    if (data->minorversion == 0)
+    {
+        op_ctx->clientid =
+            &lock_owner->so_owner.so_nfs4_owner.so_clientid;
+    }
 
-	/* Get the stateid, if any, related to this entry and owner */
-	state = nfs4_State_Get_Obj(data->current_obj, lock_owner);
+    /* Get the stateid, if any, related to this entry and owner */
+    state = nfs4_State_Get_Obj(data->current_obj, lock_owner);
 
-	/* Now we have a lock owner and a stateid.  Go ahead and test
-	 * the lock in SAL (and FSAL).
-	 */
+    /* Now we have a lock owner and a stateid.  Go ahead and test
+     * the lock in SAL (and FSAL).
+     */
 
-	state_status = state_test(data->current_obj,
-				  state,
-				  lock_owner,
-				  &lock_desc,
-				  &conflict_owner,
-				  &conflict_desc);
+    state_status = state_test(data->current_obj,
+                              state,
+                              lock_owner,
+                              &lock_desc,
+                              &conflict_owner,
+                              &conflict_desc);
 
-	if (state_status == STATE_LOCK_CONFLICT) {
-		/* A conflicting lock from a different lock_owner,
-		 * returns NFS4ERR_DENIED
-		 */
-		LogStateOwner("Conflict: ", conflict_owner);
+    if (state_status == STATE_LOCK_CONFLICT)
+    {
+        /* A conflicting lock from a different lock_owner,
+         * returns NFS4ERR_DENIED
+         */
+        LogStateOwner("Conflict: ", conflict_owner);
 
-		Process_nfs4_conflict(&res_LOCKT4->LOCKT4res_u.denied,
-				      conflict_owner,
-				      &conflict_desc);
-	}
+        Process_nfs4_conflict(&res_LOCKT4->LOCKT4res_u.denied,
+                              conflict_owner,
+                              &conflict_desc);
+    }
 
-	if (data->minorversion == 0)
-		op_ctx->clientid = NULL;
+    if (data->minorversion == 0)
+        op_ctx->clientid = NULL;
 
-	/* Release NFS4 Open Owner reference */
-	dec_state_owner_ref(lock_owner);
+    /* Release NFS4 Open Owner reference */
+    dec_state_owner_ref(lock_owner);
 
-	/* Release stateid reference */
-	if (state != NULL)
-		dec_state_t_ref(state);
+    /* Release stateid reference */
+    if (state != NULL)
+        dec_state_t_ref(state);
 
-	/* Return result */
-	res_LOCKT4->status = nfs4_Errno_state(state_status);
+    /* Return result */
+    res_LOCKT4->status = nfs4_Errno_state(state_status);
 
- out:
+out:
 
-	/* Update the lease before exit */
-	if (data->minorversion == 0) {
-		PTHREAD_MUTEX_lock(&clientid->cid_mutex);
-		update_lease(clientid);
-		PTHREAD_MUTEX_unlock(&clientid->cid_mutex);
-	}
+    /* Update the lease before exit */
+    if (data->minorversion == 0)
+    {
+        PTHREAD_MUTEX_lock(&clientid->cid_mutex);
+        update_lease(clientid);
+        PTHREAD_MUTEX_unlock(&clientid->cid_mutex);
+    }
 
-	dec_client_id_ref(clientid);
+    dec_client_id_ref(clientid);
 
-	return res_LOCKT4->status;
-}				/* nfs4_op_lockt */
+    return res_LOCKT4->status;
+} /* nfs4_op_lockt */
 
 /**
  * @brief Free memory allocated for LOCKT result
@@ -254,10 +264,10 @@ int nfs4_op_lockt(struct nfs_argop4 *op, compound_data_t *data,
  *
  * @param[in,out] resp nfs4_op results
  */
-void nfs4_op_lockt_Free(nfs_resop4 *res)
+void nfs4_op_lockt_Free(nfs_resop4* res)
 {
-	LOCKT4res *resp = &res->nfs_resop4_u.oplockt;
+    LOCKT4res* resp = &res->nfs_resop4_u.oplockt;
 
-	if (resp->status == NFS4ERR_DENIED)
-		Release_nfs4_denied(&resp->LOCKT4res_u.denied);
-}				/* nfs4_op_lockt_Free */
+    if (resp->status == NFS4ERR_DENIED)
+        Release_nfs4_denied(&resp->LOCKT4res_u.denied);
+} /* nfs4_op_lockt_Free */

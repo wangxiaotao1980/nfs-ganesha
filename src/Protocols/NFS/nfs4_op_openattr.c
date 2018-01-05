@@ -29,12 +29,12 @@
  * @brief   Routines used for managing the NFS4 COMPOUND functions.
  */
 
-#include "config.h"
-#include "hashtable.h"
-#include "log.h"
-#include "nfs4.h"
-#include "nfs_core.h"
-#include "nfs_proto_functions.h"
+//#include "../../include/config.h"
+//#include "../../include/hashtable.h"
+//#include "../../include/log.h"
+//#include "../../include/nfs4.h"
+#include "../../include/nfs_core.h"
+#include "../../include/nfs_proto_functions.h"
 
 /**
  *

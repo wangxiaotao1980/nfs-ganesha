@@ -30,14 +30,14 @@
  *
  * Routines used for managing the NFS4 COMPOUND functions.
  */
-#include "config.h"
-#include "fsal.h"
-#include "nfs_core.h"
-#include "nfs_exports.h"
-#include "nfs_proto_functions.h"
-#include "nfs_proto_tools.h"
-#include "sal_functions.h"
-#include "export_mgr.h"
+#include "../../include/config.h"
+#include "../../include/fsal.h"
+#include "../../include/nfs_core.h"
+#include "../../include/nfs_exports.h"
+#include "../../include/nfs_proto_functions.h"
+#include "../../include/nfs_proto_tools.h"
+#include "../../include/sal_functions.h"
+#include "../../include/export_mgr.h"
 
 /**
  * @brief NFSv4 SECINFO_NO_NAME operation
@@ -51,146 +51,160 @@
  * @return NFS status codes.
  */
 
-int nfs4_op_secinfo_no_name(struct nfs_argop4 *op, compound_data_t *data,
-			    struct nfs_resop4 *resp)
+int nfs4_op_secinfo_no_name(struct nfs_argop4* op, compound_data_t* data,
+                            struct nfs_resop4* resp)
 {
-	SECINFO_NO_NAME4res * const res_SECINFO_NO_NAME4 =
-	    &resp->nfs_resop4_u.opsecinfo_no_name;
+    SECINFO_NO_NAME4res* const res_SECINFO_NO_NAME4 = &resp->nfs_resop4_u.opsecinfo_no_name;
 #ifdef _HAVE_GSSAPI
-	sec_oid4 v5oid = { krb5oid.length, (char *)krb5oid.elements };
+    sec_oid4 v5oid = { krb5oid.length, (char *)krb5oid.elements };
 #endif /* _HAVE_GSSAPI */
-	int num_entry = 0;
+    int num_entry = 0;
 
-	res_SECINFO_NO_NAME4->status = NFS4_OK;
+    res_SECINFO_NO_NAME4->status = NFS4_OK;
 
-	/* Do basic checks on a filehandle */
-	res_SECINFO_NO_NAME4->status =
-	    nfs4_sanity_check_FH(data, NO_FILE_TYPE, false);
+    /* Do basic checks on a filehandle */
+    res_SECINFO_NO_NAME4->status = nfs4_sanity_check_FH(data, NO_FILE_TYPE, false);
 
-	if (res_SECINFO_NO_NAME4->status != NFS4_OK)
-		goto out;
+    if (res_SECINFO_NO_NAME4->status != NFS4_OK)
+    {
+        goto out;
+    }
 
-	if (op->nfs_argop4_u.opsecinfo_no_name == SECINFO_STYLE4_PARENT) {
-		/* Use LOOKUPP to get the parent into CurrentFH. */
-		res_SECINFO_NO_NAME4->status = nfs4_op_lookupp(op, data, resp);
+    if (op->nfs_argop4_u.opsecinfo_no_name == SECINFO_STYLE4_PARENT)
+    {
+        /* Use LOOKUPP to get the parent into CurrentFH. */
+        res_SECINFO_NO_NAME4->status = nfs4_op_lookupp(op, data, resp);
 
-		if (res_SECINFO_NO_NAME4->status != NFS4_OK)
-			goto out;
-	}
+        if (res_SECINFO_NO_NAME4->status != NFS4_OK)
+        {
+            goto out;
+        }
+    }
 
-	/* Get the number of entries */
-	if (op_ctx->export_perms->options & EXPORT_OPTION_AUTH_NONE)
-		num_entry++;
+    /* Get the number of entries */
+    if (op_ctx->export_perms->options & EXPORT_OPTION_AUTH_NONE)
+    {
+        num_entry++;
+    }
 
-	if (op_ctx->export_perms->options & EXPORT_OPTION_AUTH_UNIX)
-		num_entry++;
+    if (op_ctx->export_perms->options & EXPORT_OPTION_AUTH_UNIX)
+    {
+        num_entry++;
+    }
 
-	if (op_ctx->export_perms->options &
-	    EXPORT_OPTION_RPCSEC_GSS_NONE)
-		num_entry++;
+    if (op_ctx->export_perms->options & EXPORT_OPTION_RPCSEC_GSS_NONE)
+    {
+        num_entry++;
+    }
 
-	if (op_ctx->export_perms->options &
-	    EXPORT_OPTION_RPCSEC_GSS_INTG)
-		num_entry++;
+    if (op_ctx->export_perms->options & EXPORT_OPTION_RPCSEC_GSS_INTG)
+    {
+        num_entry++;
+    }
 
-	if (op_ctx->export_perms->options &
-	    EXPORT_OPTION_RPCSEC_GSS_PRIV)
-		num_entry++;
+    if (op_ctx->export_perms->options & EXPORT_OPTION_RPCSEC_GSS_PRIV)
+    {
+        num_entry++;
+    }
 
-	res_SECINFO_NO_NAME4->SECINFO4res_u.resok4.SECINFO4resok_val =
-	     gsh_calloc(num_entry, sizeof(secinfo4));
+    res_SECINFO_NO_NAME4->SECINFO4res_u.resok4.SECINFO4resok_val = gsh_calloc(num_entry, sizeof(secinfo4));
 
-	if (res_SECINFO_NO_NAME4->SECINFO4res_u.resok4.SECINFO4resok_val
-	    == NULL) {
-		res_SECINFO_NO_NAME4->status = NFS4ERR_SERVERFAULT;
-		goto out;
-	}
+    if (res_SECINFO_NO_NAME4->SECINFO4res_u.resok4.SECINFO4resok_val
+        == NULL)
+    {
+        res_SECINFO_NO_NAME4->status = NFS4ERR_SERVERFAULT;
+        goto out;
+    }
 
-	/**
-	 * @todo We give here the order in which the client should try
-	 * different authentifications. Might want to give it in the
-	 * order given in the config.
-	 */
-	int idx = 0;
+    /**
+     * @todo We give here the order in which the client should try
+     * different authentifications. Might want to give it in the
+     * order given in the config.
+     */
+    int idx = 0;
 
 #ifdef _HAVE_GSSAPI
-	if (op_ctx->export_perms->options &
-	    EXPORT_OPTION_RPCSEC_GSS_PRIV) {
-		res_SECINFO_NO_NAME4->SECINFO4res_u.resok4.
-		    SECINFO4resok_val[idx]
-		    .flavor = RPCSEC_GSS;
-		res_SECINFO_NO_NAME4->SECINFO4res_u.resok4.
-		    SECINFO4resok_val[idx]
-		    .secinfo4_u.flavor_info.service = RPCSEC_GSS_SVC_PRIVACY;
-		res_SECINFO_NO_NAME4->SECINFO4res_u.resok4.
-		    SECINFO4resok_val[idx]
-		    .secinfo4_u.flavor_info.qop = GSS_C_QOP_DEFAULT;
-		res_SECINFO_NO_NAME4->SECINFO4res_u.resok4.
-		    SECINFO4resok_val[idx++]
-		    .secinfo4_u.flavor_info.oid = v5oid;
-	}
+    if (op_ctx->export_perms->options &
+        EXPORT_OPTION_RPCSEC_GSS_PRIV)
+    {
+        res_SECINFO_NO_NAME4->SECINFO4res_u.resok4.
+            SECINFO4resok_val[idx]
+            .flavor = RPCSEC_GSS;
+        res_SECINFO_NO_NAME4->SECINFO4res_u.resok4.
+            SECINFO4resok_val[idx]
+            .secinfo4_u.flavor_info.service = RPCSEC_GSS_SVC_PRIVACY;
+        res_SECINFO_NO_NAME4->SECINFO4res_u.resok4.
+            SECINFO4resok_val[idx]
+            .secinfo4_u.flavor_info.qop = GSS_C_QOP_DEFAULT;
+        res_SECINFO_NO_NAME4->SECINFO4res_u.resok4.
+            SECINFO4resok_val[idx++]
+            .secinfo4_u.flavor_info.oid = v5oid;
+    }
 
-	if (op_ctx->export_perms->options &
-	    EXPORT_OPTION_RPCSEC_GSS_INTG) {
-		res_SECINFO_NO_NAME4->SECINFO4res_u.resok4.
-		    SECINFO4resok_val[idx].flavor = RPCSEC_GSS;
-		res_SECINFO_NO_NAME4->SECINFO4res_u.resok4.
-		    SECINFO4resok_val[idx]
-		    .secinfo4_u.flavor_info.service = RPCSEC_GSS_SVC_INTEGRITY;
-		res_SECINFO_NO_NAME4->SECINFO4res_u.resok4.
-		    SECINFO4resok_val[idx]
-		    .secinfo4_u.flavor_info.qop = GSS_C_QOP_DEFAULT;
-		res_SECINFO_NO_NAME4->SECINFO4res_u.resok4.
-		    SECINFO4resok_val[idx++]
-		    .secinfo4_u.flavor_info.oid = v5oid;
-	}
+    if (op_ctx->export_perms->options &
+        EXPORT_OPTION_RPCSEC_GSS_INTG)
+    {
+        res_SECINFO_NO_NAME4->SECINFO4res_u.resok4.
+            SECINFO4resok_val[idx].flavor = RPCSEC_GSS;
+        res_SECINFO_NO_NAME4->SECINFO4res_u.resok4.
+            SECINFO4resok_val[idx]
+            .secinfo4_u.flavor_info.service = RPCSEC_GSS_SVC_INTEGRITY;
+        res_SECINFO_NO_NAME4->SECINFO4res_u.resok4.
+            SECINFO4resok_val[idx]
+            .secinfo4_u.flavor_info.qop = GSS_C_QOP_DEFAULT;
+        res_SECINFO_NO_NAME4->SECINFO4res_u.resok4.
+            SECINFO4resok_val[idx++]
+            .secinfo4_u.flavor_info.oid = v5oid;
+    }
 
-	if (op_ctx->export_perms->options &
-	    EXPORT_OPTION_RPCSEC_GSS_NONE) {
-		res_SECINFO_NO_NAME4->SECINFO4res_u.resok4.
-		    SECINFO4resok_val[idx].flavor = RPCSEC_GSS;
-		res_SECINFO_NO_NAME4->SECINFO4res_u.resok4.
-		    SECINFO4resok_val[idx]
-		    .secinfo4_u.flavor_info.service = RPCSEC_GSS_SVC_NONE;
-		res_SECINFO_NO_NAME4->SECINFO4res_u.resok4.
-		    SECINFO4resok_val[idx]
-		    .secinfo4_u.flavor_info.qop = GSS_C_QOP_DEFAULT;
-		res_SECINFO_NO_NAME4->SECINFO4res_u.resok4.
-		    SECINFO4resok_val[idx++]
-		    .secinfo4_u.flavor_info.oid = v5oid;
-	}
+    if (op_ctx->export_perms->options &
+        EXPORT_OPTION_RPCSEC_GSS_NONE)
+    {
+        res_SECINFO_NO_NAME4->SECINFO4res_u.resok4.
+            SECINFO4resok_val[idx].flavor = RPCSEC_GSS;
+        res_SECINFO_NO_NAME4->SECINFO4res_u.resok4.
+            SECINFO4resok_val[idx]
+            .secinfo4_u.flavor_info.service = RPCSEC_GSS_SVC_NONE;
+        res_SECINFO_NO_NAME4->SECINFO4res_u.resok4.
+            SECINFO4resok_val[idx]
+            .secinfo4_u.flavor_info.qop = GSS_C_QOP_DEFAULT;
+        res_SECINFO_NO_NAME4->SECINFO4res_u.resok4.
+            SECINFO4resok_val[idx++]
+            .secinfo4_u.flavor_info.oid = v5oid;
+    }
 #endif /* _HAVE_GSSAPI */
 
-	if (op_ctx->export_perms->options & EXPORT_OPTION_AUTH_UNIX)
-		res_SECINFO_NO_NAME4->SECINFO4res_u.resok4.
-		    SECINFO4resok_val[idx++].flavor = AUTH_UNIX;
+    if (op_ctx->export_perms->options & EXPORT_OPTION_AUTH_UNIX)
+        res_SECINFO_NO_NAME4->SECINFO4res_u.resok4.
+        SECINFO4resok_val[idx++].flavor = AUTH_UNIX;
 
-	if (op_ctx->export_perms->options & EXPORT_OPTION_AUTH_NONE)
-		res_SECINFO_NO_NAME4->SECINFO4res_u.resok4.
-		    SECINFO4resok_val[idx++].flavor = AUTH_NONE;
+    if (op_ctx->export_perms->options & EXPORT_OPTION_AUTH_NONE)
+        res_SECINFO_NO_NAME4->SECINFO4res_u.resok4.
+        SECINFO4resok_val[idx++].flavor = AUTH_NONE;
 
-	res_SECINFO_NO_NAME4->SECINFO4res_u.resok4.SECINFO4resok_len = idx;
+    res_SECINFO_NO_NAME4->SECINFO4res_u.resok4.SECINFO4resok_len = idx;
 
-	/* Need to clear out CurrentFH */
-	set_current_entry(data, NULL);
+    /* Need to clear out CurrentFH */
+    set_current_entry(data, NULL);
 
-	data->currentFH.nfs_fh4_len = 0;
+    data->currentFH.nfs_fh4_len = 0;
 
-	/* Release CurrentFH reference to export. */
-	if (op_ctx->ctx_export) {
-		put_gsh_export(op_ctx->ctx_export);
-		op_ctx->ctx_export = NULL;
-		op_ctx->fsal_export = NULL;
-	}
+    /* Release CurrentFH reference to export. */
+    if (op_ctx->ctx_export)
+    {
+        put_gsh_export(op_ctx->ctx_export);
+        op_ctx->ctx_export = NULL;
+        op_ctx->fsal_export = NULL;
+    }
 
-	res_SECINFO_NO_NAME4->status = NFS4_OK;
+    res_SECINFO_NO_NAME4->status = NFS4_OK;
 
- out:
+out:
 
-	resp->resop = NFS4_OP_SECINFO_NO_NAME;
+    resp->resop = NFS4_OP_SECINFO_NO_NAME;
 
-	return res_SECINFO_NO_NAME4->status;
-}				/* nfs4_op_secinfo_no_name */
+    return res_SECINFO_NO_NAME4->status;
+} /* nfs4_op_secinfo_no_name */
 
 /**
  * @brief Free memory allocated for SECINFO_NO_NAME result
@@ -200,13 +214,14 @@ int nfs4_op_secinfo_no_name(struct nfs_argop4 *op, compound_data_t *data,
  *
  * @param[in,out] resp nfs4_op results
  */
-void nfs4_op_secinfo_no_name_Free(nfs_resop4 *res)
+void nfs4_op_secinfo_no_name_Free(nfs_resop4* res)
 {
-	SECINFO_NO_NAME4res *resp = &res->nfs_resop4_u.opsecinfo_no_name;
+    SECINFO_NO_NAME4res* resp = &res->nfs_resop4_u.opsecinfo_no_name;
 
-	if ((resp->status == NFS4_OK)
-	    && (resp->SECINFO4res_u.resok4.SECINFO4resok_val)) {
-		gsh_free(resp->SECINFO4res_u.resok4.SECINFO4resok_val);
-		resp->SECINFO4res_u.resok4.SECINFO4resok_val = NULL;
-	}
+    if ((resp->status == NFS4_OK)
+        && (resp->SECINFO4res_u.resok4.SECINFO4resok_val))
+    {
+        gsh_free(resp->SECINFO4res_u.resok4.SECINFO4resok_val);
+        resp->SECINFO4res_u.resok4.SECINFO4resok_val = NULL;
+    }
 }

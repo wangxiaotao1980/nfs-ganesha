@@ -32,17 +32,17 @@
  *
  *
  */
-#include "config.h"
-#include "log.h"
-#include "nfs4.h"
-#include "nfs_core.h"
-#include "sal_functions.h"
-#include "nfs_proto_functions.h"
-#include "nfs_proto_tools.h"
-#include "nfs_convert.h"
-#include "nfs_file_handle.h"
-#include "sal_functions.h"
-#include "fsal.h"
+#include "../../include/config.h"
+#include "../../include/log.h"
+#include "../../include/nfs4.h"
+#include "../../include/nfs_core.h"
+#include "../../include/sal_functions.h"
+#include "../../include/nfs_proto_functions.h"
+#include "../../include/nfs_proto_tools.h"
+#include "../../include/nfs_convert.h"
+#include "../../include/nfs_file_handle.h"
+  //#include "../../include/sal_functions.h"
+  //#include "../../include/fsal.h"
 
 /**
  * @brief The NFS4_OP_RENAME operation
@@ -57,96 +57,102 @@
  * @return per RFC5661, p. 373
  */
 
-int nfs4_op_rename(struct nfs_argop4 *op, compound_data_t *data,
-		   struct nfs_resop4 *resp)
+int nfs4_op_rename(struct nfs_argop4* op, compound_data_t* data,
+                   struct nfs_resop4* resp)
 {
-	RENAME4args * const arg_RENAME4 = &op->nfs_argop4_u.oprename;
-	RENAME4res * const res_RENAME4 = &resp->nfs_resop4_u.oprename;
-	struct fsal_obj_handle *dst_obj = NULL;
-	struct fsal_obj_handle *src_obj = NULL;
-	nfsstat4 status = NFS4_OK;
-	fsal_status_t fsal_status = {0, 0};
-	char *oldname = NULL;
-	char *newname = NULL;
+    RENAME4args* const arg_RENAME4 = &op->nfs_argop4_u.oprename;
+    RENAME4res* const res_RENAME4 = &resp->nfs_resop4_u.oprename;
+    struct fsal_obj_handle* dst_obj = NULL;
+    struct fsal_obj_handle* src_obj = NULL;
+    nfsstat4 status = NFS4_OK;
+    fsal_status_t fsal_status = { 0, 0 };
+    char* oldname = NULL;
+    char* newname = NULL;
 
-	resp->resop = NFS4_OP_RENAME;
-	res_RENAME4->status = NFS4_OK;
+    resp->resop = NFS4_OP_RENAME;
+    res_RENAME4->status = NFS4_OK;
 
-	/* Read and validate oldname and newname from uft8 strings. */
-	res_RENAME4->status = nfs4_utf8string2dynamic(&arg_RENAME4->oldname,
-						      UTF8_SCAN_ALL,
-						      &oldname);
+    /* Read and validate oldname and newname from uft8 strings. */
+    res_RENAME4->status = nfs4_utf8string2dynamic(&arg_RENAME4->oldname,
+                                                  UTF8_SCAN_ALL,
+                                                  &oldname);
 
-	if (res_RENAME4->status != NFS4_OK)
-		goto out;
+    if (res_RENAME4->status != NFS4_OK)
+        goto out;
 
-	res_RENAME4->status = nfs4_utf8string2dynamic(&arg_RENAME4->newname,
-						      UTF8_SCAN_ALL,
-						      &newname);
+    res_RENAME4->status = nfs4_utf8string2dynamic(&arg_RENAME4->newname,
+                                                  UTF8_SCAN_ALL,
+                                                  &newname);
 
-	if (res_RENAME4->status != NFS4_OK)
-		goto out;
+    if (res_RENAME4->status != NFS4_OK)
+        goto out;
 
-	/* Do basic checks on a filehandle */
-	res_RENAME4->status = nfs4_sanity_check_FH(data, DIRECTORY, false);
+    /* Do basic checks on a filehandle */
+    res_RENAME4->status = nfs4_sanity_check_FH(data, DIRECTORY, false);
 
-	if (res_RENAME4->status != NFS4_OK)
-		goto out;
+    if (res_RENAME4->status != NFS4_OK)
+        goto out;
 
-	res_RENAME4->status =
-	    nfs4_sanity_check_saved_FH(data, DIRECTORY, false);
+    res_RENAME4->status =
+        nfs4_sanity_check_saved_FH(data, DIRECTORY, false);
 
-	if (res_RENAME4->status != NFS4_OK)
-		goto out;
+    if (res_RENAME4->status != NFS4_OK)
+        goto out;
 
-	/* Check that both handles are in the same export. */
-	if (op_ctx->ctx_export != NULL && data->saved_export != NULL &&
-	    op_ctx->ctx_export->export_id != data->saved_export->export_id) {
-		res_RENAME4->status = NFS4ERR_XDEV;
-		goto out;
-	}
+    /* Check that both handles are in the same export. */
+    if (op_ctx->ctx_export != NULL && data->saved_export != NULL &&
+        op_ctx->ctx_export->export_id != data->saved_export->export_id)
+    {
+        res_RENAME4->status = NFS4ERR_XDEV;
+        goto out;
+    }
 
-	if (nfs_in_grace()) {
-		res_RENAME4->status = NFS4ERR_GRACE;
-		goto out;
-	}
+    if (nfs_in_grace())
+    {
+        res_RENAME4->status = NFS4ERR_GRACE;
+        goto out;
+    }
 
-	dst_obj = data->current_obj;
-	src_obj = data->saved_obj;
+    dst_obj = data->current_obj;
+    src_obj = data->saved_obj;
 
-	res_RENAME4->RENAME4res_u.resok4.source_cinfo.before =
-	    fsal_get_changeid4(src_obj);
-	res_RENAME4->RENAME4res_u.resok4.target_cinfo.before =
-	    fsal_get_changeid4(dst_obj);
+    res_RENAME4->RENAME4res_u.resok4.source_cinfo.before =
+        fsal_get_changeid4(src_obj);
+    res_RENAME4->RENAME4res_u.resok4.target_cinfo.before =
+        fsal_get_changeid4(dst_obj);
 
-	status = nfs4_Errno_status(fsal_rename(src_obj, oldname, dst_obj,
-					       newname));
+    status = nfs4_Errno_status(fsal_rename(src_obj, oldname, dst_obj, newname));
 
-	if (status != NFS4_OK) {
-		res_RENAME4->status = status;
-		goto out;
-	}
+    if (status != NFS4_OK)
+    {
+        res_RENAME4->status = status;
+        goto out;
+    }
 
-	/* If you reach this point, then everything was alright
-	 * For the change_info4, get the 'change' attributes
-	 * for both directories
-	 */
-	res_RENAME4->RENAME4res_u.resok4.source_cinfo.after =
-	    fsal_get_changeid4(src_obj);
-	res_RENAME4->RENAME4res_u.resok4.target_cinfo.after =
-	    fsal_get_changeid4(dst_obj);
-	res_RENAME4->RENAME4res_u.resok4.target_cinfo.atomic = FALSE;
-	res_RENAME4->RENAME4res_u.resok4.source_cinfo.atomic = FALSE;
-	res_RENAME4->status = nfs4_Errno_status(fsal_status);
+    /* If you reach this point, then everything was alright
+     * For the change_info4, get the 'change' attributes
+     * for both directories
+     */
+    res_RENAME4->RENAME4res_u.resok4.source_cinfo.after =
+        fsal_get_changeid4(src_obj);
+    res_RENAME4->RENAME4res_u.resok4.target_cinfo.after =
+        fsal_get_changeid4(dst_obj);
+    res_RENAME4->RENAME4res_u.resok4.target_cinfo.atomic = FALSE;
+    res_RENAME4->RENAME4res_u.resok4.source_cinfo.atomic = FALSE;
+    res_RENAME4->status = nfs4_Errno_status(fsal_status);
 
- out:
-	if (oldname)
-		gsh_free(oldname);
+out:
+    if (oldname)
+    {
+        gsh_free(oldname);
+    }
 
-	if (newname)
-		gsh_free(newname);
+    if (newname)
+    {
+        gsh_free(newname);
+    }
 
-	return res_RENAME4->status;
+    return res_RENAME4->status;
 }
 
 /**
@@ -157,7 +163,7 @@ int nfs4_op_rename(struct nfs_argop4 *op, compound_data_t *data,
  *
  * @param[in,out] resp nfs4_op results
  */
-void nfs4_op_rename_Free(nfs_resop4 *resp)
+void nfs4_op_rename_Free(nfs_resop4* resp)
 {
-	/* Nothing to be done */
+    /* Nothing to be done */
 }

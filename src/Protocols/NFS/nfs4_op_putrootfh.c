@@ -30,15 +30,15 @@
  *
  * Routines used for managing the NFS4_OP_PUTROOTFH operation.
  */
-#include "config.h"
-#include "log.h"
-#include "fsal.h"
-#include "nfs_core.h"
-#include "nfs_convert.h"
-#include "nfs_exports.h"
-#include "nfs_file_handle.h"
-#include "export_mgr.h"
-#include "nfs_creds.h"
+#include "../../include/config.h"
+#include "../../include/log.h"
+#include "../../include/fsal.h"
+#include "../../include/nfs_core.h"
+#include "../../include/nfs_convert.h"
+#include "../../include/nfs_exports.h"
+#include "../../include/nfs_file_handle.h"
+#include "../../include/export_mgr.h"
+#include "../../include/nfs_creds.h"
 
 /**
  *
@@ -57,95 +57,100 @@
  *
  */
 
-int nfs4_op_putrootfh(struct nfs_argop4 *op, compound_data_t *data,
-		      struct nfs_resop4 *resp)
+int nfs4_op_putrootfh(struct nfs_argop4* op, compound_data_t* data,
+                      struct nfs_resop4* resp)
 {
-	fsal_status_t status = {0, 0};
-	struct fsal_obj_handle *file_obj;
+    fsal_status_t status = { 0, 0 };
+    struct fsal_obj_handle* file_obj;
 
-	PUTROOTFH4res * const res_PUTROOTFH4 = &resp->nfs_resop4_u.opputrootfh;
+    PUTROOTFH4res* const res_PUTROOTFH4 = &resp->nfs_resop4_u.opputrootfh;
 
-	/* First of all, set the reply to zero to make sure
-	 * it contains no parasite information
-	 */
-	memset(resp, 0, sizeof(struct nfs_resop4));
-	resp->resop = NFS4_OP_PUTROOTFH;
+    /* First of all, set the reply to zero to make sure
+     * it contains no parasite information
+     */
+    memset(resp, 0, sizeof(struct nfs_resop4));
+    resp->resop = NFS4_OP_PUTROOTFH;
 
-	/* Clear out current entry for now */
-	set_current_entry(data, NULL);
+    /* Clear out current entry for now */
+    set_current_entry(data, NULL);
 
-	/* Release any old export reference */
-	if (op_ctx->ctx_export != NULL)
-		put_gsh_export(op_ctx->ctx_export);
+    /* Release any old export reference */
+    if (op_ctx->ctx_export != NULL)
+        put_gsh_export(op_ctx->ctx_export);
 
-	op_ctx->ctx_export = NULL;
-	op_ctx->fsal_export = NULL;
+    op_ctx->ctx_export = NULL;
+    op_ctx->fsal_export = NULL;
 
-	/* Get the root export of the Pseudo FS */
-	op_ctx->ctx_export = get_gsh_export_by_pseudo("/", true);
+    /* Get the root export of the Pseudo FS */
+    op_ctx->ctx_export = get_gsh_export_by_pseudo("/", true);
 
-	if (op_ctx->ctx_export == NULL) {
-		LogCrit(COMPONENT_EXPORT,
-			"Could not get export for Pseudo Root");
+    if (op_ctx->ctx_export == NULL)
+    {
+        LogCrit(COMPONENT_EXPORT,
+                "Could not get export for Pseudo Root");
 
-		res_PUTROOTFH4->status = NFS4ERR_NOENT;
-		return res_PUTROOTFH4->status;
-	}
+        res_PUTROOTFH4->status = NFS4ERR_NOENT;
+        return res_PUTROOTFH4->status;
+    }
 
-	op_ctx->fsal_export = op_ctx->ctx_export->fsal_export;
+    op_ctx->fsal_export = op_ctx->ctx_export->fsal_export;
 
-	/* Build credentials */
-	res_PUTROOTFH4->status = nfs4_export_check_access(data->req);
+    /* Build credentials */
+    res_PUTROOTFH4->status = nfs4_export_check_access(data->req);
 
-	/* Test for access error (export should not be visible). */
-	if (res_PUTROOTFH4->status == NFS4ERR_ACCESS) {
-		/* Client has no access at all */
-		LogDebug(COMPONENT_EXPORT,
-			 "Client doesn't have access to Pseudo Root");
-		return res_PUTROOTFH4->status;
-	}
+    /* Test for access error (export should not be visible). */
+    if (res_PUTROOTFH4->status == NFS4ERR_ACCESS)
+    {
+        /* Client has no access at all */
+        LogDebug(COMPONENT_EXPORT,
+                 "Client doesn't have access to Pseudo Root");
+        return res_PUTROOTFH4->status;
+    }
 
-	if (res_PUTROOTFH4->status != NFS4_OK) {
-		LogMajor(COMPONENT_EXPORT,
-			 "Failed to get FSAL credentials Pseudo Root");
-		return res_PUTROOTFH4->status;
-	}
+    if (res_PUTROOTFH4->status != NFS4_OK)
+    {
+        LogMajor(COMPONENT_EXPORT,
+                 "Failed to get FSAL credentials Pseudo Root");
+        return res_PUTROOTFH4->status;
+    }
 
-	/* Get the Pesudo Root inode of the mounted on export */
-	status = nfs_export_get_root_entry(op_ctx->ctx_export, &file_obj);
-	if (FSAL_IS_ERROR(status)) {
-		LogCrit(COMPONENT_EXPORT,
-			"Could not get root inode for Pseudo Root");
+    /* Get the Pesudo Root inode of the mounted on export */
+    status = nfs_export_get_root_entry(op_ctx->ctx_export, &file_obj);
+    if (FSAL_IS_ERROR(status))
+    {
+        LogCrit(COMPONENT_EXPORT,
+                "Could not get root inode for Pseudo Root");
 
-		res_PUTROOTFH4->status = nfs4_Errno_status(status);
-		return res_PUTROOTFH4->status;
-	}
+        res_PUTROOTFH4->status = nfs4_Errno_status(status);
+        return res_PUTROOTFH4->status;
+    }
 
-	LogMidDebug(COMPONENT_EXPORT,
-		    "Root node %p", data->current_obj);
+    LogMidDebug(COMPONENT_EXPORT,
+                "Root node %p", data->current_obj);
 
-	set_current_entry(data, file_obj);
+    set_current_entry(data, file_obj);
 
-	/* Put our ref */
-	file_obj->obj_ops.put_ref(file_obj);
+    /* Put our ref */
+    file_obj->obj_ops.put_ref(file_obj);
 
-	/* Convert it to a file handle */
-	if (!nfs4_FSALToFhandle(data->currentFH.nfs_fh4_val == NULL,
-				&data->currentFH,
-				data->current_obj,
-				op_ctx->ctx_export)) {
-		LogCrit(COMPONENT_EXPORT,
-			"Could not get handle for Pseudo Root");
+    /* Convert it to a file handle */
+    if (!nfs4_FSALToFhandle(data->currentFH.nfs_fh4_val == NULL,
+        &data->currentFH,
+        data->current_obj,
+        op_ctx->ctx_export))
+    {
+        LogCrit(COMPONENT_EXPORT,
+                "Could not get handle for Pseudo Root");
 
-		res_PUTROOTFH4->status = NFS4ERR_SERVERFAULT;
-		return res_PUTROOTFH4->status;
-	}
+        res_PUTROOTFH4->status = NFS4ERR_SERVERFAULT;
+        return res_PUTROOTFH4->status;
+    }
 
-	LogHandleNFS4("NFS4 PUTROOTFH CURRENT FH: ", &data->currentFH);
+    LogHandleNFS4("NFS4 PUTROOTFH CURRENT FH: ", &data->currentFH);
 
-	res_PUTROOTFH4->status = NFS4_OK;
-	return res_PUTROOTFH4->status;
-}				/* nfs4_op_putrootfh */
+    res_PUTROOTFH4->status = NFS4_OK;
+    return res_PUTROOTFH4->status;
+} /* nfs4_op_putrootfh */
 
 /**
  * @brief Free memory allocated for PUTROOTFH result
@@ -155,7 +160,7 @@ int nfs4_op_putrootfh(struct nfs_argop4 *op, compound_data_t *data,
  *
  * @param[in,out] resp nfs4_op results
  */
-void nfs4_op_putrootfh_Free(nfs_resop4 *resp)
+void nfs4_op_putrootfh_Free(nfs_resop4* resp)
 {
-	/* Nothing to be done */
+    /* Nothing to be done */
 }

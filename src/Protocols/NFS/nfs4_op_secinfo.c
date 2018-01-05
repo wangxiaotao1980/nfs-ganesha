@@ -30,16 +30,16 @@
  *
  * Routines used for managing the NFS4 COMPOUND functions.
  */
-#include "config.h"
-#include "fsal.h"
-#include "nfs_core.h"
-#include "nfs_exports.h"
-#include "nfs_creds.h"
-#include "nfs_proto_functions.h"
-#include "nfs_proto_tools.h"
-#include "nfs_convert.h"
-#include "sal_functions.h"
-#include "export_mgr.h"
+#include "../../include/config.h"
+#include "../../include/fsal.h"
+#include "../../include/nfs_core.h"
+#include "../../include/nfs_exports.h"
+#include "../../include/nfs_creds.h"
+#include "../../include/nfs_proto_functions.h"
+#include "../../include/nfs_proto_tools.h"
+#include "../../include/nfs_convert.h"
+#include "../../include/sal_functions.h"
+#include "../../include/export_mgr.h"
 
 /**
  * @brief NFSv4 SECINFO operation
@@ -53,258 +53,283 @@
  * @return NFS status codes.
  */
 
-int nfs4_op_secinfo(struct nfs_argop4 *op, compound_data_t *data,
-		    struct nfs_resop4 *resp)
+int nfs4_op_secinfo(struct nfs_argop4* op, compound_data_t* data,
+                    struct nfs_resop4* resp)
 {
-	SECINFO4args * const arg_SECINFO4 = &op->nfs_argop4_u.opsecinfo;
-	SECINFO4res * const res_SECINFO4 = &resp->nfs_resop4_u.opsecinfo;
-	char *secinfo_fh_name = NULL;
-	fsal_status_t fsal_status = {0, 0};
-	struct fsal_obj_handle *obj_src = NULL;
+    SECINFO4args* const arg_SECINFO4 = &op->nfs_argop4_u.opsecinfo;
+    SECINFO4res* const res_SECINFO4 = &resp->nfs_resop4_u.opsecinfo;
+    char* secinfo_fh_name = NULL;
+    fsal_status_t fsal_status = { 0, 0 };
+    struct fsal_obj_handle* obj_src = NULL;
 #ifdef _HAVE_GSSAPI
-	sec_oid4 v5oid = { krb5oid.length, (char *)krb5oid.elements };
+    sec_oid4 v5oid = { krb5oid.length, (char *)krb5oid.elements };
 #endif /* _HAVE_GSSAPI */
-	int num_entry = 0;
-	struct export_perms save_export_perms = { 0, };
-	struct gsh_export *saved_gsh_export = NULL;
+    int num_entry = 0;
+    struct export_perms save_export_perms = { 0, };
+    struct gsh_export* saved_gsh_export = NULL;
 
-	resp->resop = NFS4_OP_SECINFO;
-	res_SECINFO4->status = NFS4_OK;
+    resp->resop = NFS4_OP_SECINFO;
+    res_SECINFO4->status = NFS4_OK;
 
-	/* Read name from uft8 strings, if one is empty then returns
-	 * NFS4ERR_INVAL
-	 */
-	res_SECINFO4->status = nfs4_utf8string2dynamic(&arg_SECINFO4->name,
-						       UTF8_SCAN_ALL,
-						       &secinfo_fh_name);
+    /* Read name from uft8 strings, if one is empty then returns
+     * NFS4ERR_INVAL
+     */
+    res_SECINFO4->status = nfs4_utf8string2dynamic(&arg_SECINFO4->name,
+                                                   UTF8_SCAN_ALL,
+                                                   &secinfo_fh_name);
 
-	if (res_SECINFO4->status != NFS4_OK)
-		goto out;
+    if (res_SECINFO4->status != NFS4_OK)
+        goto out;
 
-	/* Do basic checks on a filehandle SecInfo is done only on a directory
-	 */
-	res_SECINFO4->status = nfs4_sanity_check_FH(data, DIRECTORY, false);
+    /* Do basic checks on a filehandle SecInfo is done only on a directory
+     */
+    res_SECINFO4->status = nfs4_sanity_check_FH(data, DIRECTORY, false);
 
-	if (res_SECINFO4->status != NFS4_OK)
-		goto out;
+    if (res_SECINFO4->status != NFS4_OK)
+        goto out;
 
 
-	fsal_status = fsal_lookup(data->current_obj, secinfo_fh_name,
-				  &obj_src, NULL);
+    fsal_status = fsal_lookup(data->current_obj, secinfo_fh_name,
+                              &obj_src, NULL);
 
-	if (obj_src == NULL) {
-		res_SECINFO4->status = nfs4_Errno_status(fsal_status);
-		goto out;
-	}
+    if (obj_src == NULL)
+    {
+        res_SECINFO4->status = nfs4_Errno_status(fsal_status);
+        goto out;
+    }
 
-	/* Get state lock for junction_export */
-	PTHREAD_RWLOCK_rdlock(&obj_src->state_hdl->state_lock);
+    /* Get state lock for junction_export */
+    PTHREAD_RWLOCK_rdlock(&obj_src->state_hdl->state_lock);
 
-	if (obj_src->type == DIRECTORY &&
-	    obj_src->state_hdl->dir.junction_export != NULL) {
-		/* Handle junction */
-		struct gsh_export *junction_export =
-			obj_src->state_hdl->dir.junction_export;
-		struct fsal_obj_handle *obj = NULL;
+    if (obj_src->type == DIRECTORY &&
+        obj_src->state_hdl->dir.junction_export != NULL)
+    {
+        /* Handle junction */
+        struct gsh_export* junction_export =
+            obj_src->state_hdl->dir.junction_export;
+        struct fsal_obj_handle* obj = NULL;
 
-		/* Try to get a reference to the export. */
-		if (!export_ready(junction_export)) {
-			/* Export has gone bad. */
-			LogDebug(COMPONENT_EXPORT,
-				 "NFS4ERR_STALE On Export_Id %d Pseudo %s",
-				 junction_export->export_id,
-				 junction_export->pseudopath);
-			res_SECINFO4->status = NFS4ERR_STALE;
-			PTHREAD_RWLOCK_unlock(&obj_src->state_hdl->state_lock);
-			goto out;
-		}
+        /* Try to get a reference to the export. */
+        if (!export_ready(junction_export))
+        {
+            /* Export has gone bad. */
+            LogDebug(COMPONENT_EXPORT,
+                     "NFS4ERR_STALE On Export_Id %d Pseudo %s",
+                     junction_export->export_id,
+                     junction_export->pseudopath)
 
-		get_gsh_export_ref(junction_export);
+                ;
+            res_SECINFO4->status = NFS4ERR_STALE;
+            PTHREAD_RWLOCK_unlock(&obj_src->state_hdl->state_lock);
+            goto out;
+        }
 
-		PTHREAD_RWLOCK_unlock(&obj_src->state_hdl->state_lock);
+        get_gsh_export_ref(junction_export);
 
-		/* Save the compound data context */
-		save_export_perms = *op_ctx->export_perms;
-		saved_gsh_export = op_ctx->ctx_export;
+        PTHREAD_RWLOCK_unlock(&obj_src->state_hdl->state_lock);
 
-		op_ctx->ctx_export = junction_export;
-		op_ctx->fsal_export = op_ctx->ctx_export->fsal_export;
+        /* Save the compound data context */
+        save_export_perms = *op_ctx->export_perms;
+        saved_gsh_export = op_ctx->ctx_export;
 
-		/* Build credentials */
-		res_SECINFO4->status = nfs4_export_check_access(data->req);
+        op_ctx->ctx_export = junction_export;
+        op_ctx->fsal_export = op_ctx->ctx_export->fsal_export;
 
-		/* Test for access error (export should not be visible). */
-		if (res_SECINFO4->status == NFS4ERR_ACCESS) {
-			/* If return is NFS4ERR_ACCESS then this client doesn't
-			 * have access to this export, return NFS4ERR_NOENT to
-			 * hide it. It was not visible in READDIR response.
-			 */
-			LogDebug(COMPONENT_EXPORT,
-				 "NFS4ERR_ACCESS Hiding Export_Id %d Pseudo %s with NFS4ERR_NOENT",
-				 op_ctx->ctx_export->export_id,
-				 op_ctx->ctx_export->pseudopath);
-			res_SECINFO4->status = NFS4ERR_NOENT;
-			goto out;
-		}
+        /* Build credentials */
+        res_SECINFO4->status = nfs4_export_check_access(data->req);
 
-		/* Only other error is NFS4ERR_WRONGSEC which is actually
-		 * what we expect here. Finish crossing the junction.
-		 */
-		fsal_status = nfs_export_get_root_entry(op_ctx->ctx_export,
-							&obj);
+        /* Test for access error (export should not be visible). */
+        if (res_SECINFO4->status == NFS4ERR_ACCESS)
+        {
+            /* If return is NFS4ERR_ACCESS then this client doesn't
+             * have access to this export, return NFS4ERR_NOENT to
+             * hide it. It was not visible in READDIR response.
+             */
+            LogDebug(COMPONENT_EXPORT,
+                     "NFS4ERR_ACCESS Hiding Export_Id %d Pseudo %s with NFS4ERR_NOENT",
+                     op_ctx->ctx_export->export_id,
+                     op_ctx->ctx_export->pseudopath)
 
-		if (FSAL_IS_ERROR(fsal_status)) {
-			LogMajor(COMPONENT_EXPORT,
-				 "PSEUDO FS JUNCTION TRAVERSAL: Failed to get root for %s, id=%d, status = %s",
-				 op_ctx->ctx_export->pseudopath,
-				 op_ctx->ctx_export->export_id,
-				 fsal_err_txt(fsal_status));
+                ;
+            res_SECINFO4->status = NFS4ERR_NOENT;
+            goto out;
+        }
 
-			res_SECINFO4->status = nfs4_Errno_status(fsal_status);
-			goto out;
-		}
+        /* Only other error is NFS4ERR_WRONGSEC which is actually
+         * what we expect here. Finish crossing the junction.
+         */
+        fsal_status = nfs_export_get_root_entry(op_ctx->ctx_export,
+                                                &obj);
 
-		LogDebug(COMPONENT_EXPORT,
-			 "PSEUDO FS JUNCTION TRAVERSAL: Crossed to %s, id=%d for name=%s",
-			 op_ctx->ctx_export->pseudopath,
-			 op_ctx->ctx_export->export_id,
-			 secinfo_fh_name);
+        if (FSAL_IS_ERROR(fsal_status))
+        {
+            LogMajor(COMPONENT_EXPORT,
+                     "PSEUDO FS JUNCTION TRAVERSAL: Failed to get root for %s, id=%d, status = %s",
+                     op_ctx->ctx_export->pseudopath,
+                     op_ctx->ctx_export->export_id,
+                     fsal_err_txt(fsal_status))
 
-		/* Swap in the obj on the other side of the junction. */
-		obj_src->obj_ops.put_ref(obj_src);
 
-		obj_src = obj;
-	} else {
-		/* Not a junction, release lock */
-		PTHREAD_RWLOCK_unlock(&obj_src->state_hdl->state_lock);
-	}
+                ;
 
-	/* Get the number of entries */
-	if (op_ctx->export_perms->options & EXPORT_OPTION_AUTH_NONE)
-		num_entry++;
+            res_SECINFO4->status = nfs4_Errno_status(fsal_status);
+            goto out;
+        }
 
-	if (op_ctx->export_perms->options & EXPORT_OPTION_AUTH_UNIX)
-		num_entry++;
+        LogDebug(COMPONENT_EXPORT,
+                 "PSEUDO FS JUNCTION TRAVERSAL: Crossed to %s, id=%d for name=%s",
+                 op_ctx->ctx_export->pseudopath,
+                 op_ctx->ctx_export->export_id,
+                 secinfo_fh_name)
 
-	if (op_ctx->export_perms->options &
-	    EXPORT_OPTION_RPCSEC_GSS_NONE)
-		num_entry++;
 
-	if (op_ctx->export_perms->options &
-	    EXPORT_OPTION_RPCSEC_GSS_INTG)
-		num_entry++;
+            ;
 
-	if (op_ctx->export_perms->options &
-	    EXPORT_OPTION_RPCSEC_GSS_PRIV)
-		num_entry++;
+        /* Swap in the obj on the other side of the junction. */
+        obj_src->obj_ops.put_ref(obj_src);
 
-	res_SECINFO4->SECINFO4res_u.resok4.SECINFO4resok_val =
-	     gsh_calloc(num_entry, sizeof(secinfo4));
+        obj_src = obj;
+    }
+    else
+    {
+        /* Not a junction, release lock */
+        PTHREAD_RWLOCK_unlock(&obj_src->state_hdl->state_lock);
+    }
 
-	/**
-	 * @todo We have the opportunity to associate a preferred
-	 * security triple with a specific fs/export.  For now, list
-	 * all implemented.
-	 */
-	int idx = 0;
+    /* Get the number of entries */
+    if (op_ctx->export_perms->options & EXPORT_OPTION_AUTH_NONE)
+        num_entry++;
 
-	/* List the security flavors in the order we prefer */
+    if (op_ctx->export_perms->options & EXPORT_OPTION_AUTH_UNIX)
+        num_entry++;
+
+    if (op_ctx->export_perms->options &
+        EXPORT_OPTION_RPCSEC_GSS_NONE)
+        num_entry++;
+
+    if (op_ctx->export_perms->options &
+        EXPORT_OPTION_RPCSEC_GSS_INTG)
+        num_entry++;
+
+    if (op_ctx->export_perms->options &
+        EXPORT_OPTION_RPCSEC_GSS_PRIV)
+        num_entry++;
+
+    res_SECINFO4->SECINFO4res_u.resok4.SECINFO4resok_val =
+        gsh_calloc(num_entry, sizeof(secinfo4));
+
+    /**
+     * @todo We have the opportunity to associate a preferred
+     * security triple with a specific fs/export.  For now, list
+     * all implemented.
+     */
+    int idx = 0;
+
+    /* List the security flavors in the order we prefer */
 #ifdef _HAVE_GSSAPI
-	if (op_ctx->export_perms->options &
-	    EXPORT_OPTION_RPCSEC_GSS_PRIV) {
-		res_SECINFO4->SECINFO4res_u.resok4.SECINFO4resok_val[idx]
-		    .flavor = RPCSEC_GSS;
-		res_SECINFO4->SECINFO4res_u.resok4.SECINFO4resok_val[idx]
-		    .secinfo4_u.flavor_info.service = RPCSEC_GSS_SVC_PRIVACY;
-		res_SECINFO4->SECINFO4res_u.resok4.SECINFO4resok_val[idx]
-		    .secinfo4_u.flavor_info.qop = GSS_C_QOP_DEFAULT;
-		res_SECINFO4->SECINFO4res_u.resok4.SECINFO4resok_val[idx++]
-		    .secinfo4_u.flavor_info.oid = v5oid;
-	}
+    if (op_ctx->export_perms->options &
+        EXPORT_OPTION_RPCSEC_GSS_PRIV)
+    {
+        res_SECINFO4->SECINFO4res_u.resok4.SECINFO4resok_val[idx]
+            .flavor = RPCSEC_GSS;
+        res_SECINFO4->SECINFO4res_u.resok4.SECINFO4resok_val[idx]
+            .secinfo4_u.flavor_info.service = RPCSEC_GSS_SVC_PRIVACY;
+        res_SECINFO4->SECINFO4res_u.resok4.SECINFO4resok_val[idx]
+            .secinfo4_u.flavor_info.qop = GSS_C_QOP_DEFAULT;
+        res_SECINFO4->SECINFO4res_u.resok4.SECINFO4resok_val[idx++]
+            .secinfo4_u.flavor_info.oid = v5oid;
+    }
 
-	if (op_ctx->export_perms->options &
-	    EXPORT_OPTION_RPCSEC_GSS_INTG) {
-		res_SECINFO4->SECINFO4res_u.resok4.SECINFO4resok_val[idx].
-		    flavor = RPCSEC_GSS;
-		res_SECINFO4->SECINFO4res_u.resok4.SECINFO4resok_val[idx]
-		    .secinfo4_u.flavor_info.service = RPCSEC_GSS_SVC_INTEGRITY;
-		res_SECINFO4->SECINFO4res_u.resok4.SECINFO4resok_val[idx]
-		    .secinfo4_u.flavor_info.qop = GSS_C_QOP_DEFAULT;
-		res_SECINFO4->SECINFO4res_u.resok4.SECINFO4resok_val[idx++]
-		    .secinfo4_u.flavor_info.oid = v5oid;
-	}
+    if (op_ctx->export_perms->options &
+        EXPORT_OPTION_RPCSEC_GSS_INTG)
+    {
+        res_SECINFO4->SECINFO4res_u.resok4.SECINFO4resok_val[idx].
+            flavor = RPCSEC_GSS;
+        res_SECINFO4->SECINFO4res_u.resok4.SECINFO4resok_val[idx]
+            .secinfo4_u.flavor_info.service = RPCSEC_GSS_SVC_INTEGRITY;
+        res_SECINFO4->SECINFO4res_u.resok4.SECINFO4resok_val[idx]
+            .secinfo4_u.flavor_info.qop = GSS_C_QOP_DEFAULT;
+        res_SECINFO4->SECINFO4res_u.resok4.SECINFO4resok_val[idx++]
+            .secinfo4_u.flavor_info.oid = v5oid;
+    }
 
-	if (op_ctx->export_perms->options &
-	    EXPORT_OPTION_RPCSEC_GSS_NONE) {
-		res_SECINFO4->SECINFO4res_u.resok4.SECINFO4resok_val[idx].
-		    flavor = RPCSEC_GSS;
-		res_SECINFO4->SECINFO4res_u.resok4.SECINFO4resok_val[idx]
-		    .secinfo4_u.flavor_info.service = RPCSEC_GSS_SVC_NONE;
-		res_SECINFO4->SECINFO4res_u.resok4.SECINFO4resok_val[idx]
-		    .secinfo4_u.flavor_info.qop = GSS_C_QOP_DEFAULT;
-		res_SECINFO4->SECINFO4res_u.resok4.SECINFO4resok_val[idx++]
-		    .secinfo4_u.flavor_info.oid = v5oid;
-	}
+    if (op_ctx->export_perms->options &
+        EXPORT_OPTION_RPCSEC_GSS_NONE)
+    {
+        res_SECINFO4->SECINFO4res_u.resok4.SECINFO4resok_val[idx].
+            flavor = RPCSEC_GSS;
+        res_SECINFO4->SECINFO4res_u.resok4.SECINFO4resok_val[idx]
+            .secinfo4_u.flavor_info.service = RPCSEC_GSS_SVC_NONE;
+        res_SECINFO4->SECINFO4res_u.resok4.SECINFO4resok_val[idx]
+            .secinfo4_u.flavor_info.qop = GSS_C_QOP_DEFAULT;
+        res_SECINFO4->SECINFO4res_u.resok4.SECINFO4resok_val[idx++]
+            .secinfo4_u.flavor_info.oid = v5oid;
+    }
 #endif /* _HAVE_GSSAPI */
 
-	if (op_ctx->export_perms->options & EXPORT_OPTION_AUTH_UNIX)
-		res_SECINFO4->SECINFO4res_u.resok4.SECINFO4resok_val[idx++]
-		    .flavor = AUTH_UNIX;
+    if (op_ctx->export_perms->options & EXPORT_OPTION_AUTH_UNIX)
+        res_SECINFO4->SECINFO4res_u.resok4.SECINFO4resok_val[idx++]
+        .flavor = AUTH_UNIX;
 
-	if (op_ctx->export_perms->options & EXPORT_OPTION_AUTH_NONE)
-		res_SECINFO4->SECINFO4res_u.resok4.SECINFO4resok_val[idx++]
-		    .flavor = AUTH_NONE;
+    if (op_ctx->export_perms->options & EXPORT_OPTION_AUTH_NONE)
+        res_SECINFO4->SECINFO4res_u.resok4.SECINFO4resok_val[idx++]
+        .flavor = AUTH_NONE;
 
-	res_SECINFO4->SECINFO4res_u.resok4.SECINFO4resok_len = idx;
+    res_SECINFO4->SECINFO4res_u.resok4.SECINFO4resok_len = idx;
 
-	if (data->minorversion != 0) {
-		/* Need to clear out CurrentFH */
-		set_current_entry(data, NULL);
+    if (data->minorversion != 0)
+    {
+        /* Need to clear out CurrentFH */
+        set_current_entry(data, NULL);
 
-		data->currentFH.nfs_fh4_len = 0;
+        data->currentFH.nfs_fh4_len = 0;
 
-		/* Release CurrentFH reference to export. */
-		if (op_ctx->ctx_export) {
-			put_gsh_export(op_ctx->ctx_export);
-			op_ctx->ctx_export = NULL;
-			op_ctx->fsal_export = NULL;
-		}
+        /* Release CurrentFH reference to export. */
+        if (op_ctx->ctx_export)
+        {
+            put_gsh_export(op_ctx->ctx_export);
+            op_ctx->ctx_export = NULL;
+            op_ctx->fsal_export = NULL;
+        }
 
-		if (saved_gsh_export != NULL) {
-			/* Don't need saved export */
-			put_gsh_export(saved_gsh_export);
-			saved_gsh_export = NULL;
-		}
-	}
+        if (saved_gsh_export != NULL)
+        {
+            /* Don't need saved export */
+            put_gsh_export(saved_gsh_export);
+            saved_gsh_export = NULL;
+        }
+    }
 
-	res_SECINFO4->status = NFS4_OK;
+    res_SECINFO4->status = NFS4_OK;
 
- out:
+out:
 
-	if (saved_gsh_export != NULL) {
-		/* Restore export stuff */
-		if (op_ctx->ctx_export)
-			put_gsh_export(op_ctx->ctx_export);
+    if (saved_gsh_export != NULL)
+    {
+        /* Restore export stuff */
+        if (op_ctx->ctx_export)
+            put_gsh_export(op_ctx->ctx_export);
 
-		*op_ctx->export_perms = save_export_perms;
-		op_ctx->ctx_export = saved_gsh_export;
-		op_ctx->fsal_export = op_ctx->ctx_export->fsal_export;
+        *op_ctx->export_perms = save_export_perms;
+        op_ctx->ctx_export = saved_gsh_export;
+        op_ctx->fsal_export = op_ctx->ctx_export->fsal_export;
 
-		/* Restore creds */
-		if (nfs_req_creds(data->req) != NFS4_OK) {
-			LogCrit(COMPONENT_EXPORT,
-				"Failure to restore creds");
-		}
-	}
+        /* Restore creds */
+        if (nfs_req_creds(data->req) != NFS4_OK)
+        {
+            LogCrit(COMPONENT_EXPORT,
+                    "Failure to restore creds");
+        }
+    }
 
-	if (obj_src)
-		obj_src->obj_ops.put_ref(obj_src);
+    if (obj_src)
+        obj_src->obj_ops.put_ref(obj_src);
 
-	if (secinfo_fh_name)
-		gsh_free(secinfo_fh_name);
+    if (secinfo_fh_name)
+        gsh_free(secinfo_fh_name);
 
-	return res_SECINFO4->status;
-}				/* nfs4_op_secinfo */
+    return res_SECINFO4->status;
+} /* nfs4_op_secinfo */
 
 /**
  * @brief Free memory allocated for SECINFO result
@@ -314,13 +339,14 @@ int nfs4_op_secinfo(struct nfs_argop4 *op, compound_data_t *data,
  *
  * @param[in,out] resp nfs4_op results
  */
-void nfs4_op_secinfo_Free(nfs_resop4 *res)
+void nfs4_op_secinfo_Free(nfs_resop4* res)
 {
-	SECINFO4res *resp = &res->nfs_resop4_u.opsecinfo;
+    SECINFO4res* resp = &res->nfs_resop4_u.opsecinfo;
 
-	if ((resp->status == NFS4_OK)
-	    && (resp->SECINFO4res_u.resok4.SECINFO4resok_val)) {
-		gsh_free(resp->SECINFO4res_u.resok4.SECINFO4resok_val);
-		resp->SECINFO4res_u.resok4.SECINFO4resok_val = NULL;
-	}
+    if ((resp->status == NFS4_OK)
+        && (resp->SECINFO4res_u.resok4.SECINFO4resok_val))
+    {
+        gsh_free(resp->SECINFO4res_u.resok4.SECINFO4resok_val);
+        resp->SECINFO4res_u.resok4.SECINFO4resok_val = NULL;
+    }
 }

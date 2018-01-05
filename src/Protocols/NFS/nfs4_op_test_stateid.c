@@ -24,27 +24,29 @@
  * ---------------------------------------
  */
 
-/**
- * @file    nfs4_op_test_stateid.c
- * @brief   Routines used for managing the NFS4 COMPOUND functions.
- *
- * Routines used for managing the NFS4 COMPOUND functions.
- *
- *
- */
-#include "config.h"
-#include <stdio.h>
-#include <string.h>
-#include <pthread.h>
-#include "hashtable.h"
-#include "log.h"
-#include "gsh_rpc.h"
-#include "nfs4.h"
-#include "nfs_core.h"
-#include "sal_functions.h"
-#include "nfs_proto_functions.h"
-#include "nfs_proto_tools.h"
-#include "gsh_list.h"
+ /**
+  * @file    nfs4_op_test_stateid.c
+  * @brief   Routines used for managing the NFS4 COMPOUND functions.
+  *
+  * Routines used for managing the NFS4 COMPOUND functions.
+  *
+  *
+  */
+  //#include "../../include/config.h"
+  //#include "../../include/hashtable.h"
+  //#include "../../include/log.h"
+#include "../../include/gsh_rpc.h"
+//#include "../../include/nfs4.h"
+#include "../../include/nfs_core.h"
+#include "../../include/sal_functions.h"
+#include "../../include/nfs_proto_functions.h"
+#include "../../include/nfs_proto_tools.h"
+//#include "../../include/gsh_list.h"
+
+//#include <stdio.h>
+//#include <string.h>
+//#include <pthread.h>
+
 
 /**
  * @brief The NFS4_OP_TEST_STATEID operation.
@@ -61,29 +63,30 @@
  *
  */
 
-int nfs4_op_test_stateid(struct nfs_argop4 *op, compound_data_t *data,
-			 struct nfs_resop4 *resp)
+int nfs4_op_test_stateid(struct nfs_argop4* op, compound_data_t* data,
+                         struct nfs_resop4* resp)
 {
-	TEST_STATEID4args * const arg_TEST_STATEID4 __attribute__ ((unused))
-	    = &op->nfs_argop4_u.optest_stateid;
-	TEST_STATEID4res * const res_TEST_STATEID4 =
-	    &resp->nfs_resop4_u.optest_stateid;
+    TEST_STATEID4args* const arg_TEST_STATEID4 __attribute__((unused))
+        = &op->nfs_argop4_u.optest_stateid;
+    TEST_STATEID4res* const res_TEST_STATEID4 =
+        &resp->nfs_resop4_u.optest_stateid;
 
-	/* Lock are not supported */
-	resp->resop = NFS4_OP_TEST_STATEID;
-	res_TEST_STATEID4->tsr_status = NFS4_OK;
+    /* Lock are not supported */
+    resp->resop = NFS4_OP_TEST_STATEID;
+    res_TEST_STATEID4->tsr_status = NFS4_OK;
 
-	if (data->minorversion == 0) {
-		res_TEST_STATEID4->tsr_status = NFS4ERR_INVAL;
-		return res_TEST_STATEID4->tsr_status;
-	}
+    if (data->minorversion == 0)
+    {
+        res_TEST_STATEID4->tsr_status = NFS4ERR_INVAL;
+        return res_TEST_STATEID4->tsr_status;
+    }
 
-	/* Do basic checks on a filehandle */
-	res_TEST_STATEID4->tsr_status =
-	    nfs4_sanity_check_FH(data, NO_FILE_TYPE, false);
+    /* Do basic checks on a filehandle */
+    res_TEST_STATEID4->tsr_status =
+        nfs4_sanity_check_FH(data, NO_FILE_TYPE, false);
 
-	return res_TEST_STATEID4->tsr_status;
-}				/* nfs41_op_lock */
+    return res_TEST_STATEID4->tsr_status;
+} /* nfs41_op_lock */
 
 /**
  * @brief Free memory allocated for TEST_STATEID result
@@ -93,7 +96,7 @@ int nfs4_op_test_stateid(struct nfs_argop4 *op, compound_data_t *data,
  *
  * @param[in,out] resp nfs4_op results
  */
-void nfs4_op_test_stateid_Free(nfs_resop4 *resp)
+void nfs4_op_test_stateid_Free(nfs_resop4* resp)
 {
-	/* Nothing to be done */
+    /* Nothing to be done */
 }

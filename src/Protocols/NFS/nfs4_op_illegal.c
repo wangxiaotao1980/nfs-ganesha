@@ -28,19 +28,19 @@
  * \file nfs4_op_illegal.c
  * \brief Routines used for managing the NFS4 COMPOUND functions.
  */
-#include "config.h"
-#include <stdio.h>
-#include <string.h>
-#include <pthread.h>
-#include <fcntl.h>
-#include "log.h"
-#include "gsh_rpc.h"
-#include "nfs23.h"
-#include "nfs4.h"
-#include "mount.h"
-#include "nfs_core.h"
-#include "nfs_exports.h"
-#include "nfs_proto_functions.h"
+  //#include "../../include/config.h"
+  //#include "../../include/log.h"
+  //#include "../../include/gsh_rpc.h"
+  //#include "../../include/nfs23.h"
+  //#include "../../include/nfs4.h"
+  //#include "../../include/mount.h"
+  //#include "../../include/nfs_exports.h"
+#include "../../include/nfs_core.h"
+#include "../../include/nfs_proto_functions.h"
+//#include <stdio.h>
+//#include <string.h>
+//#include <pthread.h>
+//#include <fcntl.h>
 
 /**
  * @brief Always fail
@@ -54,14 +54,14 @@
  * @retval NFS4ERR_OP_ILLEGAL always.
  *
  */
-int nfs4_op_illegal(struct nfs_argop4 *op, compound_data_t *data,
-		    struct nfs_resop4 *resp)
+int nfs4_op_illegal(struct nfs_argop4* op, compound_data_t* data,
+                    struct nfs_resop4* resp)
 {
-	resp->resop = NFS4_OP_ILLEGAL;
-	resp->nfs_resop4_u.opillegal.status = NFS4ERR_OP_ILLEGAL;
+    resp->resop = NFS4_OP_ILLEGAL;
+    resp->nfs_resop4_u.opillegal.status = NFS4ERR_OP_ILLEGAL;
 
-	return NFS4ERR_OP_ILLEGAL;
-}				/* nfs4_op_illegal */
+    return NFS4ERR_OP_ILLEGAL;
+} /* nfs4_op_illegal */
 
 /**
  * @brief Free memory allocated for ILLEGAL result
@@ -71,9 +71,9 @@ int nfs4_op_illegal(struct nfs_argop4 *op, compound_data_t *data,
  *
  * @param[in,out] resp nfs4_op results
  */
-void nfs4_op_illegal_Free(nfs_resop4 *resp)
+void nfs4_op_illegal_Free(nfs_resop4* resp)
 {
-	/* Nothing to be done */
+    /* Nothing to be done */
 }
 
 /**
@@ -88,14 +88,14 @@ void nfs4_op_illegal_Free(nfs_resop4 *resp)
  * @retval NFS4ERR_NOTSUPP always.
  *
  */
-int nfs4_op_notsupp(struct nfs_argop4 *op, compound_data_t *data,
-		    struct nfs_resop4 *resp)
+int nfs4_op_notsupp(struct nfs_argop4* op, compound_data_t* data,
+                    struct nfs_resop4* resp)
 {
-	resp->resop = op->argop;
-	resp->nfs_resop4_u.opillegal.status = NFS4ERR_NOTSUPP;
+    resp->resop = op->argop;
+    resp->nfs_resop4_u.opillegal.status = NFS4ERR_NOTSUPP;
 
-	return NFS4ERR_NOTSUPP;
-}				/* nfs4_op_notsupp */
+    return NFS4ERR_NOTSUPP;
+} /* nfs4_op_notsupp */
 
 /**
  * @brief Free memory allocated for NOTSUPP result
@@ -105,7 +105,7 @@ int nfs4_op_notsupp(struct nfs_argop4 *op, compound_data_t *data,
  *
  * @param[in,out] resp nfs4_op results
  */
-void nfs4_op_notsupp_Free(nfs_resop4 *resp)
+void nfs4_op_notsupp_Free(nfs_resop4* resp)
 {
-	/* Nothing to be done */
+    /* Nothing to be done */
 }

@@ -24,26 +24,27 @@
  * ---------------------------------------
  */
 
-/**
- * @file    nfs4_op_set_ssv.c
- * @brief   Routines for the NFS4_OP_SET_SSV operation
- *
- * Routines for the NFS4_OP_SEQUENCE operation.
- *
- *
- */
-#include "config.h"
-#include <stdio.h>
-#include <string.h>
-#include <pthread.h>
-#include <fcntl.h>
-#include "log.h"
-#include "gsh_rpc.h"
-#include "nfs4.h"
-#include "nfs_core.h"
-#include "nfs_exports.h"
-#include "nfs_proto_functions.h"
-#include "nfs_file_handle.h"
+ /**
+  * @file    nfs4_op_set_ssv.c
+  * @brief   Routines for the NFS4_OP_SET_SSV operation
+  *
+  * Routines for the NFS4_OP_SEQUENCE operation.
+  *
+  *
+  */
+  //#include "../../include/config.h"
+  //#include "../../include/log.h"
+  //#include "../../include/gsh_rpc.h"
+  //#include "../../include/nfs4.h"
+#include "../../include/nfs_core.h"
+//#include "../../include/nfs_exports.h"
+#include "../../include/nfs_proto_functions.h"
+//#include "../../include/nfs_file_handle.h"
+//#include <stdio.h>
+//#include <string.h>
+//#include <pthread.h>
+//#include <fcntl.h>
+
 
 /**
  *
@@ -62,25 +63,26 @@
  *
  */
 
-int nfs4_op_set_ssv(struct nfs_argop4 *op, compound_data_t *data,
-		    struct nfs_resop4 *resp)
+int nfs4_op_set_ssv(struct nfs_argop4* op, compound_data_t* data,
+                    struct nfs_resop4* resp)
 {
-	SET_SSV4args * const arg_SET_SSV4 __attribute__ ((unused))
-	    = &op->nfs_argop4_u.opset_ssv;
-	SET_SSV4res * const res_SET_SSV4 = &resp->nfs_resop4_u.opset_ssv;
-	resp->resop = NFS4_OP_SET_SSV;
-	res_SET_SSV4->ssr_status = NFS4_OK;
+    SET_SSV4args* const arg_SET_SSV4 __attribute__((unused))
+        = &op->nfs_argop4_u.opset_ssv;
+    SET_SSV4res* const res_SET_SSV4 = &resp->nfs_resop4_u.opset_ssv;
+    resp->resop = NFS4_OP_SET_SSV;
+    res_SET_SSV4->ssr_status = NFS4_OK;
 
-	if (data->minorversion == 0) {
-		res_SET_SSV4->ssr_status = NFS4ERR_INVAL;
-		return res_SET_SSV4->ssr_status;
-	}
+    if (data->minorversion == 0)
+    {
+        res_SET_SSV4->ssr_status = NFS4ERR_INVAL;
+        return res_SET_SSV4->ssr_status;
+    }
 
-	/* I know this is pretty dirty...
-	 * But this is an early implementation...
-	 */
-	return res_SET_SSV4->ssr_status;
-}				/* nfs41_op_set_ssv */
+    /* I know this is pretty dirty...
+     * But this is an early implementation...
+     */
+    return res_SET_SSV4->ssr_status;
+} /* nfs41_op_set_ssv */
 
 /**
  * @brief Free memory allocated for SET_SSV result
@@ -90,7 +92,7 @@ int nfs4_op_set_ssv(struct nfs_argop4 *op, compound_data_t *data,
  *
  * @param[in,out] resp nfs4_op results
  */
-void nfs4_op_set_ssv_Free(nfs_resop4 *resp)
+void nfs4_op_set_ssv_Free(nfs_resop4* resp)
 {
-	/* Nothing to be done */
+    /* Nothing to be done */
 }

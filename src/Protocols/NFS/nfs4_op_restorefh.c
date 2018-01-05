@@ -31,15 +31,15 @@
  * Routines used for managing the NFS4_OP_RESTOREFH operation.
  */
 
-#include "config.h"
-#include "log.h"
-#include "fsal.h"
-#include "nfs_core.h"
-#include "nfs_exports.h"
-#include "nfs_proto_functions.h"
-#include "nfs_proto_tools.h"
-#include "nfs_file_handle.h"
-#include "export_mgr.h"
+#include "../../include/config.h"
+#include "../../include/log.h"
+#include "../../include/fsal.h"
+#include "../../include/nfs_core.h"
+#include "../../include/nfs_exports.h"
+#include "../../include/nfs_proto_functions.h"
+#include "../../include/nfs_proto_tools.h"
+#include "../../include/nfs_file_handle.h"
+#include "../../include/export_mgr.h"
 
 /**
  *
@@ -59,97 +59,104 @@
  *
  */
 
-int nfs4_op_restorefh(struct nfs_argop4 *op, compound_data_t *data,
-		      struct nfs_resop4 *resp)
+int nfs4_op_restorefh(struct nfs_argop4* op, compound_data_t* data,
+                      struct nfs_resop4* resp)
 {
-	RESTOREFH4res * const res_RESTOREFH = &resp->nfs_resop4_u.oprestorefh;
-	/* First of all, set the reply to zero to make sure it contains no
-	   parasite information */
-	memset(resp, 0, sizeof(struct nfs_resop4));
+    RESTOREFH4res* const res_RESTOREFH = &resp->nfs_resop4_u.oprestorefh;
+    /* First of all, set the reply to zero to make sure it contains no
+       parasite information */
+    memset(resp, 0, sizeof(struct nfs_resop4));
 
-	resp->resop = NFS4_OP_RESTOREFH;
-	res_RESTOREFH->status = NFS4_OK;
+    resp->resop = NFS4_OP_RESTOREFH;
+    res_RESTOREFH->status = NFS4_OK;
 
-	LogFullDebugOpaque(COMPONENT_FILEHANDLE,
-			   "Saved FH %s",
-			   LEN_FH_STR,
-			   data->savedFH.nfs_fh4_val,
-			   data->savedFH.nfs_fh4_len);
+    LogFullDebugOpaque(COMPONENT_FILEHANDLE,
+                       "Saved FH %s",
+                       LEN_FH_STR,
+                       data->savedFH.nfs_fh4_val,
+                       data->savedFH.nfs_fh4_len);
 
-	/* If there is no savedFH, then return an error */
-	if (nfs4_Is_Fh_Empty(&(data->savedFH)) == NFS4ERR_NOFILEHANDLE) {
-		/* There is no current FH, return NFS4ERR_RESTOREFH
-		 * (cg RFC3530, page 202)
-		 */
-		res_RESTOREFH->status = NFS4ERR_RESTOREFH;
-		return res_RESTOREFH->status;
-	}
+    /* If there is no savedFH, then return an error */
+    if (nfs4_Is_Fh_Empty(&(data->savedFH)) == NFS4ERR_NOFILEHANDLE)
+    {
+        /* There is no current FH, return NFS4ERR_RESTOREFH
+         * (cg RFC3530, page 202)
+         */
+        res_RESTOREFH->status = NFS4ERR_RESTOREFH;
+        return res_RESTOREFH->status;
+    }
 
-	/* Do basic checks on saved filehandle */
-	res_RESTOREFH->status =
-	    nfs4_sanity_check_saved_FH(data, NO_FILE_TYPE, true);
+    /* Do basic checks on saved filehandle */
+    res_RESTOREFH->status =
+        nfs4_sanity_check_saved_FH(data, NO_FILE_TYPE, true);
 
-	if (res_RESTOREFH->status != NFS4_OK)
-		return res_RESTOREFH->status;
+    if (res_RESTOREFH->status != NFS4_OK)
+    {
+        return res_RESTOREFH->status;
+    }
 
-	/* Determine if we can get a new export reference. If there is
-	 * no saved export, don't get a reference to it.
-	 */
-	if (data->saved_export != NULL) {
-		if (!export_ready(data->saved_export)) {
-			/* The SavedFH export has gone bad. */
-			res_RESTOREFH->status = NFS4ERR_STALE;
-			return res_RESTOREFH->status;
-		}
-		get_gsh_export_ref(data->saved_export);
-	}
+    /* Determine if we can get a new export reference. If there is
+     * no saved export, don't get a reference to it.
+     */
+    if (data->saved_export != NULL)
+    {
+        if (!export_ready(data->saved_export))
+        {
+            /* The SavedFH export has gone bad. */
+            res_RESTOREFH->status = NFS4ERR_STALE;
+            return res_RESTOREFH->status;
+        }
+        get_gsh_export_ref(data->saved_export);
+    }
 
-	/* Copy the data from saved FH to current FH */
-	memcpy(data->currentFH.nfs_fh4_val, data->savedFH.nfs_fh4_val,
-	       data->savedFH.nfs_fh4_len);
+    /* Copy the data from saved FH to current FH */
+    memcpy(data->currentFH.nfs_fh4_val, data->savedFH.nfs_fh4_val,
+           data->savedFH.nfs_fh4_len);
 
-	data->currentFH.nfs_fh4_len = data->savedFH.nfs_fh4_len;
+    data->currentFH.nfs_fh4_len = data->savedFH.nfs_fh4_len;
 
-	if (op_ctx->ctx_export != NULL)
-		put_gsh_export(op_ctx->ctx_export);
+    if (op_ctx->ctx_export != NULL)
+        put_gsh_export(op_ctx->ctx_export);
 
-	/* Restore the export information */
-	op_ctx->ctx_export = data->saved_export;
-	if (op_ctx->ctx_export != NULL)
-		op_ctx->fsal_export = op_ctx->ctx_export->fsal_export;
+    /* Restore the export information */
+    op_ctx->ctx_export = data->saved_export;
+    if (op_ctx->ctx_export != NULL)
+        op_ctx->fsal_export = op_ctx->ctx_export->fsal_export;
 
-	*op_ctx->export_perms = data->saved_export_perms;
+    *op_ctx->export_perms = data->saved_export_perms;
 
-	/* No need to call nfs4_SetCompoundExport or nfs4_MakeCred
-	 * because we are restoring saved information, and the
-	 * credential checking may be skipped.
-	 */
+    /* No need to call nfs4_SetCompoundExport or nfs4_MakeCred
+     * because we are restoring saved information, and the
+     * credential checking may be skipped.
+     */
 
-	/* Update the current entry */
-	set_current_entry(data, data->saved_obj);
+     /* Update the current entry */
+    set_current_entry(data, data->saved_obj);
 
-	/* Restore the saved stateid */
-	data->current_stateid = data->saved_stateid;
-	data->current_stateid_valid = data->saved_stateid_valid;
+    /* Restore the saved stateid */
+    data->current_stateid = data->saved_stateid;
+    data->current_stateid_valid = data->saved_stateid_valid;
 
-	/* Make RESTOREFH work right for DS handle */
-	if (data->current_ds != NULL) {
-		data->current_ds = data->saved_ds;
-		data->current_filetype = data->saved_filetype;
-		ds_handle_get_ref(data->current_ds);
-	}
+    /* Make RESTOREFH work right for DS handle */
+    if (data->current_ds != NULL)
+    {
+        data->current_ds = data->saved_ds;
+        data->current_filetype = data->saved_filetype;
+        ds_handle_get_ref(data->current_ds);
+    }
 
-	if (isFullDebug(COMPONENT_NFS_V4)) {
-		char str[LEN_FH_STR];
+    if (isFullDebug(COMPONENT_NFS_V4))
+    {
+        char str[LEN_FH_STR];
 
-		sprint_fhandle4(str, &data->currentFH);
-		LogFullDebug(COMPONENT_NFS_V4,
-			     "RESTORE FH: Current FH %s",
-			     str);
-	}
+        sprint_fhandle4(str, &data->currentFH);
+        LogFullDebug(COMPONENT_NFS_V4,
+                     "RESTORE FH: Current FH %s",
+                     str);
+    }
 
-	return NFS4_OK;
-}				/* nfs4_op_restorefh */
+    return NFS4_OK;
+} /* nfs4_op_restorefh */
 
 /**
  * @brief Free memory allocated for RESTOREFH result
@@ -159,7 +166,7 @@ int nfs4_op_restorefh(struct nfs_argop4 *op, compound_data_t *data,
  *
  * @param[in,out] resp nfs4_op results
  */
-void nfs4_op_restorefh_Free(nfs_resop4 *resp)
+void nfs4_op_restorefh_Free(nfs_resop4* resp)
 {
-	/* Nothing to be done */
+    /* Nothing to be done */
 }

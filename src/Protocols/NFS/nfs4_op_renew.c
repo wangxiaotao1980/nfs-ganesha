@@ -31,14 +31,14 @@
  * Routines used for managing the NFS4 COMPOUND functions.
  *
  */
-#include "config.h"
-#include "log.h"
-#include "nfs4.h"
-#include "sal_functions.h"
-#include "nfs_proto_functions.h"
-#include "nfs_core.h"
-#include "nfs_rpc_callback.h"
-#include "server_stats.h"
+#include "../../include/config.h"
+#include "../../include/log.h"
+#include "../../include/nfs4.h"
+#include "../../include/sal_functions.h"
+#include "../../include/nfs_proto_functions.h"
+#include "../../include/nfs_core.h"
+#include "../../include/nfs_rpc_callback.h"
+  //#include "../../include/server_stats.h"
 
 /**
  * @brief The NFS4_OP_RENEW operation.
@@ -56,65 +56,74 @@
  *
  */
 
-int nfs4_op_renew(struct nfs_argop4 *op, compound_data_t *data,
-		  struct nfs_resop4 *resp)
+int nfs4_op_renew(struct nfs_argop4* op, compound_data_t* data,
+                  struct nfs_resop4* resp)
 {
-	RENEW4args * const arg_RENEW4 = &op->nfs_argop4_u.oprenew;
-	RENEW4res * const res_RENEW4 = &resp->nfs_resop4_u.oprenew;
-	nfs_client_id_t *clientid;
-	int rc;
+    RENEW4args* const arg_RENEW4 = &op->nfs_argop4_u.oprenew;
+    RENEW4res* const res_RENEW4 = &resp->nfs_resop4_u.oprenew;
+    nfs_client_id_t* clientid;
+    int rc;
 
-	/* Lock are not supported */
-	memset(resp, 0, sizeof(struct nfs_resop4));
-	resp->resop = NFS4_OP_RENEW;
+    /* Lock are not supported */
+    memset(resp, 0, sizeof(struct nfs_resop4));
+    resp->resop = NFS4_OP_RENEW;
 
-	if (data->minorversion > 0) {
-		res_RENEW4->status = NFS4ERR_NOTSUPP;
-		return res_RENEW4->status;
-	}
+    if (data->minorversion > 0)
+    {
+        res_RENEW4->status = NFS4ERR_NOTSUPP;
+        return res_RENEW4->status;
+    }
 
-	/* Tell the admin what I am doing... */
-	LogFullDebug(COMPONENT_CLIENTID,
-		     "RENEW Client id = %" PRIx64,
-		     arg_RENEW4->clientid);
+    /* Tell the admin what I am doing... */
+    LogFullDebug(COMPONENT_CLIENTID,
+                 "RENEW Client id = %" PRIx64,
+                 arg_RENEW4->clientid);
 
-	/* Is this an existing client id ? */
-	rc = nfs_client_id_get_confirmed(arg_RENEW4->clientid, &clientid);
+    /* Is this an existing client id ? */
+    rc = nfs_client_id_get_confirmed(arg_RENEW4->clientid, &clientid);
 
-	if (rc != CLIENT_ID_SUCCESS) {
-		/* Unknown client id */
-		res_RENEW4->status = clientid_error_to_nfsstat(rc);
-		return res_RENEW4->status;
-	}
+    if (rc != CLIENT_ID_SUCCESS)
+    {
+        /* Unknown client id */
+        res_RENEW4->status = clientid_error_to_nfsstat(rc);
+        return res_RENEW4->status;
+    }
 
-	PTHREAD_MUTEX_lock(&clientid->cid_mutex);
+    PTHREAD_MUTEX_lock(&clientid->cid_mutex);
 
-	if (!reserve_lease(clientid)) {
-		res_RENEW4->status = NFS4ERR_EXPIRED;
-	} else {
-		update_lease(clientid);
-		/* update the lease, check the state of callback
-		 * path and return correct error */
-		if (nfs_param.nfsv4_param.allow_delegations &&
-		    get_cb_chan_down(clientid) && clientid->curr_deleg_grants) {
-			res_RENEW4->status =  NFS4ERR_CB_PATH_DOWN;
-			/* Set the time for first PATH_DOWN response */
-			if (clientid->first_path_down_resp_time == 0)
-				clientid->first_path_down_resp_time =
-								time(NULL);
-		} else {
-			res_RENEW4->status = NFS4_OK;
-			/* Reset */
-			clientid->first_path_down_resp_time = 0;
-		}
-	}
+    if (!reserve_lease(clientid))
+    {
+        res_RENEW4->status = NFS4ERR_EXPIRED;
+    }
+    else
+    {
+        update_lease(clientid);
+        /* update the lease, check the state of callback
+         * path and return correct error */
+        if (nfs_param.nfsv4_param.allow_delegations &&
+            get_cb_chan_down(clientid) && clientid->curr_deleg_grants)
+        {
+            res_RENEW4->status = NFS4ERR_CB_PATH_DOWN;
+            /* Set the time for first PATH_DOWN response */
+            if (clientid->first_path_down_resp_time == 0)
+            {
+                clientid->first_path_down_resp_time = time(NULL);
+            }
+        }
+        else
+        {
+            res_RENEW4->status = NFS4_OK;
+            /* Reset */
+            clientid->first_path_down_resp_time = 0;
+        }
+    }
 
-	PTHREAD_MUTEX_unlock(&clientid->cid_mutex);
+    PTHREAD_MUTEX_unlock(&clientid->cid_mutex);
 
-	dec_client_id_ref(clientid);
+    dec_client_id_ref(clientid);
 
-	return res_RENEW4->status;
-}				/* nfs4_op_renew */
+    return res_RENEW4->status;
+} /* nfs4_op_renew */
 
 /**
  * @brief Free memory allocated for RENEW result
@@ -124,7 +133,7 @@ int nfs4_op_renew(struct nfs_argop4 *op, compound_data_t *data,
  *
  * @param[in,out] resp nfs4_op results
  */
-void nfs4_op_renew_Free(nfs_resop4 *resp)
+void nfs4_op_renew_Free(nfs_resop4* resp)
 {
-	/* Nothing to be done */
+    /* Nothing to be done */
 }

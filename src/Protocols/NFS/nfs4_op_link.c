@@ -23,30 +23,30 @@
  * ---------------------------------------
  */
 
-/**
- * \file    nfs4_op_link.c
- * \brief   Routines used for managing the NFS4 COMPOUND functions.
- *
- * Routines used for managing the NFS4 COMPOUND functions.
- *
- *
- */
-#include "config.h"
+ /**
+  * \file    nfs4_op_link.c
+  * \brief   Routines used for managing the NFS4 COMPOUND functions.
+  *
+  * Routines used for managing the NFS4 COMPOUND functions.
+  *
+  *
+  */
+#include "../../include/config.h"
+#include "../../include/hashtable.h"
+#include "../../include/log.h"
+#include "../../include/gsh_rpc.h"
+#include "../../include/nfs4.h"
+#include "../../include/nfs_core.h"
+  //#include "../../include/fsal.h"
+#include "../../include/nfs_exports.h"
+#include "../../include/nfs_proto_functions.h"
+#include "../../include/nfs_proto_tools.h"
+#include "../../include/nfs_convert.h"
+#include "../../include/nfs_file_handle.h"
 #include <stdio.h>
-#include <string.h>
+//#include <string.h>
 #include <pthread.h>
-#include <fcntl.h>
-#include "hashtable.h"
-#include "log.h"
-#include "gsh_rpc.h"
-#include "nfs4.h"
-#include "nfs_core.h"
-#include "fsal.h"
-#include "nfs_exports.h"
-#include "nfs_proto_functions.h"
-#include "nfs_proto_tools.h"
-#include "nfs_convert.h"
-#include "nfs_file_handle.h"
+//#include <fcntl.h>
 
 /**
  * @brief The NFS4_OP_LINK operation.
@@ -61,77 +61,85 @@
  * @return per RFC5661, p. 367
  */
 
-int nfs4_op_link(struct nfs_argop4 *op, compound_data_t *data,
-		 struct nfs_resop4 *resp)
+int nfs4_op_link(struct nfs_argop4* op, compound_data_t* data,
+                 struct nfs_resop4* resp)
 {
-	LINK4args * const arg_LINK4 = &op->nfs_argop4_u.oplink;
-	LINK4res * const res_LINK4 = &resp->nfs_resop4_u.oplink;
-	struct fsal_obj_handle *dir_obj = NULL;
-	struct fsal_obj_handle *file_obj = NULL;
-	fsal_status_t status = {0, 0};
-	char *newname = NULL;
+    LINK4args* const arg_LINK4 = &op->nfs_argop4_u.oplink;
+    LINK4res* const res_LINK4 = &resp->nfs_resop4_u.oplink;
+    struct fsal_obj_handle* dir_obj = NULL;
+    struct fsal_obj_handle* file_obj = NULL;
+    fsal_status_t status = { 0, 0 };
+    char* newname = NULL;
 
-	resp->resop = NFS4_OP_LINK;
-	res_LINK4->status = NFS4_OK;
+    resp->resop = NFS4_OP_LINK;
+    res_LINK4->status = NFS4_OK;
 
-	/* Do basic checks on a filehandle */
-	res_LINK4->status = nfs4_sanity_check_FH(data, DIRECTORY, false);
+    /* Do basic checks on a filehandle */
+    res_LINK4->status = nfs4_sanity_check_FH(data, DIRECTORY, false);
 
-	if (res_LINK4->status != NFS4_OK)
-		goto out;
+    if (res_LINK4->status != NFS4_OK)
+    {
+        goto out;
+    }
 
-	res_LINK4->status = nfs4_sanity_check_saved_FH(data, -DIRECTORY, false);
+    res_LINK4->status = nfs4_sanity_check_saved_FH(data, -DIRECTORY, false);
 
-	if (res_LINK4->status != NFS4_OK)
-		goto out;
+    if (res_LINK4->status != NFS4_OK)
+    {
+        goto out;
+    }
 
-	/* Check that both handles are in the same export. */
-	if (op_ctx->ctx_export != NULL && data->saved_export != NULL &&
-	    op_ctx->ctx_export->export_id != data->saved_export->export_id) {
-		res_LINK4->status = NFS4ERR_XDEV;
-		goto out;
-	}
+    /* Check that both handles are in the same export. */
+    if (op_ctx->ctx_export != NULL && data->saved_export != NULL &&
+        op_ctx->ctx_export->export_id != data->saved_export->export_id)
+    {
+        res_LINK4->status = NFS4ERR_XDEV;
+        goto out;
+    }
 
-	/*
-	 * This operation creates a hard link, for the file
-	 * represented by the saved FH, in directory represented by
-	 * currentFH under the name arg_LINK4.target
-	 */
+    /*
+     * This operation creates a hard link, for the file
+     * represented by the saved FH, in directory represented by
+     * currentFH under the name arg_LINK4.target
+     */
 
-	/* Validate and convert the UFT8 objname to a regular string */
-	res_LINK4->status = nfs4_utf8string2dynamic(&arg_LINK4->newname,
-						    UTF8_SCAN_ALL,
-						    &newname);
+     /* Validate and convert the UFT8 objname to a regular string */
+    res_LINK4->status = nfs4_utf8string2dynamic(&arg_LINK4->newname,
+                                                UTF8_SCAN_ALL,
+                                                &newname);
 
-	if (res_LINK4->status != NFS4_OK)
-		goto out;
+    if (res_LINK4->status != NFS4_OK)
+        goto out;
 
-	/* get info from compound data */
-	dir_obj = data->current_obj;
+    /* get info from compound data */
+    dir_obj = data->current_obj;
 
-	res_LINK4->LINK4res_u.resok4.cinfo.before = fsal_get_changeid4(dir_obj);
+    res_LINK4->LINK4res_u.resok4.cinfo.before = fsal_get_changeid4(dir_obj);
 
-	file_obj = data->saved_obj;
+    file_obj = data->saved_obj;
 
-	/* make the link */
-	status = fsal_link(file_obj, dir_obj, newname);
-	if (FSAL_IS_ERROR(status)) {
-		res_LINK4->status = nfs4_Errno_status(status);
-		goto out;
-	}
+    /* make the link */
+    status = fsal_link(file_obj, dir_obj, newname);
+    if (FSAL_IS_ERROR(status))
+    {
+        res_LINK4->status = nfs4_Errno_status(status);
+        goto out;
+    }
 
-	res_LINK4->LINK4res_u.resok4.cinfo.after = fsal_get_changeid4(dir_obj);
-	res_LINK4->LINK4res_u.resok4.cinfo.atomic = FALSE;
+    res_LINK4->LINK4res_u.resok4.cinfo.after = fsal_get_changeid4(dir_obj);
+    res_LINK4->LINK4res_u.resok4.cinfo.atomic = FALSE;
 
-	res_LINK4->status = NFS4_OK;
+    res_LINK4->status = NFS4_OK;
 
- out:
+out:
 
-	if (newname)
-		gsh_free(newname);
+    if (newname)
+    {
+        gsh_free(newname);
+    }
 
-	return res_LINK4->status;
-}				/* nfs4_op_link */
+    return res_LINK4->status;
+} /* nfs4_op_link */
 
 /**
  * @brief Free memory allocated for LINK result
@@ -141,7 +149,7 @@ int nfs4_op_link(struct nfs_argop4 *op, compound_data_t *data,
  *
  * @param[in,out] resp nfs4_op results
  */
-void nfs4_op_link_Free(nfs_resop4 *resp)
+void nfs4_op_link_Free(nfs_resop4* resp)
 {
-	/* Nothing to be done */
+    /* Nothing to be done */
 }
