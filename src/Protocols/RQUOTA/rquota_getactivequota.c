@@ -20,22 +20,22 @@
  *
  */
 
-#include "config.h"
-#include <stdio.h>
-#include <string.h>
-#include <pthread.h>
+ //#include "../../include/config.h"
+#include "../../include/log.h"
+#include "../../include/gsh_rpc.h"
+//#include "../../include/nfs23.h"
+//#include "../../include/nfs4.h"
+//#include "../../include/nfs_core.h"
+//#include "../../include/nfs_exports.h"
+//#include "../../include/mount.h"
+//#include "../../include/rquota.h"
+#include "../../include/nfs_proto_functions.h"
 #include <fcntl.h>
-#include <sys/file.h>		/* for having FNDELAY */
-#include "hashtable.h"
-#include "log.h"
-#include "gsh_rpc.h"
-#include "nfs23.h"
-#include "nfs4.h"
-#include "nfs_core.h"
-#include "nfs_exports.h"
-#include "mount.h"
-#include "rquota.h"
-#include "nfs_proto_functions.h"
+//#include <stdio.h>
+//#include <string.h>
+//#include <pthread.h>
+//#include <sys/file.h>		/* for having FNDELAY */
+//#include "../../include/hashtable.h"
 
 /**
  * @brief The Rquota getactivequota function, for all versions.
@@ -46,12 +46,12 @@
  *
  */
 
-int rquota_getactivequota(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
+int rquota_getactivequota(nfs_arg_t* arg, struct svc_req* req, nfs_res_t* res)
 {
-	LogFullDebug(COMPONENT_NFSPROTO,
-		     "REQUEST PROCESSING: Calling rquota_getactivequota");
-	/* 0 is success */
-	return 0;
+    LogFullDebug(COMPONENT_NFSPROTO,
+                 "REQUEST PROCESSING: Calling rquota_getactivequota");
+    /* 0 is success */
+    return 0;
 }
 
 /**
@@ -60,7 +60,7 @@ int rquota_getactivequota(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
  * @param[in,oujt] res Pointer to the result structure.
  *
  */
-void rquota_getactivequota_Free(nfs_res_t *res)
+void rquota_getactivequota_Free(nfs_res_t* res)
 {
-	/* Nothing to do */
+    /* Nothing to do */
 }

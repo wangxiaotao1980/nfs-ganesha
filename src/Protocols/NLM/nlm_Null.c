@@ -21,15 +21,16 @@
  *
  */
 
-#include "config.h"
-#include <stdio.h>
-#include <string.h>
-#include <pthread.h>
-#include "log.h"
-#include "gsh_rpc.h"
-#include "nlm4.h"
-#include "nlm_util.h"
-#include "nlm_async.h"
+ //#include "../../include/config.h"
+#include "../../include/log.h"
+#include "../../include/gsh_rpc.h"
+//#include "../../include/nlm4.h"
+//#include "../../include/nlm_util.h"
+#include "../../include/nlm_async.h"
+
+//#include <stdio.h>
+//#include <string.h>
+//#include <pthread.h>
 
 /**
  * @brief The NLM proc null function, for all versions.
@@ -42,12 +43,12 @@
  *
  */
 
-int nlm_Null(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
+int nlm_Null(nfs_arg_t* arg, struct svc_req* req, nfs_res_t* res)
 {
-	LogDebug(COMPONENT_NLM, "REQUEST PROCESSING: Calling nlm_Null");
+    LogDebug(COMPONENT_NLM, "REQUEST PROCESSING: Calling nlm_Null");
 
-	/* 0 is success */
-	return 0;
+    /* 0 is success */
+    return 0;
 }
 
 /**
@@ -58,7 +59,7 @@ int nlm_Null(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
  * @param res        [INOUT]   Pointer to the result structure.
  *
  */
-void nlm_Null_Free(nfs_res_t *res)
+void nlm_Null_Free(nfs_res_t* res)
 {
-	/* Nothing to do */
+    /* Nothing to do */
 }

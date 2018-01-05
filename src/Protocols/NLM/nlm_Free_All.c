@@ -21,16 +21,16 @@
  *
  */
 
-#include "config.h"
+#include "../../include/config.h"
+#include "../../include/gsh_rpc.h"
+#include "../../include/log.h"
+#include "../../include/nlm4.h"
+#include "../../include/sal_functions.h"
+#include "../../include/nfs_proto_functions.h"
+#include "../../include/nlm_util.h"
 #include <stdio.h>
-#include <string.h>
+ //#include <string.h>
 #include <pthread.h>
-#include "gsh_rpc.h"
-#include "log.h"
-#include "nlm4.h"
-#include "sal_functions.h"
-#include "nfs_proto_functions.h"
-#include "nlm_util.h"
 
 /**
  * @brief Free All Locks
@@ -40,41 +40,43 @@
  * @param[out] res
  */
 
-int nlm4_Free_All(nfs_arg_t *args, struct svc_req *req, nfs_res_t *res)
+int nlm4_Free_All(nfs_arg_t* args, struct svc_req* req, nfs_res_t* res)
 {
-	nlm4_free_allargs *arg = &args->arg_nlm4_free_allargs;
-	state_status_t state_status = STATE_SUCCESS;
-	state_nsm_client_t *nsm_client;
+    nlm4_free_allargs* arg = &args->arg_nlm4_free_allargs;
+    state_status_t state_status = STATE_SUCCESS;
+    state_nsm_client_t* nsm_client;
 
-	LogDebug(COMPONENT_NLM,
-		 "REQUEST PROCESSING: Calling nlm4_Free_All for %s",
-		 arg->name);
+    LogDebug(COMPONENT_NLM,
+             "REQUEST PROCESSING: Calling nlm4_Free_All for %s",
+             arg->name);
 
-	nsm_client = get_nsm_client(CARE_NOT, req->rq_xprt, arg->name);
-	if (nsm_client != NULL) {
-		/* NLM_FREE_ALL has the same semantics as handling SM_NOTIFY.
-		 *
-		 * Cast the state number into a state pointer to protect
-		 * locks from a client that has rebooted from being released
-		 * by this NLM_FREE_ALL.
-		 */
-		state_status =
-		    state_nlm_notify(nsm_client, false, 0);
-		if (state_status != STATE_SUCCESS) {
-			/* NLM_FREE_ALL has void result so all we can do is
-			 * log error
-			 */
-			LogWarn(COMPONENT_NLM,
-				"NLM_FREE_ALL failed with result %s",
-				state_err_str(state_status));
-		}
+    nsm_client = get_nsm_client(CARE_NOT, req->rq_xprt, arg->name);
+    if (nsm_client != NULL)
+    {
+        /* NLM_FREE_ALL has the same semantics as handling SM_NOTIFY.
+         *
+         * Cast the state number into a state pointer to protect
+         * locks from a client that has rebooted from being released
+         * by this NLM_FREE_ALL.
+         */
+        state_status =
+            state_nlm_notify(nsm_client, false, 0);
+        if (state_status != STATE_SUCCESS)
+        {
+            /* NLM_FREE_ALL has void result so all we can do is
+             * log error
+             */
+            LogWarn(COMPONENT_NLM,
+                    "NLM_FREE_ALL failed with result %s",
+                    state_err_str(state_status));
+        }
 
-		dec_nsm_client_ref(nsm_client);
-	}
+        dec_nsm_client_ref(nsm_client);
+    }
 
-	LogDebug(COMPONENT_NLM, "REQUEST RESULT: nlm4_Free_All DONE");
+    LogDebug(COMPONENT_NLM, "REQUEST RESULT: nlm4_Free_All DONE");
 
-	return NFS_REQ_OK;
+    return NFS_REQ_OK;
 }
 
 /**
@@ -85,7 +87,7 @@ int nlm4_Free_All(nfs_arg_t *args, struct svc_req *req, nfs_res_t *res)
  * @param res        [INOUT]   Pointer to the result structure.
  *
  */
-void nlm4_Free_All_Free(nfs_res_t *res)
+void nlm4_Free_All_Free(nfs_res_t* res)
 {
-	/* Nothing to do */
+    /* Nothing to do */
 }

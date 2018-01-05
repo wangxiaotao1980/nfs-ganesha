@@ -18,22 +18,22 @@
  * 02110-1301 USA
  */
 
-#include "config.h"
-#include <stdio.h>
-#include <string.h>
-#include <pthread.h>
-#include <fcntl.h>
+//#include "../../include/config.h"
+#include "../../include/log.h"
+#include "../../include/gsh_rpc.h"
+//#include "../../include/nfs23.h"
+//#include "../../include/nfs4.h"
+//#include "../../include/nfs_core.h"
+//#include "../../include/nfs_exports.h"
+//#include "../../include/mount.h"
+//#include "../../include/rquota.h"
+#include "../../include/nfs_proto_functions.h"
+//#include "../../include/hashtable.h"
+//#include <stdio.h>
+//#include <string.h>
+//#include <pthread.h>
+//#include <fcntl.h>
 #include <sys/file.h>
-#include "hashtable.h"
-#include "log.h"
-#include "gsh_rpc.h"
-#include "nfs23.h"
-#include "nfs4.h"
-#include "nfs_core.h"
-#include "nfs_exports.h"
-#include "mount.h"
-#include "rquota.h"
-#include "nfs_proto_functions.h"
 
 /**
  * @brief The Rquota setactivequota function, for all versions.

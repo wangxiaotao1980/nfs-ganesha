@@ -6,9 +6,8 @@
  * This file is under version control.
  */
 
-#include "config.h"
-
-#include "nfsv41.h"
+#include "../../include/config.h"
+#include "../../include/nfsv41.h"
 
 /* Most Ganesha XDR decoder routines are inlines, defined in
  * nfsv41.h.  The present file is retained as a location for

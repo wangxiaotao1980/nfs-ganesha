@@ -22,42 +22,50 @@
 
 #include <stdio.h>
 #include <string.h>
-#include "log.h"
-#include "export_mgr.h"
+#include "../../include/log.h"
+#include "../../include/export_mgr.h"
 
-/**
- * Check if leading slash is missing, if yes then prepend
- * root path to the pathname
- */
-char *check_handle_lead_slash(char *quota_path, char *temp_path,
-			      size_t temp_path_size)
+ /**
+  * Check if leading slash is missing, if yes then prepend
+  * root path to the pathname
+  */
+char* check_handle_lead_slash(char* quota_path, char* temp_path,
+                              size_t temp_path_size)
 {
-	if (quota_path[0] != '/') {
-		/* prepend root path */
-		struct gsh_export *exp;
-		int pathlen;
-		int qpathlen;
+    if (quota_path[0] != '/')
+    {
+        /* prepend root path */
+        struct gsh_export* exp;
+        int pathlen;
+        int qpathlen;
 
-		exp = get_gsh_export(0);
-		pathlen = strlen(exp->fullpath);
-		if (pathlen >= temp_path_size)
-			return NULL;
-		memcpy(temp_path, exp->fullpath, pathlen);
+        exp = get_gsh_export(0);
+        pathlen = strlen(exp->fullpath);
+        if (pathlen >= temp_path_size)
+        {
+            return NULL;
+        }
+        memcpy(temp_path, exp->fullpath, pathlen);
 
-		/* Add trailing slash if it is missing */
-		if ((pathlen > 0) &&
-		    (temp_path[pathlen - 1] != '/'))
-			temp_path[pathlen++] = '/';
+        /* Add trailing slash if it is missing */
+        if ((pathlen > 0) &&
+            (temp_path[pathlen - 1] != '/'))
+        {
+            temp_path[pathlen++] = '/';
+        }
 
-		qpathlen = strlen(quota_path);
-		if ((pathlen + qpathlen) >= temp_path_size) {
-			LogInfo(COMPONENT_NFSPROTO,
-				"Quota path %s too long", quota_path);
-			return NULL;
-		}
-		memcpy(temp_path + pathlen, quota_path, qpathlen + 1);
-		return temp_path;
-	} else {
-		return quota_path;
-	}
+        qpathlen = strlen(quota_path);
+        if ((pathlen + qpathlen) >= temp_path_size)
+        {
+            LogInfo(COMPONENT_NFSPROTO,
+                    "Quota path %s too long", quota_path);
+            return NULL;
+        }
+        memcpy(temp_path + pathlen, quota_path, qpathlen + 1);
+        return temp_path;
+    }
+    else
+    {
+        return quota_path;
+    }
 }
