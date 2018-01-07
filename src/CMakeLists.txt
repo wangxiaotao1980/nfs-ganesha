@@ -27,14 +27,14 @@ ENDIF(CMAKE_BUILD_TYPE STREQUAL "Release" OR CMAKE_BUILD_TYPE STREQUAL "RelWithD
 
 # needs to come after project()
 IF(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT OR CMAKE_INSTALL_PREFIX STREQUAL "/usr")
-	SET(CMAKE_INSTALL_PREFIX "/usr" CACHE PATH "Install prefix for common files" FORCE)
-	message(STATUS "override default CMAKE_INSTALL_PREFIX = ${CMAKE_INSTALL_PREFIX}")
-	SET(SYSCONFDIR "/etc" CACHE PATH "Install prefix for common files")
-	SET(SYSSTATEDIR "/var" CACHE PATH "Install prefix for common files")
+    SET(CMAKE_INSTALL_PREFIX "/usr" CACHE PATH "Install prefix for common files" FORCE)
+    message(STATUS "override default CMAKE_INSTALL_PREFIX = ${CMAKE_INSTALL_PREFIX}")
+    SET(SYSCONFDIR "/etc" CACHE PATH "Install prefix for common files")
+    SET(SYSSTATEDIR "/var" CACHE PATH "Install prefix for common files")
 ELSE()
-	message(STATUS "was set CMAKE_INSTALL_PREFIX = ${CMAKE_INSTALL_PREFIX}")
-	SET(SYSCONFDIR "${CMAKE_INSTALL_PREFIX}/etc" CACHE PATH "Install prefix for common files")
-	SET(SYSSTATEDIR "${CMAKE_INSTALL_PREFIX}/var" CACHE PATH "Install prefix for common files")
+    message(STATUS "was set CMAKE_INSTALL_PREFIX = ${CMAKE_INSTALL_PREFIX}")
+    SET(SYSCONFDIR "${CMAKE_INSTALL_PREFIX}/etc" CACHE PATH "Install prefix for common files")
+    SET(SYSSTATEDIR "${CMAKE_INSTALL_PREFIX}/var" CACHE PATH "Install prefix for common files")
 ENDIF(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT OR CMAKE_INSTALL_PREFIX STREQUAL "/usr")
 # Patch level is always ".0" for mainline (master).  It is blank for development.
 # When starting a stable maintenance branch, this becomes ".N"
@@ -122,14 +122,14 @@ include(FindPkgConfig)
 IF( EXISTS ${CMAKE_SOURCE_DIR}/../.git/HEAD  )
   message( STATUS "Compilation from within a git repository. Using git rev-parse HEAD")
   EXECUTE_PROCESS( COMMAND git rev-parse HEAD
-		   WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
-		   OUTPUT_STRIP_TRAILING_WHITESPACE
-		   ERROR_QUIET
+           WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+           OUTPUT_STRIP_TRAILING_WHITESPACE
+           ERROR_QUIET
                    OUTPUT_VARIABLE _GIT_HEAD_COMMIT)
   EXECUTE_PROCESS( COMMAND git describe --long
                    WORKING_DIRECTORY  ${CMAKE_SOURCE_DIR}
-		   OUTPUT_STRIP_TRAILING_WHITESPACE
-		   ERROR_QUIET
+           OUTPUT_STRIP_TRAILING_WHITESPACE
+           ERROR_QUIET
                    OUTPUT_VARIABLE _GIT_DESCRIBE)
 
 ELSE( EXISTS ${CMAKE_SOURCE_DIR}/../.git/HEAD  )
@@ -180,11 +180,11 @@ endif(MSVC)
 # Library path name
 get_property(USE_LIB64 GLOBAL PROPERTY FIND_LIBRARY_USE_LIB64_PATHS)
 if (USE_LIB64)
-	set(LIB_INSTALL_DIR ${CMAKE_INSTALL_PREFIX}/lib64 CACHE PATH
-		"Specify name of libdir inside install path")
+    set(LIB_INSTALL_DIR ${CMAKE_INSTALL_PREFIX}/lib64 CACHE PATH
+        "Specify name of libdir inside install path")
 else (USE_LIB64)
-	set(LIB_INSTALL_DIR ${CMAKE_INSTALL_PREFIX}/lib CACHE PATH
-		"Specify name of libdir inside install path")
+    set(LIB_INSTALL_DIR ${CMAKE_INSTALL_PREFIX}/lib CACHE PATH
+        "Specify name of libdir inside install path")
 endif (USE_LIB64)
 
 IF(FSAL_DESTINATION)
@@ -471,7 +471,7 @@ ENDIF(PROXY_HANDLE_MAPPING)
 IF(_VALGRIND_MEMCHECK)
   check_include_files(valgrind/memcheck.h HAVE_MEMCHECK_H)
   if(NOT HAVE_MEMCHECK_H)
-	  message(FATAL_ERROR "Cannot find valgrind/memcheck.h, install valgrind-devel package to enable _VALGRIND_MEMCHECK")
+      message(FATAL_ERROR "Cannot find valgrind/memcheck.h, install valgrind-devel package to enable _VALGRIND_MEMCHECK")
   ENDIF(NOT HAVE_MEMCHECK_H)
 ENDIF(_VALGRIND_MEMCHECK)
 
@@ -576,11 +576,11 @@ if(USE_FSAL_GLUSTER)
     endif(NOT HAVE_XATTR_H)
     check_include_files("acl/libacl.h" HAVE_ACL_H)
     if(HAVE_ACL_H)
-	set(USE_POSIX_ACLS ON)
+    set(USE_POSIX_ACLS ON)
     else()
-	set(USE_POSIX_ACLS OFF)
-	set(USE_FSAL_GLUSTER OFF)
-	message(STATUS "Could not find libacl, disabling GLUSTER fsal build")
+    set(USE_POSIX_ACLS OFF)
+    set(USE_FSAL_GLUSTER OFF)
+    message(STATUS "Could not find libacl, disabling GLUSTER fsal build")
     endif(HAVE_ACL_H)
     check_library_exists(gfapi glfs_xreaddirplus_r ${GFAPI_LIBDIR} HAVE_XREADDIRPLUS)
     if(HAVE_XREADDIRPLUS)
@@ -591,11 +591,11 @@ if(USE_FSAL_GLUSTER)
     endif(HAVE_XREADDIRPLUS)
     check_library_exists(gfapi glfs_fd_set_lkowner ${GFAPI_LIBDIR} HAVE_LKOWNER)
     if(HAVE_LKOWNER)
-	set(USE_LKOWNER ON)
+    set(USE_LKOWNER ON)
     else()
-	set(USE_LKOWNER OFF)
-	set(USE_FSAL_GLUSTER OFF)
-	message(STATUS "lkowner support is needed to enable GLUSTER build")
+    set(USE_LKOWNER OFF)
+    set(USE_FSAL_GLUSTER OFF)
+    message(STATUS "lkowner support is needed to enable GLUSTER build")
     endif(HAVE_LKOWNER)
   endif(USE_FSAL_GLUSTER)
 endif(USE_FSAL_GLUSTER)
@@ -620,7 +620,7 @@ if(USE_FSAL_RGW)
       message(FATAL_ERROR "STRICT_PACKAGE : Cannot find RGW runtime.  Disabling RGW fsal build")
     else(STRICT_PACKAGE)
       message(WARNING
-	"Cannot find supported RGW runtime.  Disabling RGW fsal build")
+    "Cannot find supported RGW runtime.  Disabling RGW fsal build")
       set(USE_FSAL_RGW OFF)
     endif(STRICT_PACKAGE)
   endif(NOT RGW_FOUND)
@@ -792,11 +792,11 @@ find_library(LIBRT rt)  # extended Pthreads functions
 # We need to have libcap installed
 find_library(LIBCAP cap)  # Management of Capablilities
 check_library_exists(
-	cap
-	cap_set_proc
-	""
-	HAVE_LIBCAP
-	)
+    cap
+    cap_set_proc
+    ""
+    HAVE_LIBCAP
+    )
 
 if(HAVE_LIBCAP)
   set(SYSTEM_LIBRARIES ${SYSTEM_LIBRARIES} ${LIBCAP})
@@ -812,20 +812,20 @@ endif(HAVE_LIBCAP)
 check_include_files("blkid/blkid.h" HAVE_LIBBLKID_H)
 find_library(LIBBLKID blkid)  # Management of Capablilities
 check_library_exists(
-	blkid
-	blkid_devno_to_devname
-	""
-	HAVE_LIBBLKID
-	)
+    blkid
+    blkid_devno_to_devname
+    ""
+    HAVE_LIBBLKID
+    )
 
 check_include_files("uuid/uuid.h" HAVE_LIBUUID_H)
 find_library(LIBUUID uuid)  # Management of Capablilities
 check_library_exists(
-	uuid
-	uuid_parse
-	""
-	HAVE_LIBUUID
-	)
+    uuid
+    uuid_parse
+    ""
+    HAVE_LIBUUID
+    )
 
 if(HAVE_LIBBLKID AND HAVE_LIBUUID AND HAVE_LIBBLKID_H AND HAVE_LIBUUID_H)
   # we have all the libraries and include files to use libblkid and libuuid
@@ -848,11 +848,11 @@ endif(HAVE_LIBBLKID AND HAVE_LIBUUID AND HAVE_LIBBLKID_H AND HAVE_LIBUUID_H)
 # check is daemon exists
 # I use check_library_exists there to be portab;e
 check_library_exists(
-	c
-	daemon
-	""
-	HAVE_DAEMON
-	)
+    c
+    daemon
+    ""
+    HAVE_DAEMON
+    )
 
 # Roll up required libraries
 
@@ -1388,15 +1388,15 @@ configure_file(
 add_custom_target( rpm DEPENDS dist)
 add_custom_command(TARGET rpm
                   COMMAND sh -c "rpmbuild -ta ${PKG_NAME}"
-		  VERBATIM
-		  DEPENDS dist)
+          VERBATIM
+          DEPENDS dist)
 
 set(RPMDEST "--define '_srcrpmdir ${CMAKE_CURRENT_BINARY_DIR}'")
 add_custom_target( srpm DEPENDS dist)
 add_custom_command(TARGET srpm
                   COMMAND sh -c "rpmbuild ${RPMDEST} -ts ${PKG_NAME}"
-		  VERBATIM
-		  DEPENDS dist)
+          VERBATIM
+          DEPENDS dist)
 
 # Make a docker image
 set(DOCKER_TMP_INSTALL_PATH "${PROJECT_BINARY_DIR}/docker/root")
@@ -1424,26 +1424,26 @@ endif(LSB_RELEASE_EXECUTABLE)
 
 
 if(COVERAGE)
-	find_program(LCOV_EXEC lcov)
-	find_program(GENHTML_EXEC genhtml)
-	if(LCOV_EXEC AND GENHTML_EXEC)
-		add_custom_target(lcov)
-		add_custom_command(TARGET lcov
-			COMMAND ${LCOV_EXEC} --capture --directory .
-			--output-file coverage.info
-			COMMAND ${GENHTML_EXEC} coverage.info
-			--output-directory ./coverage_html/
-			VERBATIM
-			WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
-			)
-	endif(LCOV_EXEC AND GENHTML_EXEC)
+    find_program(LCOV_EXEC lcov)
+    find_program(GENHTML_EXEC genhtml)
+    if(LCOV_EXEC AND GENHTML_EXEC)
+        add_custom_target(lcov)
+        add_custom_command(TARGET lcov
+            COMMAND ${LCOV_EXEC} --capture --directory .
+            --output-file coverage.info
+            COMMAND ${GENHTML_EXEC} coverage.info
+            --output-directory ./coverage_html/
+            VERBATIM
+            WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+            )
+    endif(LCOV_EXEC AND GENHTML_EXEC)
 endif(COVERAGE)
 
 ########### add a "make doc" target to call Doxygen
 find_package(Doxygen)
 if(DOXYGEN_FOUND)
   configure_file(${CMAKE_CURRENT_SOURCE_DIR}/Doxyfile.in
-		 ${CMAKE_CURRENT_BINARY_DIR}/Doxyfile @ONLY)
+         ${CMAKE_CURRENT_BINARY_DIR}/Doxyfile @ONLY)
   add_custom_target(doc
     ${DOXYGEN_EXECUTABLE} ${CMAKE_CURRENT_BINARY_DIR}/Doxyfile
     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}

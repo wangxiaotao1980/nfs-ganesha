@@ -18,6 +18,7 @@
 #include <assert.h>
 
 #include "../include/avltree.h"
+#include "../libntirpc/ntirpc/rpc/types.h"
 
 
 #ifdef UINTPTR_MAX
@@ -214,14 +215,18 @@ static int do_splay(const struct splaytree_node* key, struct splaytree* tree)
 
             left = get_left(root);
             if(!left)
+            {
                 break;
+            }
             if((rv = cmp(key, left)) < 0)
             {
                 rotate_right(root);
                 root = left;
                 left = get_left(root);
                 if(!left)
+                {
                     break;
+                }
             }
             /* link left */
             set_left(root, subright);
@@ -234,14 +239,18 @@ static int do_splay(const struct splaytree_node* key, struct splaytree* tree)
 
             right = get_right(root);
             if(!right)
+            {
                 break;
+            }
             if((rv = cmp(key, right)) > 0)
             {
                 rotate_left(root);
                 root = right;
                 right = get_right(root);
                 if(!right)
+                {
                     break;
+                }
             }
             /* link right */
             set_right(root, subleft);
@@ -251,14 +260,22 @@ static int do_splay(const struct splaytree_node* key, struct splaytree* tree)
     }
     /* assemble */
     if(get_left(root))
+    {
         set_right(get_left(root), subleft);
+    }
     else
+    {
         set_next(root, subleft);
+    }
 
     if(get_right(root))
+    {
         set_left(get_right(root), subright);
+    }
     else
+    {
         set_prev(root, subright);
+    }
 
     set_left(get_right(&subroots), root);
     set_right(get_left(&subroots), root);
@@ -270,9 +287,13 @@ struct splaytree_node* splaytree_lookup(const struct splaytree_node* key,
                                         struct splaytree* tree)
 {
     if(!tree->root)
+    {
         return NULL;
+    }
     if(do_splay(key, tree) != 0)
+    {
         return NULL;
+    }
     return tree->root;
 }
 
@@ -293,7 +314,9 @@ struct splaytree_node* splaytree_insert(struct splaytree_node* node,
 
     res = do_splay(node, tree);
     if(res == 0)
+    {
         return tree->root;
+    }
 
     root = tree->root;
     if(res < 0)
@@ -302,10 +325,14 @@ struct splaytree_node* splaytree_insert(struct splaytree_node* node,
 
         set_left(left, node);
         set_right(root, node);
-        if(left)
+        if (left)
+        {
             set_next(node, get_last(left));
+        }
         else
+        {
             tree->first = node;
+        }
         set_prev(node, root);
     }
     else
@@ -314,10 +341,14 @@ struct splaytree_node* splaytree_insert(struct splaytree_node* node,
 
         set_right(right, node);
         set_left(root, node);
-        if(right)
+        if (right)
+        {
             set_prev(node, get_first(right));
+        }
         else
+        {
             tree->last = node;
+        }
         set_next(node, root);
     }
     tree->root = node;
@@ -347,9 +378,13 @@ void splaytree_remove(struct splaytree_node* node, struct splaytree* tree)
         prev = tree->root;
     }
     if(right)
+    {
         set_prev(prev, get_first(right));
+    }
     else
+    {
         tree->last = prev;
+    }
 }
 
 void splaytree_replace(struct splaytree_node* old, struct splaytree_node* new,
