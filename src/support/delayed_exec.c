@@ -35,20 +35,20 @@
  * @brief Implementation of the delayed execution system
  */
 
-#include "config.h"
+#include "../include/config.h"
+#include "../include/abstract_mem.h"
+#include "../include/delayed_exec.h"
+#include "../include/log.h"
+#include "../include/avltree.h"
+#include "../include/gsh_intrinsic.h"
+#include "../include/common_utils.h"
 #include <pthread.h>
 #ifdef LINUX
 #include <sys/signal.h>
 #elif FREEBSD
 #include <signal.h>
 #endif
-#include "abstract_mem.h"
-#include "delayed_exec.h"
-#include "log.h"
-#include "avltree.h"
 #include "misc/queue.h"
-#include "gsh_intrinsic.h"
-#include "common_utils.h"
 
 /**
  * @brief A list of tasks

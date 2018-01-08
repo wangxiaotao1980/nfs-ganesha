@@ -27,6 +27,10 @@
 /* LogTest("/* multiline comment");
 */
 
+#include "../include/log.h"
+
+
+
 LogTest("tab");
 
 LogTest("space");
@@ -104,17 +108,17 @@ foo;
 foo("oops shouldn't pick this up");
 
 if (LogTest("if with braces on same line")) {
-	foo;
+    foo;
 }
 foo("oops shouldn't pick this up");
 
 if (LogTest("if with braces")) {
-	foo;
+    foo;
 }
 foo("oops shouldn't pick this up");
 
 if (LogTest("if with braces 2")) {
-	foo();
+    foo();
 }
 foo("oops shouldn't pick this up");
 
