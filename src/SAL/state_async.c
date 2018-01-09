@@ -24,17 +24,24 @@
  * ---------------------------------------
  */
 
-/**
- * @defgroup SAL State abstraction layer
- * @{
- */
+ /**
+  * @defgroup SAL State abstraction layer
+  * @{
+  */
 
-/**
- * @file  state_async.c
- * @brief Management of SAL asynchronous processing
- */
+  /**
+   * @file  state_async.c
+   * @brief Management of SAL asynchronous processing
+   */
 
-#include "config.h"
+   //#include "../include/config.h"
+#include "../include/log.h"
+//#include "../include/hashtable.h"
+#include "../include/fsal.h"
+#include "../include/sal_functions.h"
+#include "../include/fridgethr.h"
+#include "../include/gsh_config.h"
+
 #include <unistd.h>
 #include <sys/types.h>
 #include <sys/param.h>
@@ -42,15 +49,9 @@
 #include <pthread.h>
 #include <string.h>
 
-#include "log.h"
-#include "hashtable.h"
-#include "fsal.h"
-#include "sal_functions.h"
-#include "fridgethr.h"
-#include "gsh_config.h"
 
-struct fridgethr *state_async_fridge;
-struct fridgethr *state_poll_fridge;
+struct fridgethr* state_async_fridge;
+struct fridgethr* state_poll_fridge;
 
 /**
  * @brief Process a blocked lock request
@@ -61,11 +62,11 @@ struct fridgethr *state_poll_fridge;
  * @param[in] ctx Thread context, containing arguments.
  */
 
-static void state_blocked_lock_caller(struct fridgethr_context *ctx)
+static void state_blocked_lock_caller(struct fridgethr_context* ctx)
 {
-	state_block_data_t *block = ctx->arg;
+    state_block_data_t* block = ctx->arg;
 
-	process_blocked_lock_upcall(block);
+    process_blocked_lock_upcall(block);
 }
 
 /**
@@ -76,11 +77,11 @@ static void state_blocked_lock_caller(struct fridgethr_context *ctx)
  *
  * @param[in] ctx Thread context, containing arguments.
  */
-static void state_async_func_caller(struct fridgethr_context *ctx)
+static void state_async_func_caller(struct fridgethr_context* ctx)
 {
-	state_async_queue_t *entry = ctx->arg;
+    state_async_queue_t* entry = ctx->arg;
 
-	entry->state_async_func(entry);
+    entry->state_async_func(entry);
 }
 
 /**
@@ -90,18 +91,18 @@ static void state_async_func_caller(struct fridgethr_context *ctx)
  *
  * @return State status.
  */
-state_status_t state_async_schedule(state_async_queue_t *arg)
+state_status_t state_async_schedule(state_async_queue_t* arg)
 {
-	int rc;
+    int rc;
 
-	LogFullDebug(COMPONENT_STATE, "Schedule %p", arg);
+    LogFullDebug(COMPONENT_STATE, "Schedule %p", arg);
 
-	rc = fridgethr_submit(state_async_fridge, state_async_func_caller, arg);
+    rc = fridgethr_submit(state_async_fridge, state_async_func_caller, arg);
 
-	if (rc != 0)
-		LogCrit(COMPONENT_STATE, "Unable to schedule request: %d", rc);
+    if (rc != 0)
+        LogCrit(COMPONENT_STATE, "Unable to schedule request: %d", rc);
 
-	return rc == 0 ? STATE_SUCCESS : STATE_SIGNAL_ERROR;
+    return rc == 0 ? STATE_SUCCESS : STATE_SIGNAL_ERROR;
 }
 
 /**
@@ -111,19 +112,20 @@ state_status_t state_async_schedule(state_async_queue_t *arg)
  *
  * @return State status.
  */
-state_status_t state_block_schedule(state_block_data_t *block)
+state_status_t state_block_schedule(state_block_data_t* block)
 {
-	int rc;
+    int rc;
 
-	LogFullDebug(COMPONENT_STATE, "Schedule notification %p", block);
+    LogFullDebug(COMPONENT_STATE, "Schedule notification %p", block);
 
-	rc = fridgethr_submit(state_async_fridge, state_blocked_lock_caller,
-			      block);
+    rc = fridgethr_submit(state_async_fridge,
+                          state_blocked_lock_caller,
+                          block);
 
-	if (rc != 0)
-		LogMajor(COMPONENT_STATE, "Unable to schedule request: %d", rc);
+    if (rc != 0)
+        LogMajor(COMPONENT_STATE, "Unable to schedule request: %d", rc);
 
-	return rc == 0 ? STATE_SUCCESS : STATE_SIGNAL_ERROR;
+    return rc == 0 ? STATE_SUCCESS : STATE_SIGNAL_ERROR;
 }
 
 /**
@@ -133,47 +135,50 @@ state_status_t state_block_schedule(state_block_data_t *block)
  */
 state_status_t state_async_init(void)
 {
-	int rc = 0;
-	struct fridgethr_params frp;
+    int rc = 0;
+    struct fridgethr_params frp;
 
-	memset(&frp, 0, sizeof(struct fridgethr_params));
-	frp.thr_max = 1;
-	frp.deferment = fridgethr_defer_queue;
+    memset(&frp, 0, sizeof(struct fridgethr_params));
+    frp.thr_max = 1;
+    frp.deferment = fridgethr_defer_queue;
 
-	rc = fridgethr_init(&state_async_fridge, "State_Async", &frp);
+    rc = fridgethr_init(&state_async_fridge, "State_Async", &frp);
 
-	if (rc != 0) {
-		LogMajor(COMPONENT_STATE,
-			 "Unable to initialize state async thread fridge: %d",
-			 rc);
-		return STATE_INIT_ENTRY_FAILED;
-	}
+    if (rc != 0)
+    {
+        LogMajor(COMPONENT_STATE,
+                 "Unable to initialize state async thread fridge: %d",
+                 rc);
+        return STATE_INIT_ENTRY_FAILED;
+    }
 
-	memset(&frp, 0, sizeof(struct fridgethr_params));
-	frp.thr_max = 1;
-	frp.thr_min = 1;
-	frp.thread_delay = nfs_param.core_param.blocked_lock_poller_interval;
-	frp.flavor = fridgethr_flavor_looper;
+    memset(&frp, 0, sizeof(struct fridgethr_params));
+    frp.thr_max = 1;
+    frp.thr_min = 1;
+    frp.thread_delay = nfs_param.core_param.blocked_lock_poller_interval;
+    frp.flavor = fridgethr_flavor_looper;
 
-	rc = fridgethr_init(&state_poll_fridge, "state_poll", &frp);
+    rc = fridgethr_init(&state_poll_fridge, "state_poll", &frp);
 
-	if (rc != 0) {
-		LogMajor(COMPONENT_STATE,
-			 "Unable to initialize state blocked lock polling thread fridge: %d",
-			 rc);
-		return STATE_INIT_ENTRY_FAILED;
-	}
+    if (rc != 0)
+    {
+        LogMajor(COMPONENT_STATE,
+                 "Unable to initialize state blocked lock polling thread fridge: %d",
+                 rc);
+        return STATE_INIT_ENTRY_FAILED;
+    }
 
-	rc = fridgethr_submit(state_poll_fridge, blocked_lock_polling, NULL);
+    rc = fridgethr_submit(state_poll_fridge, blocked_lock_polling, NULL);
 
-	if (rc != 0) {
-		LogMajor(COMPONENT_STATE,
-			 "Unable to start blocked lock polling thread, error code %d.",
-			 rc);
-		return STATE_INIT_ENTRY_FAILED;
-	}
+    if (rc != 0)
+    {
+        LogMajor(COMPONENT_STATE,
+                 "Unable to start blocked lock polling thread, error code %d.",
+                 rc);
+        return STATE_INIT_ENTRY_FAILED;
+    }
 
-	return STATE_SUCCESS;
+    return STATE_SUCCESS;
 }
 
 /**
@@ -183,36 +188,42 @@ state_status_t state_async_init(void)
  */
 state_status_t state_async_shutdown(void)
 {
-	int rc1, rc2;
+    int rc1, rc2;
 
-	rc1 = fridgethr_sync_command(state_async_fridge,
-				     fridgethr_comm_stop,
-				     120);
+    rc1 = fridgethr_sync_command(state_async_fridge,
+                                 fridgethr_comm_stop,
+                                 120);
 
-	if (rc1 == ETIMEDOUT) {
-		LogMajor(COMPONENT_STATE,
-			 "Shutdown timed out, cancelling threads.");
-		fridgethr_cancel(state_async_fridge);
-	} else if (rc1 != 0) {
-		LogMajor(COMPONENT_STATE,
-			 "Failed shutting down state async thread: %d", rc1);
-	}
+    if (rc1 == ETIMEDOUT)
+    {
+        LogMajor(COMPONENT_STATE,
+                 "Shutdown timed out, cancelling threads.");
+        fridgethr_cancel(state_async_fridge);
+    }
+    else if (rc1 != 0)
+    {
+        LogMajor(COMPONENT_STATE,
+                 "Failed shutting down state async thread: %d", rc1);
+    }
 
-	rc2 = fridgethr_sync_command(state_poll_fridge,
-				     fridgethr_comm_stop,
-				     120);
+    rc2 = fridgethr_sync_command(state_poll_fridge,
+                                 fridgethr_comm_stop,
+                                 120);
 
-	if (rc2 == ETIMEDOUT) {
-		LogMajor(COMPONENT_STATE,
-			 "Shutdown timed out, cancelling threads.");
-		fridgethr_cancel(state_poll_fridge);
-	} else if (rc2 != 0) {
-		LogMajor(COMPONENT_STATE,
-			 "Failed shutting down state blocked lock polling thread: %d",
-			 rc2);
-	}
+    if (rc2 == ETIMEDOUT)
+    {
+        LogMajor(COMPONENT_STATE,
+                 "Shutdown timed out, cancelling threads.");
+        fridgethr_cancel(state_poll_fridge);
+    }
+    else if (rc2 != 0)
+    {
+        LogMajor(COMPONENT_STATE,
+                 "Failed shutting down state blocked lock polling thread: %d",
+                 rc2);
+    }
 
-	return ((rc1 == 0) && (rc2 == 0)) ? STATE_SUCCESS : STATE_SIGNAL_ERROR;
+    return ((rc1 == 0) && (rc2 == 0)) ? STATE_SUCCESS : STATE_SIGNAL_ERROR;
 }
 
 /** @} */

@@ -1,16 +1,16 @@
-#include "config.h"
-#include "log.h"
-#include "nfs_core.h"
-#include "nfs4.h"
-#include "sal_functions.h"
-#include <sys/stat.h>
+//#include "../../include/config.h"
+#include "../../include/log.h"
+#include "../../include/nfs_core.h"
+#include "../../include/nfs4.h"
+#include "../../include/sal_functions.h"
+#include "../../include/bsd-base64.h"
+#include "../../include/client_mgr.h"
+//#include "../../include/fsal.h"
+#include <netdb.h>
+//#include <sys/stat.h>
 #include <sys/types.h>
-#include <fcntl.h>
+//#include <fcntl.h>
 #include <ctype.h>
-#include "bsd-base64.h"
-#include "client_mgr.h"
-#include "fsal.h"
-#include "netdb.h"
 #include <rados/librados.h>
 
 #define KEY_MAX_LEN		NAME_MAX

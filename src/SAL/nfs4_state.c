@@ -33,7 +33,21 @@
  * @brief NFSv4 state functions.
  */
 
-#include "config.h"
+#include "../include/config.h"
+#include "../include/log.h"
+#include "../include/hashtable.h"
+#include "../include/nfs_core.h"
+#include "../include/nfs4.h"
+//#include "../include/fsal.h"
+#include "../include/sal_functions.h"
+#include "../include/export_mgr.h"
+#include "../include/fsal_up.h"
+#include "../include/nfs_file_handle.h"
+#include "../include/nfs_proto_tools.h"
+#ifdef USE_LTTNG
+#include "../include/gsh_lttng/state.h"
+#endif
+
 #include <unistd.h>
 #include <sys/types.h>
 #include <sys/param.h>
@@ -42,19 +56,7 @@
 #include <string.h>
 #include <assert.h>
 
-#include "log.h"
-#include "hashtable.h"
-#include "nfs_core.h"
-#include "nfs4.h"
-#include "fsal.h"
-#include "sal_functions.h"
-#include "export_mgr.h"
-#include "fsal_up.h"
-#include "nfs_file_handle.h"
-#include "nfs_proto_tools.h"
-#ifdef USE_LTTNG
-#include "gsh_lttng/state.h"
-#endif
+
 
 #ifdef DEBUG_SAL
 struct glist_head state_v4_all = GLIST_HEAD_INIT(state_v4_all);

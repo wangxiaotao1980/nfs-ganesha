@@ -32,7 +32,13 @@
  * @brief Layout state management.
  */
 
-#include "config.h"
+#include "../include/config.h"
+#include "../include/log.h"
+#include "../include/hashtable.h"
+#include "../include/fsal.h"
+#include "../include/sal_functions.h"
+#include "../include/nfs_core.h"
+#include "../include/nfs_proto_tools.h"
 #include <unistd.h>
 #include <sys/types.h>
 #include <sys/param.h>
@@ -40,12 +46,6 @@
 #include <pthread.h>
 #include <string.h>
 
-#include "log.h"
-#include "hashtable.h"
-#include "fsal.h"
-#include "sal_functions.h"
-#include "nfs_core.h"
-#include "nfs_proto_tools.h"
 
 /**
  * @brief Add a segment to an existing layout state
@@ -64,40 +64,41 @@
  * @return STATE_SUCCESS on completion, other values of state_status_t
  *         on failure.
  */
-state_status_t state_add_segment(state_t *state, struct pnfs_segment *segment,
-				 void *fsal_data, bool return_on_close)
+state_status_t state_add_segment(state_t* state, struct pnfs_segment* segment,
+                                 void* fsal_data, bool return_on_close)
 {
-	/* Pointer to the new segment being added to the state */
-	state_layout_segment_t *new_segment = NULL;
+    /* Pointer to the new segment being added to the state */
+    state_layout_segment_t* new_segment = NULL;
 
-	if (state->state_type != STATE_TYPE_LAYOUT) {
-		char str[LOG_BUFF_LEN] = "\0";
-		struct display_buffer dspbuf = {sizeof(str), str, str};
+    if(state->state_type != STATE_TYPE_LAYOUT)
+    {
+        char str[LOG_BUFF_LEN] = "\0";
+        struct display_buffer dspbuf = { sizeof(str), str, str };
 
-		display_stateid(&dspbuf, state);
+        display_stateid(&dspbuf, state);
 
-		LogCrit(COMPONENT_PNFS,
-			"Attempt to add layout segment to non-layout state: %s",
-			str);
-		return STATE_BAD_TYPE;
-	}
+        LogCrit(COMPONENT_PNFS,
+            "Attempt to add layout segment to non-layout state: %s",
+            str);
+        return STATE_BAD_TYPE;
+    }
 
-	new_segment = gsh_calloc(1, sizeof(*new_segment));
+    new_segment = gsh_calloc(1, sizeof(*new_segment));
 
-	new_segment->sls_fsal_data = fsal_data;
-	new_segment->sls_state = state;
-	new_segment->sls_segment = *segment;
+    new_segment->sls_fsal_data = fsal_data;
+    new_segment->sls_state     = state;
+    new_segment->sls_segment   = *segment;
 
-	glist_add_tail(&state->state_data.layout.state_segments,
-		       &new_segment->sls_state_segments);
+    glist_add_tail(&state->state_data.layout.state_segments,
+                   &new_segment->sls_state_segments);
 
-	/* Based on comments by Benny Halevy, if any segment is marked
-	   return_on_close, all segments should be treated as
-	   return_on_close. */
-	if (return_on_close)
-		state->state_data.layout.state_return_on_close = true;
+    /* Based on comments by Benny Halevy, if any segment is marked
+       return_on_close, all segments should be treated as
+       return_on_close. */
+    if(return_on_close)
+        state->state_data.layout.state_return_on_close = true;
 
-	return STATE_SUCCESS;
+    return STATE_SUCCESS;
 }
 
 /**
@@ -109,11 +110,11 @@ state_status_t state_add_segment(state_t *state, struct pnfs_segment *segment,
  *
  * @return State status.
  */
-state_status_t state_delete_segment(state_layout_segment_t *segment)
+state_status_t state_delete_segment(state_layout_segment_t* segment)
 {
-	glist_del(&segment->sls_state_segments);
-	gsh_free(segment);
-	return STATE_SUCCESS;
+    glist_del(&segment->sls_state_segments);
+    gsh_free(segment);
+    return STATE_SUCCESS;
 }
 
 /**
@@ -133,28 +134,31 @@ state_status_t state_delete_segment(state_layout_segment_t *segment)
  *         isn't, and an appropriate code if other bad things happen.
  */
 
-state_status_t state_lookup_layout_state(struct fsal_obj_handle *obj,
-					 state_owner_t *owner,
-					 layouttype4 type,
-					 state_t **state)
+state_status_t state_lookup_layout_state(struct fsal_obj_handle* obj,
+                                         state_owner_t* owner,
+                                         layouttype4 type,
+                                         state_t** state)
 {
-	/* Pointer for iterating over the list of states on the file */
-	struct glist_head *glist_iter = NULL;
-	/* The state under inspection in the loop */
-	state_t *state_iter = NULL;
+    /* Pointer for iterating over the list of states on the file */
+    struct glist_head* glist_iter = NULL;
+    /* The state under inspection in the loop */
+    state_t* state_iter = NULL;
 
-	glist_for_each(glist_iter, &obj->state_hdl->file.list_of_states) {
-		state_iter = glist_entry(glist_iter, state_t, state_list);
-		if (state_iter->state_type == STATE_TYPE_LAYOUT &&
-		    state_same_owner(state_iter, owner) &&
-		    state_iter->state_data.layout.state_layout_type == type) {
-			inc_state_t_ref(state_iter);
-			*state = state_iter;
-			return STATE_SUCCESS;
-		}
-	}
+    glist_for_each(glist_iter, &obj->state_hdl->file.list_of_states)
+    {
+        state_iter = glist_entry(glist_iter, state_t, state_list)
+        ;
+        if(state_iter->state_type == STATE_TYPE_LAYOUT &&
+            state_same_owner(state_iter, owner) &&
+            state_iter->state_data.layout.state_layout_type == type)
+        {
+            inc_state_t_ref(state_iter);
+            *state = state_iter;
+            return STATE_SUCCESS;
+        }
+    }
 
-	return STATE_NOT_FOUND;
+    return STATE_NOT_FOUND;
 }
 
 /**
@@ -162,111 +166,119 @@ state_status_t state_lookup_layout_state(struct fsal_obj_handle *obj,
  *
  * @param[in,out] client owner
  */
-void revoke_owner_layouts(state_owner_t *client_owner)
+void revoke_owner_layouts(state_owner_t* client_owner)
 {
-	state_t *state, *first;
-	struct fsal_obj_handle *obj;
-	int errcnt = 0;
-	struct glist_head *glist, *glistn;
-	bool so_mutex_held;
+    state_t* state, * first;
+    struct fsal_obj_handle* obj;
+    int errcnt = 0;
+    struct glist_head* glist, * glistn;
+    bool so_mutex_held;
 
- again:
-	first = NULL;
-	PTHREAD_MUTEX_lock(&client_owner->so_mutex);
-	so_mutex_held = true;
+again:
+    first = NULL;
+    PTHREAD_MUTEX_lock(&client_owner->so_mutex);
+    so_mutex_held = true;
 
-	glist_for_each_safe(glist, glistn,
-			&client_owner->so_owner.so_nfs4_owner.so_state_list) {
-		bool deleted = false;
-		struct pnfs_segment entire = {
-			.io_mode = LAYOUTIOMODE4_ANY,
-			.offset = 0,
-			.length = NFS4_UINT64_MAX
-		};
+    glist_for_each_safe(glist, glistn,
+        &client_owner->so_owner.so_nfs4_owner.so_state_list)
+    {
+        bool deleted = false;
+        struct pnfs_segment entire = {
+            .io_mode = LAYOUTIOMODE4_ANY,
+            .offset = 0,
+            .length = NFS4_UINT64_MAX
+        };
 
-		state = glist_entry(glist, state_t, state_owner_list);
+        state = glist_entry(glist, state_t, state_owner_list)
+        ;
 
-		/* We set first to the first state we look in this iteration.
-		 * If the current state matches the first state, it implies
-		 * that went through the entire list without droping the lock
-		 * guarding the list. So nothing more left to process.
-		 */
-		if (first == NULL)
-			first = state;
-		else if (first == state)
-			break;
+        /* We set first to the first state we look in this iteration.
+         * If the current state matches the first state, it implies
+         * that went through the entire list without droping the lock
+         * guarding the list. So nothing more left to process.
+         */
+        if(first == NULL)
+            first = state;
+        else if(first == state)
+            break;
 
-		/* Move entry to end of list to handle errors and skipping of
-		 * non-layout states.
-		 */
-		glist_del(&state->state_owner_list);
-		glist_add_tail(
-			&client_owner->so_owner.so_nfs4_owner.so_state_list,
-			&state->state_owner_list);
+        /* Move entry to end of list to handle errors and skipping of
+         * non-layout states.
+         */
+        glist_del(&state->state_owner_list);
+        glist_add_tail(
+                       &client_owner->so_owner.so_nfs4_owner.so_state_list,
+                       &state->state_owner_list);
 
-		/* Skip non-layout states. */
-		if (state->state_type != STATE_TYPE_LAYOUT)
-			continue;
+        /* Skip non-layout states. */
+        if(state->state_type != STATE_TYPE_LAYOUT)
+            continue;
 
-		/* Safely access the cache inode associated with the state217.
-		 * This will get an LRU reference protecting our access
-		 * even after state_deleg_revoke releases the reference it
-		 * holds.
-		 */
-		obj = get_state_obj_ref(state);
+        /* Safely access the cache inode associated with the state217.
+         * This will get an LRU reference protecting our access
+         * even after state_deleg_revoke releases the reference it
+         * holds.
+         */
+        obj = get_state_obj_ref(state);
 
-		if (obj == NULL) {
-			LogDebug(COMPONENT_STATE,
-				 "Stale state or file");
-			continue;
-		}
+        if(obj == NULL)
+        {
+            LogDebug(COMPONENT_STATE,
+                "Stale state or file");
+            continue;
+        }
 
-		PTHREAD_MUTEX_unlock(&client_owner->so_mutex);
-		so_mutex_held = false;
+        PTHREAD_MUTEX_unlock(&client_owner->so_mutex);
+        so_mutex_held = false;
 
-		PTHREAD_RWLOCK_wrlock(&obj->state_hdl->state_lock);
+        PTHREAD_RWLOCK_wrlock(&obj->state_hdl->state_lock);
 
-		(void) nfs4_return_one_state(obj,
-					     LAYOUTRETURN4_FILE,
-					     circumstance_revoke,
-					     state,
-					     entire,
-					     0,
-					     NULL,
-					     &deleted);
+        (void)nfs4_return_one_state(obj,
+                                    LAYOUTRETURN4_FILE,
+                                    circumstance_revoke,
+                                    state,
+                                    entire,
+                                    0,
+                                    NULL,
+                                    &deleted);
 
-		if (!deleted) {
-			errcnt++;
-			LogCrit(COMPONENT_PNFS,
-				"Layout state not destroyed during lease expiry.");
-		}
+        if(!deleted)
+        {
+            errcnt++;
+            LogCrit(COMPONENT_PNFS,
+                "Layout state not destroyed during lease expiry.");
+        }
 
-		PTHREAD_RWLOCK_unlock(&obj->state_hdl->state_lock);
+        PTHREAD_RWLOCK_unlock(&obj->state_hdl->state_lock);
 
-		if (errcnt < STATE_ERR_MAX) {
-			/* Loop again, but since we droped the so_mutex, we
-			 * must restart.
-			 */
-			goto again;
-		}
+        if(errcnt < STATE_ERR_MAX)
+        {
+            /* Loop again, but since we droped the so_mutex, we
+             * must restart.
+             */
+            goto again;
+        }
 
-		/* Too many errors, quit. */
-		break;
-	}
+        /* Too many errors, quit. */
+        break;
+    }
 
-	if (so_mutex_held)
-		PTHREAD_MUTEX_unlock(&client_owner->so_mutex);
+    if(so_mutex_held)
+    {
+        PTHREAD_MUTEX_unlock(&client_owner->so_mutex);
+    }
 
-	if (errcnt == STATE_ERR_MAX) {
-		char str[LOG_BUFF_LEN] = "\0";
-		struct display_buffer dspbuf = {sizeof(str), str, str};
+    if(errcnt == STATE_ERR_MAX)
+    {
+        char str[LOG_BUFF_LEN] = "\0";
+        struct display_buffer dspbuf = { sizeof(str), str, str };
 
-		display_owner(&dspbuf, client_owner);
+        display_owner(&dspbuf, client_owner);
 
-		LogFatal(COMPONENT_STATE,
-			 "Could not complete cleanup of layouts for client owner %s",
-			 str);
-	}
+        LogFatal(COMPONENT_STATE,
+            "Could not complete cleanup of layouts for client owner %s",
+            str);
+    }
 }
 
 /** @} */

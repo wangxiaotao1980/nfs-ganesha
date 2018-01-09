@@ -24,30 +24,30 @@
  * ---------------------------------------
  */
 
-/**
- * @defgroup SAL State abstraction layer
- * @{
- */
+ /**
+  * @defgroup SAL State abstraction layer
+  * @{
+  */
 
-/**
- * @file nfs41_session_id.c
- * @brief The management of the session id cache.
- */
+  /**
+   * @file nfs41_session_id.c
+   * @brief The management of the session id cache.
+   */
 
-#include "config.h"
-#include "nfs_core.h"
-#include "sal_functions.h"
+#include "../include/config.h"
+#include "../include/nfs_core.h"
+#include "../include/sal_functions.h"
 
-/**
- * @brief Pool for allocating session data
- */
-pool_t *nfs41_session_pool = NULL;
+   /**
+    * @brief Pool for allocating session data
+    */
+pool_t* nfs41_session_pool = NULL;
 
 /**
  * @param Session ID hash
  */
 
-hash_table_t *ht_session_id;
+hash_table_t* ht_session_id;
 
 /**
  * @param counter for creating session IDs.
@@ -64,16 +64,16 @@ uint64_t global_sequence = 0;
  * @return the bytes remaining in the buffer.
  */
 
-int display_session_id(struct display_buffer *dspbuf, char *session_id)
+int display_session_id(struct display_buffer* dspbuf, char* session_id)
 {
-	int b_left = display_cat(dspbuf, "sessionid=");
+    int b_left = display_cat(dspbuf, "sessionid=");
 
-	if (b_left > 0)
-		b_left = display_opaque_value(dspbuf,
-					      session_id,
-					      NFS4_SESSIONID_SIZE);
+    if (b_left > 0)
+        b_left = display_opaque_value(dspbuf,
+                                      session_id,
+                                      NFS4_SESSIONID_SIZE);
 
-	return b_left;
+    return b_left;
 }
 
 /**
@@ -85,12 +85,12 @@ int display_session_id(struct display_buffer *dspbuf, char *session_id)
  * @return Length of output string.
  */
 
-int display_session_id_key(struct gsh_buffdesc *buff, char *str)
+int display_session_id_key(struct gsh_buffdesc* buff, char* str)
 {
-	struct display_buffer dspbuf = {HASHTABLE_DISPLAY_STRLEN, str, str};
+    struct display_buffer dspbuf = { HASHTABLE_DISPLAY_STRLEN, str, str };
 
-	display_session_id(&dspbuf, buff->addr);
-	return display_buffer_len(&dspbuf);
+    display_session_id(&dspbuf, buff->addr);
+    return display_buffer_len(&dspbuf);
 }
 
 /**
@@ -102,17 +102,17 @@ int display_session_id_key(struct gsh_buffdesc *buff, char *str)
  * @return Length of output string.
  */
 
-int display_session(struct display_buffer *dspbuf, nfs41_session_t *session)
+int display_session(struct display_buffer* dspbuf, nfs41_session_t* session)
 {
-	int b_left = display_printf(dspbuf, "session %p {", session);
+    int b_left = display_printf(dspbuf, "session %p {", session);
 
-	if (b_left > 0)
-		b_left = display_session_id(dspbuf, session->session_id);
+    if (b_left > 0)
+        b_left = display_session_id(dspbuf, session->session_id);
 
-	if (b_left > 0)
-		b_left = display_cat(dspbuf, "}");
+    if (b_left > 0)
+        b_left = display_cat(dspbuf, "}");
 
-	return b_left;
+    return b_left;
 }
 
 /**
@@ -124,12 +124,12 @@ int display_session(struct display_buffer *dspbuf, nfs41_session_t *session)
  * @return Length of output string.
  */
 
-int display_session_id_val(struct gsh_buffdesc *buff, char *str)
+int display_session_id_val(struct gsh_buffdesc* buff, char* str)
 {
-	struct display_buffer dspbuf = {HASHTABLE_DISPLAY_STRLEN, str, str};
+    struct display_buffer dspbuf = { HASHTABLE_DISPLAY_STRLEN, str, str };
 
-	display_session(&dspbuf, buff->addr);
-	return display_buffer_len(&dspbuf);
+    display_session(&dspbuf, buff->addr);
+    return display_buffer_len(&dspbuf);
 }
 
 /**
@@ -139,9 +139,9 @@ int display_session_id_val(struct gsh_buffdesc *buff, char *str)
  * @retval 1 if they are not.
  */
 
-int compare_session_id(struct gsh_buffdesc *buff1, struct gsh_buffdesc *buff2)
+int compare_session_id(struct gsh_buffdesc* buff1, struct gsh_buffdesc* buff2)
 {
-	return memcmp(buff1->addr, buff2->addr, NFS4_SESSIONID_SIZE);
+    return memcmp(buff1->addr, buff2->addr, NFS4_SESSIONID_SIZE);
 }
 
 /**
@@ -153,14 +153,14 @@ int compare_session_id(struct gsh_buffdesc *buff1, struct gsh_buffdesc *buff2)
  * @return The hash index of the key.
  */
 
-uint32_t session_id_value_hash_func(hash_parameter_t *hparam,
-				    struct gsh_buffdesc *key)
+uint32_t session_id_value_hash_func(hash_parameter_t* hparam,
+                                    struct gsh_buffdesc* key)
 {
-	/* Only need to take the mod of the global counter portion
-	   since it is unique */
-	uint64_t *counter = key->addr + sizeof(clientid4);
+    /* Only need to take the mod of the global counter portion
+       since it is unique */
+    uint64_t* counter = key->addr + sizeof(clientid4);
 
-	return *counter % hparam->index_size;
+    return *counter % hparam->index_size;
 }
 
 /**
@@ -172,24 +172,24 @@ uint32_t session_id_value_hash_func(hash_parameter_t *hparam,
  * @return The RBT hash of the key.
  */
 
-uint64_t session_id_rbt_hash_func(hash_parameter_t *hparam,
-				  struct gsh_buffdesc *key)
+uint64_t session_id_rbt_hash_func(hash_parameter_t* hparam,
+                                  struct gsh_buffdesc* key)
 {
-	/* Only need to return the global counter portion since it is unique */
-	uint64_t *counter = key->addr + sizeof(clientid4);
+    /* Only need to return the global counter portion since it is unique */
+    uint64_t* counter = key->addr + sizeof(clientid4);
 
-	return *counter;
+    return *counter;
 }
 
 static hash_parameter_t session_id_param = {
-	.index_size = PRIME_STATE,
-	.hash_func_key = session_id_value_hash_func,
-	.hash_func_rbt = session_id_rbt_hash_func,
-	.ht_log_component = COMPONENT_SESSIONS,
-	.compare_key = compare_session_id,
-	.key_to_str = display_session_id_key,
-	.val_to_str = display_session_id_val,
-	.flags = HT_FLAG_CACHE,
+    .index_size = PRIME_STATE,
+    .hash_func_key = session_id_value_hash_func,
+    .hash_func_rbt = session_id_rbt_hash_func,
+    .ht_log_component = COMPONENT_SESSIONS,
+    .compare_key = compare_session_id,
+    .key_to_str = display_session_id_key,
+    .val_to_str = display_session_id_val,
+    .flags = HT_FLAG_CACHE,
 };
 
 /**
@@ -202,15 +202,16 @@ static hash_parameter_t session_id_param = {
 
 int nfs41_Init_session_id(void)
 {
-	ht_session_id = hashtable_init(&session_id_param);
+    ht_session_id = hashtable_init(&session_id_param);
 
-	if (ht_session_id == NULL) {
-		LogCrit(COMPONENT_SESSIONS,
-			"NFS SESSION_ID: Cannot init Session Id cache");
-		return -1;
-	}
+    if (ht_session_id == NULL)
+    {
+        LogCrit(COMPONENT_SESSIONS,
+                "NFS SESSION_ID: Cannot init Session Id cache");
+        return -1;
+    }
 
-	return 0;
+    return 0;
 }
 
 /**
@@ -220,55 +221,55 @@ int nfs41_Init_session_id(void)
  * @param[out] sessionid The sessionid
  */
 
-void nfs41_Build_sessionid(clientid4 *clientid, char *sessionid)
+void nfs41_Build_sessionid(clientid4* clientid, char* sessionid)
 {
-	uint64_t seq;
+    uint64_t seq;
 
-	seq = atomic_inc_uint64_t(&global_sequence);
+    seq = atomic_inc_uint64_t(&global_sequence);
 
-	memset(sessionid, 0, NFS4_SESSIONID_SIZE);
-	memcpy(sessionid, clientid, sizeof(clientid4));
-	memcpy(sessionid + sizeof(clientid4), &seq, sizeof(seq));
+    memset(sessionid, 0, NFS4_SESSIONID_SIZE);
+    memcpy(sessionid, clientid, sizeof(clientid4));
+    memcpy(sessionid + sizeof(clientid4), &seq, sizeof(seq));
 }
 
-int32_t inc_session_ref(nfs41_session_t *session)
+int32_t inc_session_ref(nfs41_session_t* session)
 {
-	int32_t refcnt = atomic_inc_int32_t(&session->refcount);
-	return refcnt;
+    int32_t refcnt = atomic_inc_int32_t(&session->refcount);
+    return refcnt;
 }
 
-int32_t dec_session_ref(nfs41_session_t *session)
+int32_t dec_session_ref(nfs41_session_t* session)
 {
-	int i;
-	int32_t refcnt = atomic_dec_int32_t(&session->refcount);
+    int i;
+    int32_t refcnt = atomic_dec_int32_t(&session->refcount);
 
-	if (refcnt == 0) {
+    if (refcnt == 0)
+    {
+        /* Unlink the session from the client's list of
+           sessions */
+        PTHREAD_MUTEX_lock(&session->clientid_record->cid_mutex);
+        glist_del(&session->session_link);
+        PTHREAD_MUTEX_unlock(&session->clientid_record->cid_mutex);
 
-		/* Unlink the session from the client's list of
-		   sessions */
-		PTHREAD_MUTEX_lock(&session->clientid_record->cid_mutex);
-		glist_del(&session->session_link);
-		PTHREAD_MUTEX_unlock(&session->clientid_record->cid_mutex);
+        /* Decrement our reference to the clientid record */
+        dec_client_id_ref(session->clientid_record);
+        /* Destroy this session's mutexes and condition variable */
 
-		/* Decrement our reference to the clientid record */
-		dec_client_id_ref(session->clientid_record);
-		/* Destroy this session's mutexes and condition variable */
+        for (i = 0; i < NFS41_NB_SLOTS; i++)
+            PTHREAD_MUTEX_destroy(&session->slots[i].lock);
 
-		for (i = 0; i < NFS41_NB_SLOTS; i++)
-			PTHREAD_MUTEX_destroy(&session->slots[i].lock);
+        PTHREAD_COND_destroy(&session->cb_cond);
+        PTHREAD_MUTEX_destroy(&session->cb_mutex);
 
-		PTHREAD_COND_destroy(&session->cb_cond);
-		PTHREAD_MUTEX_destroy(&session->cb_mutex);
+        /* Destroy the session's back channel (if any) */
+        if (session->flags & session_bc_up)
+            nfs_rpc_destroy_chan(&session->cb_chan);
 
-		/* Destroy the session's back channel (if any) */
-		if (session->flags & session_bc_up)
-			nfs_rpc_destroy_chan(&session->cb_chan);
+        /* Free the memory for the session */
+        pool_free(nfs41_session_pool, session);
+    }
 
-		/* Free the memory for the session */
-		pool_free(nfs41_session_pool, session);
-	}
-
-	return refcnt;
+    return refcnt;
 }
 
 /**
@@ -282,38 +283,45 @@ int32_t dec_session_ref(nfs41_session_t *session)
  *
  */
 
-int nfs41_Session_Set(nfs41_session_t *session_data)
+int nfs41_Session_Set(nfs41_session_t* session_data)
 {
-	struct gsh_buffdesc key;
-	struct gsh_buffdesc val;
-	struct hash_latch latch;
-	hash_error_t code;
-	int rc = 0;
+    struct gsh_buffdesc key;
+    struct gsh_buffdesc val;
+    struct hash_latch latch;
+    hash_error_t code;
+    int rc = 0;
 
-	key.addr = session_data->session_id;
-	key.len = NFS4_SESSIONID_SIZE;
+    key.addr = session_data->session_id;
+    key.len = NFS4_SESSIONID_SIZE;
 
-	val.addr = session_data;
-	val.len = sizeof(nfs41_session_t);
+    val.addr = session_data;
+    val.len = sizeof(nfs41_session_t);
 
-	/* The latch idiom isn't strictly necessary here */
-	code = hashtable_getlatch(ht_session_id, &key, &val, true, &latch);
-	if (code == HASHTABLE_SUCCESS) {
-		hashtable_releaselatched(ht_session_id, &latch);
-		goto out;
-	}
-	if (code == HASHTABLE_ERROR_NO_SUCH_KEY) {
-		/* nfs4_op_create_session ensures refcount == 2 for new
-		 * session records */
-		code =
-		    hashtable_setlatched(ht_session_id, &key, &val, &latch,
-					 false, NULL, NULL);
-		if (code == HASHTABLE_SUCCESS)
-			rc = 1;
-	}
+    /* The latch idiom isn't strictly necessary here */
+    code = hashtable_getlatch(ht_session_id, &key, &val, true, &latch);
+    if (code == HASHTABLE_SUCCESS)
+    {
+        hashtable_releaselatched(ht_session_id, &latch);
+        goto out;
+    }
+    if (code == HASHTABLE_ERROR_NO_SUCH_KEY)
+    {
+        /* nfs4_op_create_session ensures refcount == 2 for new
+         * session records */
+        code =
+            hashtable_setlatched(ht_session_id,
+                                 &key,
+                                 &val,
+                                 &latch,
+                                 false,
+                                 NULL,
+                                 NULL);
+        if (code == HASHTABLE_SUCCESS)
+            rc = 1;
+    }
 
- out:
-	return rc;
+out:
+    return rc;
 }
 
 /**
@@ -327,43 +335,45 @@ int nfs41_Session_Set(nfs41_session_t *session_data)
  */
 
 int nfs41_Session_Get_Pointer(char sessionid[NFS4_SESSIONID_SIZE],
-			      nfs41_session_t **session_data)
+                              nfs41_session_t** session_data)
 {
-	struct gsh_buffdesc key;
-	struct gsh_buffdesc val;
-	struct hash_latch latch;
-	char str[LOG_BUFF_LEN] = "\0";
-	struct display_buffer dspbuf = {sizeof(str), str, str};
-	bool str_valid = false;
-	hash_error_t code;
+    struct gsh_buffdesc key;
+    struct gsh_buffdesc val;
+    struct hash_latch latch;
+    char str[LOG_BUFF_LEN] = "\0";
+    struct display_buffer dspbuf = { sizeof(str), str, str };
+    bool str_valid = false;
+    hash_error_t code;
 
-	if (isFullDebug(COMPONENT_SESSIONS)) {
-		display_session_id(&dspbuf, sessionid);
-		LogFullDebug(COMPONENT_SESSIONS, "Get Session %s", str);
-		str_valid = true;
-	}
+    if (isFullDebug(COMPONENT_SESSIONS))
+    {
+        display_session_id(&dspbuf, sessionid);
+        LogFullDebug(COMPONENT_SESSIONS, "Get Session %s", str);
+        str_valid = true;
+    }
 
-	key.addr = sessionid;
-	key.len = NFS4_SESSIONID_SIZE;
+    key.addr = sessionid;
+    key.len = NFS4_SESSIONID_SIZE;
 
-	code = hashtable_getlatch(ht_session_id, &key, &val, false, &latch);
-	if (code != HASHTABLE_SUCCESS) {
-		hashtable_releaselatched(ht_session_id, &latch);
-		if (str_valid)
-			LogFullDebug(COMPONENT_SESSIONS,
-				     "Session %s Not Found", str);
-		return 0;
-	}
+    code = hashtable_getlatch(ht_session_id, &key, &val, false, &latch);
+    if (code != HASHTABLE_SUCCESS)
+    {
+        hashtable_releaselatched(ht_session_id, &latch);
+        if (str_valid)
+            LogFullDebug(COMPONENT_SESSIONS,
+                         "Session %s Not Found", str);
+        return 0;
+    }
 
-	*session_data = val.addr;
-	inc_session_ref(*session_data);	/* XXX more locks? */
+    *session_data = val.addr;
+    inc_session_ref(*session_data); /* XXX more locks? */
 
-	hashtable_releaselatched(ht_session_id, &latch);
+    hashtable_releaselatched(ht_session_id, &latch);
 
-	if (str_valid)
-		LogFullDebug(COMPONENT_SESSIONS, "Session %s Found", str);
+    if (str_valid)
+        LogFullDebug(COMPONENT_SESSIONS, "Session %s Found", str);
 
-	return 1;
+    return 1;
 }
 
 /**
@@ -379,22 +389,25 @@ int nfs41_Session_Get_Pointer(char sessionid[NFS4_SESSIONID_SIZE],
 
 int nfs41_Session_Del(char sessionid[NFS4_SESSIONID_SIZE])
 {
-	struct gsh_buffdesc key, old_key, old_value;
+    struct gsh_buffdesc key, old_key, old_value;
 
-	key.addr = sessionid;
-	key.len = NFS4_SESSIONID_SIZE;
+    key.addr = sessionid;
+    key.len = NFS4_SESSIONID_SIZE;
 
-	if (HashTable_Del(ht_session_id, &key, &old_key, &old_value) ==
-	    HASHTABLE_SUCCESS) {
-		nfs41_session_t *session = old_value.addr;
+    if (HashTable_Del(ht_session_id, &key, &old_key, &old_value) ==
+        HASHTABLE_SUCCESS)
+    {
+        nfs41_session_t* session = old_value.addr;
 
-		/* unref session */
-		dec_session_ref(session);
+        /* unref session */
+        dec_session_ref(session);
 
-		return true;
-	} else {
-		return false;
-	}
+        return true;
+    }
+    else
+    {
+        return false;
+    }
 }
 
 /**
@@ -403,7 +416,7 @@ int nfs41_Session_Del(char sessionid[NFS4_SESSIONID_SIZE])
 
 void nfs41_Session_PrintAll(void)
 {
-	hashtable_log(COMPONENT_SESSIONS, ht_session_id);
+    hashtable_log(COMPONENT_SESSIONS, ht_session_id);
 }
 
 /** @} */

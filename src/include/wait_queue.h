@@ -22,27 +22,28 @@
  * -------------
  */
 
-/**
- *
- * @file wait_queue.h
- * @author Matt Benjamin
- * @brief Pthreads-based wait queue package
- *
- * @section DESCRIPTION
- *
- * This module provides simple wait queues using pthreads primitives.
- */
+ /**
+  *
+  * @file wait_queue.h
+  * @author Matt Benjamin
+  * @brief Pthreads-based wait queue package
+  *
+  * @section DESCRIPTION
+  *
+  * This module provides simple wait queues using pthreads primitives.
+  */
 
 #ifndef WAIT_QUEUE_H
 #define WAIT_QUEUE_H
 
-#include <errno.h>
+  //#include <errno.h>
 #include <pthread.h>
 #include "gsh_list.h"
 
-typedef struct wait_entry {
-	pthread_mutex_t mtx;
-	pthread_cond_t cv;
+typedef struct wait_entry
+{
+    pthread_mutex_t mtx;
+    pthread_cond_t cv;
 } wait_entry_t;
 
 #define Wqe_LFlag_None        0x0000
@@ -50,51 +51,52 @@ typedef struct wait_entry {
 #define Wqe_LFlag_SyncDone    0x0002
 
 /* thread wait queue */
-typedef struct wait_q_entry {
-	uint32_t flags;
-	uint32_t waiters;
-	wait_entry_t lwe;	/* left */
-	wait_entry_t rwe;	/* right */
-	struct glist_head waitq;
+typedef struct wait_q_entry
+{
+    uint32_t flags;
+    uint32_t waiters;
+    wait_entry_t lwe;	/* left */
+    wait_entry_t rwe;	/* right */
+    struct glist_head waitq;
 } wait_q_entry_t;
 
 static inline int gsh_mutex_init(pthread_mutex_t *m,
-				 const pthread_mutexattr_t *a
-				 __attribute__ ((unused)))
+                                 const pthread_mutexattr_t *a
+                                 __attribute__((unused)))
 {
-	pthread_mutexattr_t attr;
+    pthread_mutexattr_t attr;
 
-	pthread_mutexattr_init(&attr);
-	pthread_mutexattr_settype(&attr,
+    pthread_mutexattr_init(&attr);
+    pthread_mutexattr_settype(&attr,
 #if defined(__linux__)
-				  PTHREAD_MUTEX_ADAPTIVE_NP
+                              PTHREAD_MUTEX_ADAPTIVE_NP
 #else
-				  PTHREAD_MUTEX_DEFAULT
+                              PTHREAD_MUTEX_DEFAULT
 #endif
-	    );
-	return pthread_mutex_init(m, &attr);
+    );
+    return pthread_mutex_init(m, &attr);
 }
 
 static inline void init_wait_entry(wait_entry_t *we)
 {
-	gsh_mutex_init(&we->mtx, NULL);
-	pthread_cond_init(&we->cv, NULL);
+    gsh_mutex_init(&we->mtx, NULL);
+    pthread_cond_init(&we->cv, NULL);
 }
 
 static inline void init_wait_q_entry(wait_q_entry_t *wqe)
 {
-	glist_init(&wqe->waitq);
-	init_wait_entry(&wqe->lwe);
-	init_wait_entry(&wqe->rwe);
+    glist_init(&wqe->waitq);
+    init_wait_entry(&wqe->lwe);
+    init_wait_entry(&wqe->rwe);
 }
 
 static inline void thread_delay_ms(time_t ms)
 {
-	struct timespec then = {
-		.tv_sec = ms / 1000,
-		.tv_nsec = (ms % 1000) * 1000000U
-	};
-	nanosleep(&then, NULL);
+    struct timespec then = {
+        .tv_sec = ms / 1000,
+        .tv_nsec = (ms % 1000) * 1000000U
+    };
+    nanosleep(&then, NULL);
 }
 
 #endif /* WAIT_QUEUE_H */
