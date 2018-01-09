@@ -44,9 +44,12 @@
 #ifndef EXPORT_MGR_H
 #define EXPORT_MGR_H
 
-enum export_status {
-	EXPORT_READY,		/*< searchable, usable */
-	EXPORT_STALE,		/*< export is no longer valid */
+enum export_status
+{
+    EXPORT_READY,
+    /*< searchable, usable */
+    EXPORT_STALE,
+    /*< export is no longer valid */
 };
 
 /**
@@ -56,126 +59,127 @@ enum export_status {
  *
  */
 
-struct gsh_export {
-	/** List of all exports */
-	struct glist_head exp_list;
-	/** gsh_exports are kept in an AVL tree by export_id */
-	struct avltree_node node_k;
-	/** List of NFS v4 state belonging to this export */
-	struct glist_head exp_state_list;
-	/** List of locks belonging to this export */
-	struct glist_head exp_lock_list;
-	/** List of NLM shares belonging to this export */
-	struct glist_head exp_nlm_share_list;
-	/** List of exports rooted on the same inode */
-	struct glist_head exp_root_list;
-	/** List of exports to be mounted or cleaned up */
-	struct glist_head exp_work;
-	/** List of exports mounted on this export */
-	struct glist_head mounted_exports_list;
-	/** This export is a node in the list of mounted_exports */
-	struct glist_head mounted_exports_node;
-	/** Entry for the root of this export, protected by lock */
-	struct fsal_obj_handle *exp_root_obj;
-	/** CFG Allowed clients - update protected by lock */
-	struct glist_head clients;
-	/** Entry for the junction of this export.  Protected by lock */
-	struct fsal_obj_handle *exp_junction_obj;
-	/** The export this export sits on. Protected by lock */
-	struct gsh_export *exp_parent_exp;
-	/** Pointer to the fsal_export associated with this export */
-	struct fsal_export *fsal_export;
-	/** CFG: Exported path - static option */
-	char *fullpath;
-	/** CFG: PseudoFS path for export - static option */
-	char *pseudopath;
-	/** CFG: Tag for direct NFS v3 mounting of export - static option */
-	char *FS_tag;
-	/** Node id this is mounted on. Protected by lock */
-	uint64_t exp_mounted_on_file_id;
-	/** CFG: Max Read for this entry - atomic changeable option */
-	uint64_t MaxRead;
-	/** CFG: Max Write for this entry - atomic changeable option */
-	uint64_t MaxWrite;
-	/** CFG: Preferred Read size - atomic changeable option */
-	uint64_t PrefRead;
-	/** CFG: Preferred Write size - atomic changeable option */
-	uint64_t PrefWrite;
-	/** CFG: Preferred Readdir size - atomic changeable option */
-	uint64_t PrefReaddir;
-	/** CFG: Maximum Offset allowed for write - atomic changeable option */
-	uint64_t MaxOffsetWrite;
-	/** CFG: Maximum Offset allowed for read - atomic changeable option */
-	uint64_t MaxOffsetRead;
-	/** CFG: Filesystem ID for overriding fsid from FSAL - ????? */
-	fsal_fsid_t filesystem_id;
-	/** References to this export */
-	int64_t refcnt;
-	/** Read/Write lock protecting export */
-	pthread_rwlock_t lock;
-	/** CFG: available mount options - update protected by lock */
-	struct export_perms export_perms;
-	/** The last time the export stats were updated */
-	nsecs_elapsed_t last_update;
-	/** CFG: Export non-permission options - atomic changeable option */
-	uint32_t options;
-	/** CFG: Export non-permission options set - atomic changeable option */
-	uint32_t options_set;
-	/** CFG: Expiration time interval in seconds for attributes.  Settable
-	    with Attr_Expiration_Time. - atomic changeable option */
-	int32_t expire_time_attr;
-	/** CFG: Export_Id for this export - static option */
-	uint16_t export_id;
+struct gsh_export
+{
+    /** List of all exports */
+    struct glist_head exp_list;
+    /** gsh_exports are kept in an AVL tree by export_id */
+    struct avltree_node node_k;
+    /** List of NFS v4 state belonging to this export */
+    struct glist_head exp_state_list;
+    /** List of locks belonging to this export */
+    struct glist_head exp_lock_list;
+    /** List of NLM shares belonging to this export */
+    struct glist_head exp_nlm_share_list;
+    /** List of exports rooted on the same inode */
+    struct glist_head exp_root_list;
+    /** List of exports to be mounted or cleaned up */
+    struct glist_head exp_work;
+    /** List of exports mounted on this export */
+    struct glist_head mounted_exports_list;
+    /** This export is a node in the list of mounted_exports */
+    struct glist_head mounted_exports_node;
+    /** Entry for the root of this export, protected by lock */
+    struct fsal_obj_handle* exp_root_obj;
+    /** CFG Allowed clients - update protected by lock */
+    struct glist_head clients;
+    /** Entry for the junction of this export.  Protected by lock */
+    struct fsal_obj_handle* exp_junction_obj;
+    /** The export this export sits on. Protected by lock */
+    struct gsh_export* exp_parent_exp;
+    /** Pointer to the fsal_export associated with this export */
+    struct fsal_export* fsal_export;
+    /** CFG: Exported path - static option */
+    char* fullpath;
+    /** CFG: PseudoFS path for export - static option */
+    char* pseudopath;
+    /** CFG: Tag for direct NFS v3 mounting of export - static option */
+    char* FS_tag;
+    /** Node id this is mounted on. Protected by lock */
+    uint64_t exp_mounted_on_file_id;
+    /** CFG: Max Read for this entry - atomic changeable option */
+    uint64_t MaxRead;
+    /** CFG: Max Write for this entry - atomic changeable option */
+    uint64_t MaxWrite;
+    /** CFG: Preferred Read size - atomic changeable option */
+    uint64_t PrefRead;
+    /** CFG: Preferred Write size - atomic changeable option */
+    uint64_t PrefWrite;
+    /** CFG: Preferred Readdir size - atomic changeable option */
+    uint64_t PrefReaddir;
+    /** CFG: Maximum Offset allowed for write - atomic changeable option */
+    uint64_t MaxOffsetWrite;
+    /** CFG: Maximum Offset allowed for read - atomic changeable option */
+    uint64_t MaxOffsetRead;
+    /** CFG: Filesystem ID for overriding fsid from FSAL - ????? */
+    fsal_fsid_t filesystem_id;
+    /** References to this export */
+    int64_t refcnt;
+    /** Read/Write lock protecting export */
+    pthread_rwlock_t lock;
+    /** CFG: available mount options - update protected by lock */
+    struct export_perms export_perms;
+    /** The last time the export stats were updated */
+    nsecs_elapsed_t last_update;
+    /** CFG: Export non-permission options - atomic changeable option */
+    uint32_t options;
+    /** CFG: Export non-permission options set - atomic changeable option */
+    uint32_t options_set;
+    /** CFG: Expiration time interval in seconds for attributes.  Settable
+        with Attr_Expiration_Time. - atomic changeable option */
+    int32_t expire_time_attr;
+    /** CFG: Export_Id for this export - static option */
+    uint16_t export_id;
 
-	uint8_t export_status;		/*< current condition */
-	bool has_pnfs_ds;		/*< id_servers matches export_id */
+    uint8_t export_status; /*< current condition */
+    bool has_pnfs_ds; /*< id_servers matches export_id */
 };
 
 /* Use macro to define this to get around include file order. */
 #define export_path(export) \
-	((nfs_param.core_param.mount_path_pseudo) \
-		? ((export)->pseudopath) \
-		: ((export)->fullpath))
+    ((nfs_param.core_param.mount_path_pseudo) \
+        ? ((export)->pseudopath) \
+        : ((export)->fullpath))
 
 /* If op_ctx request is NFS_V4 always use pseudopath, otherwise use fullpath
  * for export.
  */
 #define op_ctx_export_path(export) \
-	((op_ctx->nfs_vers == NFS_V4) || \
-	 (nfs_param.core_param.mount_path_pseudo) \
-		? ((export)->pseudopath) \
-		: ((export)->fullpath))
+    ((op_ctx->nfs_vers == NFS_V4) || \
+     (nfs_param.core_param.mount_path_pseudo) \
+        ? ((export)->pseudopath) \
+        : ((export)->fullpath))
 
 static inline bool op_ctx_export_has_option(uint32_t option)
 {
-	return atomic_fetch_uint32_t(&op_ctx->ctx_export->options) & option;
+    return atomic_fetch_uint32_t(&op_ctx->ctx_export->options) & option;
 }
 
 static inline bool op_ctx_export_has_option_set(uint32_t option)
 {
-	return atomic_fetch_uint32_t(&op_ctx->ctx_export->options_set) & option;
+    return atomic_fetch_uint32_t(&op_ctx->ctx_export->options_set) & option;
 }
 
 void export_pkginit(void);
 #ifdef USE_DBUS
 void dbus_export_init(void);
 #endif
-struct gsh_export *alloc_export(void);
-void free_export(struct gsh_export *a_export);
-bool insert_gsh_export(struct gsh_export *a_export);
-struct gsh_export *get_gsh_export(uint16_t export_id);
-struct gsh_export *get_gsh_export_by_path(char *path, bool exact_match);
-struct gsh_export *get_gsh_export_by_path_locked(char *path,
-						 bool exact_match);
-struct gsh_export *get_gsh_export_by_pseudo(char *path, bool exact_match);
-struct gsh_export *get_gsh_export_by_pseudo_locked(char *path,
-						   bool exact_match);
-struct gsh_export *get_gsh_export_by_tag(char *tag);
-bool mount_gsh_export(struct gsh_export *exp);
-void put_gsh_export(struct gsh_export *a_export);
+struct gsh_export* alloc_export(void);
+void free_export(struct gsh_export* a_export);
+bool insert_gsh_export(struct gsh_export* a_export);
+struct gsh_export* get_gsh_export(uint16_t export_id);
+struct gsh_export* get_gsh_export_by_path(char* path, bool exact_match);
+struct gsh_export* get_gsh_export_by_path_locked(char* path,
+                                                 bool exact_match);
+struct gsh_export* get_gsh_export_by_pseudo(char* path, bool exact_match);
+struct gsh_export* get_gsh_export_by_pseudo_locked(char* path,
+                                                   bool exact_match);
+struct gsh_export* get_gsh_export_by_tag(char* tag);
+bool mount_gsh_export(struct gsh_export* exp);
+void put_gsh_export(struct gsh_export* a_export);
 void remove_gsh_export(uint16_t export_id);
-bool foreach_gsh_export(bool(*cb) (struct gsh_export *exp, void *state),
-			bool wrlock, void *state);
+bool foreach_gsh_export(bool (*cb)(struct gsh_export* exp, void* state),
+                        bool wrlock, void* state);
 
 /**
  * @brief Advisory check of export readiness.
@@ -190,22 +194,22 @@ bool foreach_gsh_export(bool(*cb) (struct gsh_export *exp, void *state),
  *
  * @retval true if the export is ready
  */
-static inline bool export_ready(struct gsh_export *a_export)
+static inline bool export_ready(struct gsh_export* a_export)
 {
-	return a_export->export_status == EXPORT_READY;
+    return a_export->export_status == EXPORT_READY;
 }
 
-static inline void get_gsh_export_ref(struct gsh_export *a_export)
+static inline void get_gsh_export_ref(struct gsh_export* a_export)
 {
-	(void) atomic_inc_int64_t(&a_export->refcnt);
+    (void)atomic_inc_int64_t(&a_export->refcnt);
 }
 
-void export_revert(struct gsh_export *a_export);
-void export_add_to_mount_work(struct gsh_export *a_export);
-void export_add_to_unexport_work_locked(struct gsh_export *a_export);
-void export_add_to_unexport_work(struct gsh_export *a_export);
-struct gsh_export *export_take_mount_work(void);
-struct gsh_export *export_take_unexport_work(void);
+void export_revert(struct gsh_export* a_export);
+void export_add_to_mount_work(struct gsh_export* a_export);
+void export_add_to_unexport_work_locked(struct gsh_export* a_export);
+void export_add_to_unexport_work(struct gsh_export* a_export);
+struct gsh_export* export_take_mount_work(void);
+struct gsh_export* export_take_unexport_work(void);
 
 extern struct config_block add_export_param;
 extern struct config_block update_export_param;

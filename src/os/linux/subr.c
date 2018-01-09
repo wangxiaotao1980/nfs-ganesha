@@ -30,7 +30,8 @@
 #include "../../include/os/subr.h"
 
 #include <stddef.h>
-#include <string.h>
+#include <sys/stat.h>
+//#include <string.h>
 #include <unistd.h>
 #include <sys/fsuid.h>
 #include <sys/syscall.h>

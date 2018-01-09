@@ -39,6 +39,7 @@
 #include "../../include/server_stats.h"
 #include "../../include/export_mgr.h"
 #include "../../include/sal_functions.h"
+#include "../../include/nfs_file_handle.h"
 #include <stdio.h>
   //#include <string.h>
 #include <pthread.h>

@@ -24,10 +24,10 @@
  * ---------------------------------------
  */
 
-/**
- * @file    nfs_init.h
- * @brief   NFSd initialization prototypes.
- */
+ /**
+  * @file    nfs_init.h
+  * @brief   NFSd initialization prototypes.
+  */
 
 #ifndef NFS_INIT_H
 #define NFS_INIT_H
@@ -36,15 +36,17 @@
 #include "nfs_core.h"
 #include "gsh_rpc.h"
 
-typedef struct __nfs_start_info {
-	int dump_default_config;
-	int lw_mark_trigger;
+typedef struct __nfs_start_info
+{
+    int dump_default_config;
+    int lw_mark_trigger;
 } nfs_start_info_t;
 
-struct nfs_init {
-	pthread_mutex_t init_mutex;
-	pthread_cond_t init_cond;
-	bool init_complete;
+struct nfs_init
+{
+    pthread_mutex_t init_mutex;
+    pthread_cond_t init_cond;
+    bool init_complete;
 };
 
 extern struct nfs_init nfs_init;
@@ -59,16 +61,16 @@ void nfs_init_wait(void);
  * nfs_prereq_init:
  * Initialize NFSd prerequisites: memory management, logging, ...
  */
-void nfs_prereq_init(char *program_name, char *host_name, int debug_level,
-		     char *log_path, bool dump_trace);
+void nfs_prereq_init(char* program_name, char* host_name, int debug_level,
+                     char* log_path, bool dump_trace);
 
 /**
  * nfs_set_param_from_conf:
  * Load parameters from config file.
  */
 int nfs_set_param_from_conf(config_file_t config_struct,
-			    nfs_start_info_t *p_start_info,
-			    struct config_error_type *err_type);
+                            nfs_start_info_t* p_start_info,
+                            struct config_error_type* err_type);
 
 /**
  * Initialization that needs config file parse but must be done
@@ -81,35 +83,35 @@ int init_server_pkgs(void);
  * nfs_start:
  * start NFS service
  */
-void nfs_start(nfs_start_info_t *p_start_info);
+void nfs_start(nfs_start_info_t* p_start_info);
 
 /**
  * check for useable malloc implementation
  */
 static inline void nfs_check_malloc(void)
 {
-	/* Check malloc(0) - Ganesha assumes malloc(0) returns non-NULL pointer.
-	 * Note we use malloc and calloc directly here and not gsh_malloc and
-	 * gsh_calloc because we don't want those functions to abort(), we
-	 * want to log a descriptive message.
-	 */
-	void *p;
+    /* Check malloc(0) - Ganesha assumes malloc(0) returns non-NULL pointer.
+     * Note we use malloc and calloc directly here and not gsh_malloc and
+     * gsh_calloc because we don't want those functions to abort(), we
+     * want to log a descriptive message.
+     */
+    void* p;
 
-	p = malloc(0);
-	if (p == NULL)
-		LogFatal(COMPONENT_MAIN,
-			 "Ganesha assumes malloc(0) returns a non-NULL pointer.");
-	free(p);
-	p = calloc(0, 0);
-	if (p == NULL)
-		LogFatal(COMPONENT_MAIN,
-			 "Ganesha assumes calloc(0, 0) returns a non-NULL pointer.");
-	free(p);
+    p = malloc(0);
+    if (p == NULL)
+        LogFatal(COMPONENT_MAIN,
+                 "Ganesha assumes malloc(0) returns a non-NULL pointer.");
+    free(p);
+    p = calloc(0, 0);
+    if (p == NULL)
+        LogFatal(COMPONENT_MAIN,
+                 "Ganesha assumes calloc(0, 0) returns a non-NULL pointer.");
+    free(p);
 }
 
 /* in nfs_rpc_dispatcher_thread.c */
 
-enum xprt_stat thr_decode_rpc_request(void *context, SVCXPRT *xprt);
+enum xprt_stat thr_decode_rpc_request(void* context, SVCXPRT* xprt);
 
 #ifdef _USE_NFS_RDMA
 /* in nfs_rpc_rdma.c */

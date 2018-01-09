@@ -56,31 +56,33 @@ typedef uint32_t uint32;
 typedef uint64_t uint64;
 
 typedef struct _uint128 uint128;
-struct _uint128 {
-	uint64 first;
-	uint64 second;
+
+struct _uint128
+{
+    uint64 first;
+    uint64 second;
 };
 
 #define Uint128Low64(x) (x).first
 #define Uint128High64(x) (x).second
 
 // Hash function for a byte array.
-uint64 CityHash64(const char *buf, size_t len);
+uint64 CityHash64(const char* buf, size_t len);
 
 // Hash function for a byte array.  For convenience, a 64-bit seed is also
 // hashed into the result.
-uint64 CityHash64WithSeed(const char *buf, size_t len, uint64 seed);
+uint64 CityHash64WithSeed(const char* buf, size_t len, uint64 seed);
 
 // Hash function for a byte array.  For convenience, two seeds are also
 // hashed into the result.
-uint64 CityHash64WithSeeds(const char *buf, size_t len, uint64 seed0,
-			   uint64 seed1);
+uint64 CityHash64WithSeeds(const char* buf, size_t len, uint64 seed0,
+                           uint64 seed1);
 
 // Hash function for a byte array.
-uint128 CityHash128(const char *s, size_t len);
+uint128 CityHash128(const char* s, size_t len);
 
 // Hash function for a byte array.  For convenience, a 128-bit seed is also
 // hashed into the result.
-uint128 CityHash128WithSeed(const char *s, size_t len, uint128 seed);
+uint128 CityHash128WithSeed(const char* s, size_t len, uint128 seed);
 
 #endif				// CITY_HASH_H_

@@ -42,6 +42,7 @@
 #include "../include/delayed_exec.h"
 #include "../include/export_mgr.h"
 #include "../include/server_stats.h"
+#include "../include/nfs_file_handle.h"
 
 
 //#include <stdio.h>
@@ -194,10 +195,7 @@ static void destroy_recall(struct state_layout_recall_file* recall)
     {
         struct recall_state_list* list_entry;
         /* The first entry in the queue */
-        list_entry = glist_first_entry(&recall->state_list,
-            struct recall_state_list,
-            link)
-        ;
+        list_entry = glist_first_entry(&recall->state_list, struct recall_state_list, link);
         dec_state_t_ref(list_entry->state);
         glist_del(&list_entry->link);
         gsh_free(list_entry);
@@ -246,16 +244,15 @@ static state_status_t create_file_recall(struct fsal_obj_handle* obj,
     /* Error return code */
     state_status_t rc = STATE_SUCCESS;
     /* The recall object referenced by future returns */
-    struct state_layout_recall_file* recall =
-            gsh_malloc(sizeof(struct state_layout_recall_file));
+    struct state_layout_recall_file* recall = gsh_malloc(sizeof(struct state_layout_recall_file));
 
     glist_init(&recall->state_list);
     recall->entry_link.next = NULL;
     recall->entry_link.prev = NULL;
-    recall->obj = obj;
-    recall->type = type;
-    recall->segment = *segment;
-    recall->recall_cookie = cookie;
+    recall->obj             = obj;
+    recall->type            = type;
+    recall->segment         = *segment;
+    recall->recall_cookie   = cookie;
 
     if((segment->length == 0)
         || ((segment->length != UINT64_MAX)
@@ -272,10 +269,7 @@ static state_status_t create_file_recall(struct fsal_obj_handle* obj,
         /* Iterator over segments on this state */
         struct glist_head* seg_iter = NULL;
         /* The state under examination */
-        state_t* s = glist_entry(state_iter,
-            state_t,
-            state_list)
-        ;
+        state_t* s = glist_entry(state_iter, state_t, state_list);
         /* Does this state have a matching segment? */
         bool match = false;
         /* referenced owner */
@@ -325,13 +319,11 @@ static state_status_t create_file_recall(struct fsal_obj_handle* obj,
         glist_for_each(seg_iter,
             &s->state_data.layout.state_segments)
         {
-            state_layout_segment_t* g = glist_entry(
-                seg_iter,
-                state_layout_segment_t,
-                sls_state_segments)
-            ;
+            state_layout_segment_t* g = glist_entry(seg_iter, state_layout_segment_t, sls_state_segments);
             if(pnfs_segments_overlap(segment, &g->sls_segment))
+            {
                 match = true;
+            }
         }
         if(match)
         {
@@ -354,14 +346,15 @@ static state_status_t create_file_recall(struct fsal_obj_handle* obj,
     }
 
     if(!found)
+    {
         rc = STATE_NOT_FOUND;
+    }
 
 out:
 
     if(rc == STATE_SUCCESS)
     {
-        glist_add_tail(&obj->state_hdl->file.layoutrecall_list,
-                       &recall->entry_link);
+        glist_add_tail(&obj->state_hdl->file.layoutrecall_list, &recall->entry_link);
         *recout = recall;
     }
     else
@@ -382,11 +375,11 @@ static void layoutrecall_one_call(void* arg);
 struct layoutrecall_cb_data
 {
     char stateid_other[OTHERSIZE]; /*< "Other" part of state id */
-    struct pnfs_segment segment; /*< Segment to recall */
-    nfs_cb_argop4 arg; /*< So we don't free */
-    nfs_client_id_t* client; /*< The client we're calling. */
-    struct timespec first_recall; /*< Time of first recall */
-    uint32_t attempts; /*< Number of times we've recalled */
+    struct pnfs_segment segment;   /*< Segment to recall */
+    nfs_cb_argop4 arg;             /*< So we don't free */
+    nfs_client_id_t* client;       /*< The client we're calling. */
+    struct timespec first_recall;  /*< Time of first recall */
+    uint32_t attempts;             /*< Number of times we've recalled */
 };
 
 /**
@@ -419,21 +412,22 @@ state_status_t layoutrecall(const struct fsal_up_vector* vec,
                             struct layoutrecall_spec* spec)
 {
     /* Return code */
-    state_status_t rc = STATE_SUCCESS;
+    state_status_t rc                       = STATE_SUCCESS;
     /* file on which to operate */
-    struct fsal_obj_handle* obj = NULL;
+    struct fsal_obj_handle* obj             = NULL;
     /* The recall object */
     struct state_layout_recall_file* recall = NULL;
     /* Iterator over the work list */
-    struct glist_head* wi = NULL;
-    struct gsh_export* exp = NULL;
-    state_owner_t* owner = NULL;
-    struct fsal_export* export = vec->up_fsal_export;
+    struct glist_head* wi                   = NULL;
+    struct gsh_export* exp                  = NULL;
+    state_owner_t* owner                    = NULL;
+    struct fsal_export* export              = vec->up_fsal_export;
 
-    rc = state_error_convert(export->exp_ops.create_handle(export, handle,
-                                                           &obj, NULL));
+    rc = state_error_convert(export->exp_ops.create_handle(export, handle, &obj, NULL));
     if(rc != STATE_SUCCESS)
+    {
         return rc;
+    }
 
     PTHREAD_RWLOCK_wrlock(&obj->state_hdl->state_lock);
     /* We build up the list before consuming it so that we have
@@ -442,7 +436,9 @@ state_status_t layoutrecall(const struct fsal_up_vector* vec,
                             &recall);
     PTHREAD_RWLOCK_unlock(&obj->state_hdl->state_lock);
     if(rc != STATE_SUCCESS)
+    {
         goto out;
+    }
 
     /**
      * @todo This leaves us open to a race if a return comes in
@@ -452,11 +448,7 @@ state_status_t layoutrecall(const struct fsal_up_vector* vec,
     glist_for_each(wi, &recall->state_list)
     {
         /* The current entry in the queue */
-        struct recall_state_list* g = glist_entry(wi,
-            struct
-            recall_state_list,
-            link)
-        ;
+        struct recall_state_list* g = glist_entry(wi, struct recall_state_list, link);
         struct state_t* s = g->state;
         struct layoutrecall_cb_data* cb_data;
         nfs_cb_argop4* arg;
@@ -465,17 +457,17 @@ state_status_t layoutrecall(const struct fsal_up_vector* vec,
 
         cb_data = gsh_malloc(sizeof(struct layoutrecall_cb_data));
 
-        arg = &cb_data->arg;
-        arg->argop = NFS4_OP_CB_LAYOUTRECALL;
-        cb_layoutrec = &arg->nfs_cb_argop4_u.opcblayoutrecall;
-        layout = &cb_layoutrec->clora_recall.layoutrecall4_u.lor_layout;
+        arg                                       = &cb_data->arg;
+        arg->argop                                = NFS4_OP_CB_LAYOUTRECALL;
+        cb_layoutrec                              = &arg->nfs_cb_argop4_u.opcblayoutrecall;
+        layout                                    = &cb_layoutrec->clora_recall.layoutrecall4_u.lor_layout;
 
-        cb_layoutrec->clora_type = layout_type;
-        cb_layoutrec->clora_iomode = segment->io_mode;
-        cb_layoutrec->clora_changed = changed;
+        cb_layoutrec->clora_type                  = layout_type;
+        cb_layoutrec->clora_iomode                = segment->io_mode;
+        cb_layoutrec->clora_changed               = changed;
         cb_layoutrec->clora_recall.lor_recalltype = LAYOUTRECALL4_FILE;
-        layout->lor_offset = segment->offset;
-        layout->lor_length = segment->length;
+        layout->lor_offset                        = segment->offset;
+        layout->lor_length                        = segment->length;
 
 
         if(!get_state_obj_export_owner_refs(s, NULL, &exp, &owner))
@@ -557,24 +549,24 @@ static int32_t layoutrec_completion(rpc_call_t* call, rpc_call_hook hook,
                                     void* arg, uint32_t flags)
 {
     struct layoutrecall_cb_data* cb_data = arg;
-    bool deleted = false;
-    state_t* state = NULL;
+    bool deleted                         = false;
+    state_t* state                       = NULL;
     struct root_op_context root_op_context;
-    struct fsal_obj_handle* obj = NULL;
-    struct gsh_export* export = NULL;
-    state_owner_t* owner = NULL;
-    bool ok = false;
+    struct fsal_obj_handle* obj          = NULL;
+    struct gsh_export* export            = NULL;
+    state_owner_t* owner                 = NULL;
+    bool ok                              = false;
 
     /* Initialize req_ctx */
-    init_root_op_context(&root_op_context, NULL, NULL,
-                         0, 0, UNKNOWN_REQUEST);
+    init_root_op_context(&root_op_context, NULL, NULL, 0, 0, UNKNOWN_REQUEST);
 
-    LogFullDebug(COMPONENT_NFS_CB, "status %d cb_data %p",
-        call->cbt.v_u.v4.res.status, cb_data);
+    LogFullDebug(COMPONENT_NFS_CB, "status %d cb_data %p", call->cbt.v_u.v4.res.status, cb_data);
 
     /* Get this out of the way up front */
     if(hook != RPC_CALL_COMPLETE)
+    {
         goto revoke;
+    }
 
     if(call->cbt.v_u.v4.res.status == NFS4_OK)
     {

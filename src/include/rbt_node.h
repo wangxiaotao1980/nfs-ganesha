@@ -115,11 +115,12 @@ iterators invalidated are those referring to the deleted node.
  * rbt_head is the head structure.
  * There is one rbt_head structure per tree.
  */
-struct rbt_head {
-	struct rbt_node *root; /* root node       */
-	struct rbt_node *leftmost; /* leftmost node   */
-	struct rbt_node *rightmost; /* rightmost nodei */
-	unsigned int rbt_num_node; /* number of nodes */
+struct rbt_head
+{
+    struct rbt_node* root; /* root node       */
+    struct rbt_node* leftmost; /* leftmost node   */
+    struct rbt_node* rightmost; /* rightmost nodei */
+    unsigned int rbt_num_node; /* number of nodes */
 };
 
 /*
@@ -136,14 +137,15 @@ struct rbt_head {
  * - the field root in the rbt_head structure (for the root node)
  */
 
-typedef struct rbt_node {
-	unsigned int rbt_flags;
-	struct rbt_node **anchor; /* anchor for this node */
-	struct rbt_node *parent; /* parent node or NULL for root */
-	struct rbt_node *left; /* left node */
-	struct rbt_node *next; /* "right" node */
-	uint64_t rbt_value; /* used for order */
-	void *rbt_opaq; /* pointer for external object */
+typedef struct rbt_node
+{
+    unsigned int rbt_flags;
+    struct rbt_node** anchor; /* anchor for this node */
+    struct rbt_node* parent; /* parent node or NULL for root */
+    struct rbt_node* left; /* left node */
+    struct rbt_node* next; /* "right" node */
+    uint64_t rbt_value; /* used for order */
+    void* rbt_opaq; /* pointer for external object */
 } rbt_node_t;
 
 /*

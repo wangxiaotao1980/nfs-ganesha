@@ -42,8 +42,9 @@
 #include "../../include/fsal_pnfs.h"
 #include "../../include/server_stats.h"
 #include "../../include/export_mgr.h"
+#include "../../include/nfs_file_handle.h"
 
-  /**
+/**
    * @brief Write for a data server
    *
    * This function bypasses cache_inode and calls directly into the FSAL
@@ -65,17 +66,16 @@ static int op_dswrite(struct nfs_argop4* op, compound_data_t* data,
     /* NFSv4 return code */
     nfsstat4 nfs_status = 0;
 
-    nfs_status = data->current_ds->dsh_ops.write(
-        data->current_ds,
-        op_ctx,
-        &arg_WRITE4->stateid,
-        arg_WRITE4->offset,
-        arg_WRITE4->data.data_len,
-        arg_WRITE4->data.data_val,
-        arg_WRITE4->stable,
-        &res_WRITE4->WRITE4res_u.resok4.count,
-        &res_WRITE4->WRITE4res_u.resok4.writeverf,
-        &res_WRITE4->WRITE4res_u.resok4.committed);
+    nfs_status = data->current_ds->dsh_ops.write(data->current_ds,
+                                                 op_ctx,
+                                                 &arg_WRITE4->stateid,
+                                                 arg_WRITE4->offset,
+                                                 arg_WRITE4->data.data_len,
+                                                 arg_WRITE4->data.data_val,
+                                                 arg_WRITE4->stable,
+                                                 &res_WRITE4->WRITE4res_u.resok4.count,
+                                                 &res_WRITE4->WRITE4res_u.resok4.writeverf,
+                                                 &res_WRITE4->WRITE4res_u.resok4.committed);
 
     res_WRITE4->status = nfs_status;
     return res_WRITE4->status;

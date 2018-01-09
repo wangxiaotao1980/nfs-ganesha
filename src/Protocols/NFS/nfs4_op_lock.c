@@ -37,6 +37,7 @@
 #include "../../include/nfs_proto_tools.h"
 #include "../../include/gsh_list.h"
 #include "../../include/export_mgr.h"
+#include "../../include/nfs_file_handle.h"
 
 static const char* lock_tag = "LOCK";
 

@@ -23,22 +23,23 @@
  * ---------------------------------------
  */
 
-/**
- * @file    nfs_convert.h
- * @brief   Prototypes for miscellaneous conversion routines.
- *
- * nfs_convert.h :  Prototypes for miscellaneous conversion routines.
- *
- *
- */
+ /**
+  * @file    nfs_convert.h
+  * @brief   Prototypes for miscellaneous conversion routines.
+  *
+  * nfs_convert.h :  Prototypes for miscellaneous conversion routines.
+  *
+  *
+  */
 
 #ifndef _NFS_CONVERT_H
 #define _NFS_CONVERT_H
 
 #include "nfs23.h"
 #include "nfs4.h"
-#include "mount.h"
 #include "fsal.h"
+
+//#include "mount.h"
 
 char *nfsstat3_to_str(nfsstat3 code);
 char *nfsstat4_to_str(nfsstat4 code);

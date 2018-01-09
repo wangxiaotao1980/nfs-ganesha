@@ -38,9 +38,11 @@
 #include "../../include/nfs_proto_tools.h"
 #include "../../include/nfs_proto_functions.h"
 #include "../../include/nfs_convert.h"
+#include "../../include/nfs_file_handle.h"
+
 #include <pthread.h>
 
-  /* Tag passed to state functions */
+/* Tag passed to state functions */
 static const char* close_tag = "CLOSE";
 
 /**

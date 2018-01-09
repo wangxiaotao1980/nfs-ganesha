@@ -31,11 +31,12 @@
 #include "../../include/nlm_async.h"
 #include "../../include/nfs_core.h"
 #include "../../include/export_mgr.h"
+#include "../../include/nfs_file_handle.h"
 #include <stdio.h>
 #include <string.h>
 #include <pthread.h>
 
- /* nlm grace time tracking */
+/* nlm grace time tracking */
 static struct timeval nlm_grace_tv;
 
 /* We manage our own cookie for GRANTED call backs

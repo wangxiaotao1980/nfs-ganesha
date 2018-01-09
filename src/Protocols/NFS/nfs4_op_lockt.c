@@ -36,7 +36,8 @@
 #include "../../include/nfs_core.h"
 #include "../../include/sal_functions.h"
 #include "../../include/nfs_proto_functions.h"
-#include "../../include/nfs_proto_tools.h"
+//#include "../../include/nfs_proto_tools.h"
+#include "../../include/nfs_file_handle.h"
 #include <stdio.h>
   //#include <string.h>
 #include <pthread.h>

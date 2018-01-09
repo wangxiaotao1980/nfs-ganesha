@@ -42,11 +42,11 @@
 #else
 extern int __build_bug_on_failed;
 #define BUILD_BUG_ON(condition)					\
-	do {							\
-		((void)sizeof(char[1 - 2*!!(condition)]));      \
-		if (condition)					\
-			__build_bug_on_failed = 1;		\
-	} while (0)
+    do {							\
+        ((void)sizeof(char[1 - 2*!!(condition)]));      \
+        if (condition)					\
+            __build_bug_on_failed = 1;		\
+    } while (0)
 #endif
 
 /* Most machines scandir callback requires a const. But not all */
@@ -58,7 +58,7 @@ extern int __build_bug_on_failed;
 /* String parsing functions */
 
 #ifndef HAVE_STRLCPY
-extern size_t strlcpy(char *dst, const char *src, size_t siz);
+extern size_t strlcpy(char* dst, const char* src, size_t siz);
 #endif
 
 #ifndef HAVE_STRNLEN
@@ -89,23 +89,23 @@ extern int portable_clock_gettime(struct timespec *ts);
  * @param[in,out] _attr The attributes used while initializing the lock
  */
 #define PTHREAD_RWLOCK_init(_lock, _attr)				\
-	do {								\
-		int rc;							\
-									\
-		rc = pthread_rwlock_init(_lock, _attr);			\
-		if (rc == 0) {						\
-			LogFullDebug(COMPONENT_RW_LOCK,			\
-				     "Init rwlock %p (%s) at %s:%d",	\
-				     _lock, #_lock,			\
-				     __FILE__, __LINE__);		\
-		} else {						\
-			LogCrit(COMPONENT_RW_LOCK,			\
-				"Error %d, Init rwlock %p (%s) "	\
-				"at %s:%d", rc, _lock, #_lock,		\
-				__FILE__, __LINE__);			\
-			abort();					\
-		}							\
-	} while (0)
+    do {								\
+        int rc;							\
+                                    \
+        rc = pthread_rwlock_init(_lock, _attr);			\
+        if (rc == 0) {						\
+            LogFullDebug(COMPONENT_RW_LOCK,			\
+                     "Init rwlock %p (%s) at %s:%d",	\
+                     _lock, #_lock,			\
+                     __FILE__, __LINE__);		\
+        } else {						\
+            LogCrit(COMPONENT_RW_LOCK,			\
+                "Error %d, Init rwlock %p (%s) "	\
+                "at %s:%d", rc, _lock, #_lock,		\
+                __FILE__, __LINE__);			\
+            abort();					\
+        }							\
+    } while (0)
 
 /**
  * @brief Logging rwlock destroy
@@ -113,23 +113,23 @@ extern int portable_clock_gettime(struct timespec *ts);
  * @param[in,out] _lock The rwlock to destroy
  */
 #define PTHREAD_RWLOCK_destroy(_lock)					\
-	do {								\
-		int rc;							\
-									\
-		rc = pthread_rwlock_destroy(_lock);			\
-		if (rc == 0) {						\
-			LogFullDebug(COMPONENT_RW_LOCK,			\
-				     "Destroy mutex %p (%s) at %s:%d",	\
-				     _lock, #_lock,			\
-				     __FILE__, __LINE__);		\
-		} else {						\
-			LogCrit(COMPONENT_RW_LOCK,			\
-				"Error %d, Destroy mutex %p (%s) "	\
-				"at %s:%d", rc, _lock, #_lock,		\
-				__FILE__, __LINE__);			\
-			abort();					\
-		}							\
-	} while (0)
+    do {								\
+        int rc;							\
+                                    \
+        rc = pthread_rwlock_destroy(_lock);			\
+        if (rc == 0) {						\
+            LogFullDebug(COMPONENT_RW_LOCK,			\
+                     "Destroy mutex %p (%s) at %s:%d",	\
+                     _lock, #_lock,			\
+                     __FILE__, __LINE__);		\
+        } else {						\
+            LogCrit(COMPONENT_RW_LOCK,			\
+                "Error %d, Destroy mutex %p (%s) "	\
+                "at %s:%d", rc, _lock, #_lock,		\
+                __FILE__, __LINE__);			\
+            abort();					\
+        }							\
+    } while (0)
 
 /**
  * @brief Logging write-lock
@@ -138,24 +138,23 @@ extern int portable_clock_gettime(struct timespec *ts);
  */
 
 #define PTHREAD_RWLOCK_wrlock(_lock)					\
-	do {								\
-		int rc;							\
-									\
-		rc = pthread_rwlock_wrlock(_lock);			\
-		if (rc == 0) {						\
-			LogFullDebug(COMPONENT_RW_LOCK,			\
-				     "Got write lock on %p (%s) "	\
-				     "at %s:%d", _lock, #_lock,		\
-				     __FILE__, __LINE__);		\
-		} else {						\
-			LogCrit(COMPONENT_RW_LOCK,			\
-				"Error %d, write locking %p (%s) "	\
-				"at %s:%d", rc, _lock, #_lock,		\
-				__FILE__, __LINE__);			\
-			abort();					\
-		}							\
-	} while (0)							\
-
+    do {								\
+        int rc;							\
+                                    \
+        rc = pthread_rwlock_wrlock(_lock);			\
+        if (rc == 0) {						\
+            LogFullDebug(COMPONENT_RW_LOCK,			\
+                     "Got write lock on %p (%s) "	\
+                     "at %s:%d", _lock, #_lock,		\
+                     __FILE__, __LINE__);		\
+        } else {						\
+            LogCrit(COMPONENT_RW_LOCK,			\
+                "Error %d, write locking %p (%s) "	\
+                "at %s:%d", rc, _lock, #_lock,		\
+                __FILE__, __LINE__);			\
+            abort();					\
+        }							\
+    } while (0)
 /**
  * @brief Logging read-lock
  *
@@ -163,24 +162,23 @@ extern int portable_clock_gettime(struct timespec *ts);
  */
 
 #define PTHREAD_RWLOCK_rdlock(_lock)					\
-	do {								\
-		int rc;							\
-									\
-		rc = pthread_rwlock_rdlock(_lock);			\
-		if (rc == 0) {						\
-			LogFullDebug(COMPONENT_RW_LOCK,			\
-				     "Got read lock on %p (%s) "	\
-				     "at %s:%d", _lock, #_lock,		\
-				     __FILE__, __LINE__);		\
-		} else {						\
-			LogCrit(COMPONENT_RW_LOCK,			\
-				"Error %d, read locking %p (%s) "	\
-				"at %s:%d", rc, _lock, #_lock,		\
-				__FILE__, __LINE__);			\
-			abort();					\
-		}							\
-	} while (0)							\
-
+    do {								\
+        int rc;							\
+                                    \
+        rc = pthread_rwlock_rdlock(_lock);			\
+        if (rc == 0) {						\
+            LogFullDebug(COMPONENT_RW_LOCK,			\
+                     "Got read lock on %p (%s) "	\
+                     "at %s:%d", _lock, #_lock,		\
+                     __FILE__, __LINE__);		\
+        } else {						\
+            LogCrit(COMPONENT_RW_LOCK,			\
+                "Error %d, read locking %p (%s) "	\
+                "at %s:%d", rc, _lock, #_lock,		\
+                __FILE__, __LINE__);			\
+            abort();					\
+        }							\
+    } while (0)
 /**
  * @brief Logging read-write lock unlock
  *
@@ -188,24 +186,23 @@ extern int portable_clock_gettime(struct timespec *ts);
  */
 
 #define PTHREAD_RWLOCK_unlock(_lock)					\
-	do {								\
-		int rc;							\
-									\
-		rc = pthread_rwlock_unlock(_lock);			\
-		if (rc == 0) {						\
-			LogFullDebug(COMPONENT_RW_LOCK,			\
-				     "Unlocked %p (%s) at %s:%d",       \
-				     _lock, #_lock,			\
-				     __FILE__, __LINE__);		\
-		} else {						\
-			LogCrit(COMPONENT_RW_LOCK,			\
-				"Error %d, unlocking %p (%s) at %s:%d",	\
-				rc, _lock, #_lock,			\
-				__FILE__, __LINE__);			\
-			abort();					\
-		}							\
-	} while (0)							\
-
+    do {								\
+        int rc;							\
+                                    \
+        rc = pthread_rwlock_unlock(_lock);			\
+        if (rc == 0) {						\
+            LogFullDebug(COMPONENT_RW_LOCK,			\
+                     "Unlocked %p (%s) at %s:%d",       \
+                     _lock, #_lock,			\
+                     __FILE__, __LINE__);		\
+        } else {						\
+            LogCrit(COMPONENT_RW_LOCK,			\
+                "Error %d, unlocking %p (%s) at %s:%d",	\
+                rc, _lock, #_lock,			\
+                __FILE__, __LINE__);			\
+            abort();					\
+        }							\
+    } while (0)
 /**
  * @brief Logging mutex lock
  *
@@ -213,23 +210,23 @@ extern int portable_clock_gettime(struct timespec *ts);
  */
 
 #define PTHREAD_MUTEX_lock(_mtx)					\
-	do {								\
-		int rc;							\
-									\
-		rc = pthread_mutex_lock(_mtx);				\
-		if (rc == 0) {						\
-			LogFullDebug(COMPONENT_RW_LOCK,			\
-				     "Acquired mutex %p (%s) at %s:%d",	\
-				     _mtx, #_mtx,			\
-				     __FILE__, __LINE__);		\
-		} else{							\
-			LogCrit(COMPONENT_RW_LOCK,			\
-				"Error %d, acquiring mutex %p (%s) "	\
-				"at %s:%d", rc, _mtx, #_mtx,		\
-				__FILE__, __LINE__);			\
-			abort();					\
-		}							\
-	} while (0)
+    do {								\
+        int rc;							\
+                                    \
+        rc = pthread_mutex_lock(_mtx);				\
+        if (rc == 0) {						\
+            LogFullDebug(COMPONENT_RW_LOCK,			\
+                     "Acquired mutex %p (%s) at %s:%d",	\
+                     _mtx, #_mtx,			\
+                     __FILE__, __LINE__);		\
+        } else{							\
+            LogCrit(COMPONENT_RW_LOCK,			\
+                "Error %d, acquiring mutex %p (%s) "	\
+                "at %s:%d", rc, _mtx, #_mtx,		\
+                __FILE__, __LINE__);			\
+            abort();					\
+        }							\
+    } while (0)
 
 /**
  * @brief Logging mutex unlock
@@ -238,23 +235,23 @@ extern int portable_clock_gettime(struct timespec *ts);
  */
 
 #define PTHREAD_MUTEX_unlock(_mtx)					\
-	do {								\
-		int rc;							\
-									\
-		rc = pthread_mutex_unlock(_mtx);			\
-		if (rc == 0) {						\
-			LogFullDebug(COMPONENT_RW_LOCK,			\
-				     "Released mutex %p (%s) at %s:%d",	\
-				     _mtx, #_mtx,			\
-				     __FILE__, __LINE__);		\
-		} else{							\
-			LogCrit(COMPONENT_RW_LOCK,			\
-				"Error %d, releasing mutex %p (%s) "	\
-				"at %s:%d", rc, _mtx, #_mtx,		\
-				__FILE__, __LINE__);			\
-			abort();					\
-		}							\
-	} while (0)
+    do {								\
+        int rc;							\
+                                    \
+        rc = pthread_mutex_unlock(_mtx);			\
+        if (rc == 0) {						\
+            LogFullDebug(COMPONENT_RW_LOCK,			\
+                     "Released mutex %p (%s) at %s:%d",	\
+                     _mtx, #_mtx,			\
+                     __FILE__, __LINE__);		\
+        } else{							\
+            LogCrit(COMPONENT_RW_LOCK,			\
+                "Error %d, releasing mutex %p (%s) "	\
+                "at %s:%d", rc, _mtx, #_mtx,		\
+                __FILE__, __LINE__);			\
+            abort();					\
+        }							\
+    } while (0)
 
 /**
  * @brief Logging mutex initialization
@@ -263,23 +260,23 @@ extern int portable_clock_gettime(struct timespec *ts);
  * @param[in,out] _attr The attributes used while initializing the mutex
  */
 #define PTHREAD_MUTEX_init(_mtx, _attr)					\
-	do {								\
-		int rc;							\
-									\
-		rc = pthread_mutex_init(_mtx, _attr);			\
-		if (rc == 0) {						\
-			LogFullDebug(COMPONENT_RW_LOCK,			\
-				     "Init mutex %p (%s) at %s:%d",	\
-				     _mtx, #_mtx,			\
-				     __FILE__, __LINE__);		\
-		} else {						\
-			LogCrit(COMPONENT_RW_LOCK,			\
-				"Error %d, Init mutex %p (%s) "		\
-				"at %s:%d", rc, _mtx, #_mtx,		\
-				__FILE__, __LINE__);			\
-			abort();					\
-		}							\
-	} while (0)
+    do {								\
+        int rc;							\
+                                    \
+        rc = pthread_mutex_init(_mtx, _attr);			\
+        if (rc == 0) {						\
+            LogFullDebug(COMPONENT_RW_LOCK,			\
+                     "Init mutex %p (%s) at %s:%d",	\
+                     _mtx, #_mtx,			\
+                     __FILE__, __LINE__);		\
+        } else {						\
+            LogCrit(COMPONENT_RW_LOCK,			\
+                "Error %d, Init mutex %p (%s) "		\
+                "at %s:%d", rc, _mtx, #_mtx,		\
+                __FILE__, __LINE__);			\
+            abort();					\
+        }							\
+    } while (0)
 
 /**
  * @brief Logging mutex destroy
@@ -288,23 +285,23 @@ extern int portable_clock_gettime(struct timespec *ts);
  */
 
 #define PTHREAD_MUTEX_destroy(_mtx)					\
-	do {								\
-		int rc;							\
-									\
-		rc = pthread_mutex_destroy(_mtx);			\
-		if (rc == 0) {						\
-			LogFullDebug(COMPONENT_RW_LOCK,			\
-				     "Destroy mutex %p (%s) at %s:%d",	\
-				     _mtx, #_mtx,			\
-				     __FILE__, __LINE__);		\
-		} else {						\
-			LogCrit(COMPONENT_RW_LOCK,			\
-				"Error %d, Destroy mutex %p (%s) "	\
-				"at %s:%d", rc, _mtx, #_mtx,		\
-				__FILE__, __LINE__);			\
-			abort();					\
-		}							\
-	} while (0)
+    do {								\
+        int rc;							\
+                                    \
+        rc = pthread_mutex_destroy(_mtx);			\
+        if (rc == 0) {						\
+            LogFullDebug(COMPONENT_RW_LOCK,			\
+                     "Destroy mutex %p (%s) at %s:%d",	\
+                     _mtx, #_mtx,			\
+                     __FILE__, __LINE__);		\
+        } else {						\
+            LogCrit(COMPONENT_RW_LOCK,			\
+                "Error %d, Destroy mutex %p (%s) "	\
+                "at %s:%d", rc, _mtx, #_mtx,		\
+                __FILE__, __LINE__);			\
+            abort();					\
+        }							\
+    } while (0)
 
 /**
  * @brief Logging condition variable initialization
@@ -314,23 +311,23 @@ extern int portable_clock_gettime(struct timespec *ts);
  *			condition variable
  */
 #define PTHREAD_COND_init(_cond, _attr)					\
-	do {								\
-		int rc;							\
-									\
-		rc = pthread_cond_init(_cond, _attr);			\
-		if (rc == 0) {						\
-			LogFullDebug(COMPONENT_RW_LOCK,			\
-				     "Init cond %p (%s) at %s:%d",	\
-				     _cond, #_cond,			\
-				     __FILE__, __LINE__);		\
-		} else {						\
-			LogCrit(COMPONENT_RW_LOCK,			\
-				"Error %d, Init cond %p (%s) "		\
-				"at %s:%d", rc, _cond, #_cond,		\
-				__FILE__, __LINE__);			\
-			abort();					\
-		}							\
-	} while (0)
+    do {								\
+        int rc;							\
+                                    \
+        rc = pthread_cond_init(_cond, _attr);			\
+        if (rc == 0) {						\
+            LogFullDebug(COMPONENT_RW_LOCK,			\
+                     "Init cond %p (%s) at %s:%d",	\
+                     _cond, #_cond,			\
+                     __FILE__, __LINE__);		\
+        } else {						\
+            LogCrit(COMPONENT_RW_LOCK,			\
+                "Error %d, Init cond %p (%s) "		\
+                "at %s:%d", rc, _cond, #_cond,		\
+                __FILE__, __LINE__);			\
+            abort();					\
+        }							\
+    } while (0)
 
 /**
  * @brief Logging condtion variable destroy
@@ -339,23 +336,23 @@ extern int portable_clock_gettime(struct timespec *ts);
  */
 
 #define PTHREAD_COND_destroy(_cond)					\
-	do {								\
-		int rc;							\
-									\
-		rc = pthread_cond_destroy(_cond);			\
-		if (rc == 0) {						\
-			LogFullDebug(COMPONENT_RW_LOCK,			\
-				     "Destroy cond %p (%s) at %s:%d",	\
-				     _cond, #_cond,			\
-				     __FILE__, __LINE__);		\
-		} else {						\
-			LogCrit(COMPONENT_RW_LOCK,			\
-				"Error %d, Destroy cond %p (%s) "	\
-				"at %s:%d", rc, _cond, #_cond,		\
-				__FILE__, __LINE__);			\
-			abort();					\
-		}							\
-	} while (0)
+    do {								\
+        int rc;							\
+                                    \
+        rc = pthread_cond_destroy(_cond);			\
+        if (rc == 0) {						\
+            LogFullDebug(COMPONENT_RW_LOCK,			\
+                     "Destroy cond %p (%s) at %s:%d",	\
+                     _cond, #_cond,			\
+                     __FILE__, __LINE__);		\
+        } else {						\
+            LogCrit(COMPONENT_RW_LOCK,			\
+                "Error %d, Destroy cond %p (%s) "	\
+                "at %s:%d", rc, _cond, #_cond,		\
+                __FILE__, __LINE__);			\
+            abort();					\
+        }							\
+    } while (0)
 
 /**
  * @brief Inline functions for timespec math
@@ -382,18 +379,21 @@ extern int portable_clock_gettime(struct timespec *ts);
  */
 
 static inline nsecs_elapsed_t
-timespec_diff(const struct timespec *start,
-	      const struct timespec *end)
+timespec_diff(const struct timespec* start,
+              const struct timespec* end)
 {
-	if ((end->tv_sec > start->tv_sec)
-	    || (end->tv_sec == start->tv_sec
-		&& end->tv_nsec >= start->tv_nsec)) {
-		return (end->tv_sec - start->tv_sec) * NS_PER_SEC +
-		    (end->tv_nsec - start->tv_nsec);
-	} else {
-		return (start->tv_sec - end->tv_sec) * NS_PER_SEC +
-		    (start->tv_nsec - end->tv_nsec);
-	}
+    if((end->tv_sec > start->tv_sec)
+        || (end->tv_sec == start->tv_sec
+            && end->tv_nsec >= start->tv_nsec))
+    {
+        return (end->tv_sec - start->tv_sec) * NS_PER_SEC +
+                (end->tv_nsec - start->tv_nsec);
+    }
+    else
+    {
+        return (start->tv_sec - end->tv_sec) * NS_PER_SEC +
+                (start->tv_nsec - end->tv_nsec);
+    }
 }
 
 /**
@@ -403,9 +403,9 @@ timespec_diff(const struct timespec *start,
  */
 
 static
-inline nsecs_elapsed_t timespec_to_nsecs(struct timespec *timespec)
+inline nsecs_elapsed_t timespec_to_nsecs(struct timespec* timespec)
 {
-	return timespec->tv_sec * NS_PER_SEC + timespec->tv_nsec;
+    return timespec->tv_sec * NS_PER_SEC + timespec->tv_nsec;
 }
 
 /**
@@ -414,10 +414,10 @@ inline nsecs_elapsed_t timespec_to_nsecs(struct timespec *timespec)
 
 static
 inline void nsecs_to_timespec(nsecs_elapsed_t interval,
-			      struct timespec *timespec)
+                              struct timespec* timespec)
 {
-	timespec->tv_sec = interval / NS_PER_SEC;
-	timespec->tv_nsec = interval % NS_PER_SEC;
+    timespec->tv_sec = interval / NS_PER_SEC;
+    timespec->tv_nsec = interval % NS_PER_SEC;
 }
 
 /**
@@ -429,14 +429,15 @@ inline void nsecs_to_timespec(nsecs_elapsed_t interval,
 
 static inline void
 timespec_add_nsecs(nsecs_elapsed_t interval,
-		   struct timespec *timespec)
+                   struct timespec* timespec)
 {
-	timespec->tv_sec += (interval / NS_PER_SEC);
-	timespec->tv_nsec += (interval % NS_PER_SEC);
-	if (timespec->tv_nsec > NS_PER_SEC) {
-		timespec->tv_sec += (timespec->tv_nsec / NS_PER_SEC);
-		timespec->tv_nsec = timespec->tv_nsec % NS_PER_SEC;
-	}
+    timespec->tv_sec += (interval / NS_PER_SEC);
+    timespec->tv_nsec += (interval % NS_PER_SEC);
+    if(timespec->tv_nsec > NS_PER_SEC)
+    {
+        timespec->tv_sec += (timespec->tv_nsec / NS_PER_SEC);
+        timespec->tv_nsec = timespec->tv_nsec % NS_PER_SEC;
+    }
 }
 
 /**
@@ -447,19 +448,22 @@ timespec_add_nsecs(nsecs_elapsed_t interval,
  */
 
 static inline void
-timespec_sub_nsecs(nsecs_elapsed_t interval, struct timespec *t)
+timespec_sub_nsecs(nsecs_elapsed_t interval, struct timespec* t)
 {
-	struct timespec ts;
+    struct timespec ts;
 
-	nsecs_to_timespec(interval, &ts);
+    nsecs_to_timespec(interval, &ts);
 
-	if (ts.tv_nsec > t->tv_nsec) {
-		t->tv_sec -= (ts.tv_sec + 1);
-		t->tv_nsec = ts.tv_nsec - t->tv_nsec;
-	} else {
-		t->tv_sec -= ts.tv_sec;
-		t->tv_nsec -= ts.tv_nsec;
-	}
+    if(ts.tv_nsec > t->tv_nsec)
+    {
+        t->tv_sec -= (ts.tv_sec + 1);
+        t->tv_nsec = ts.tv_nsec - t->tv_nsec;
+    }
+    else
+    {
+        t->tv_sec -= ts.tv_sec;
+        t->tv_nsec -= ts.tv_nsec;
+    }
 }
 
 /**
@@ -475,21 +479,26 @@ timespec_sub_nsecs(nsecs_elapsed_t interval, struct timespec *t)
  * @retval 1 @c t1 is greater-than @c t2
  */
 
-static inline int gsh_time_cmp(const struct timespec *t1,
-			       const struct timespec *t2)
+static inline int gsh_time_cmp(const struct timespec* t1,
+                               const struct timespec* t2)
 {
-	if (t1->tv_sec < t2->tv_sec) {
-		return -1;
-	} else if (t1->tv_sec > t2->tv_sec) {
-		return 1;
-	} else {
-		if (t1->tv_nsec < t2->tv_nsec)
-			return -1;
-		else if (t1->tv_nsec > t2->tv_nsec)
-			return 1;
-	}
+    if(t1->tv_sec < t2->tv_sec)
+    {
+        return -1;
+    }
+    else if(t1->tv_sec > t2->tv_sec)
+    {
+        return 1;
+    }
+    else
+    {
+        if(t1->tv_nsec < t2->tv_nsec)
+            return -1;
+        else if(t1->tv_nsec > t2->tv_nsec)
+            return 1;
+    }
 
-	return 0;
+    return 0;
 }
 
 /**
@@ -498,15 +507,16 @@ static inline int gsh_time_cmp(const struct timespec *t1,
  * @param[out] ts Timespec struct
  */
 
-static inline void now(struct timespec *ts)
+static inline void now(struct timespec* ts)
 {
-	int rc;
+    int rc;
 
-	rc = clock_gettime(CLOCK_REALTIME, ts);
-	if (rc != 0) {
-		LogCrit(COMPONENT_MAIN, "Failed to get timestamp");
-		assert(0);	/* if this is broken, we are toast so die */
-	}
+    rc = clock_gettime(CLOCK_REALTIME, ts);
+    if(rc != 0)
+    {
+        LogCrit(COMPONENT_MAIN, "Failed to get timestamp");
+        assert(0); /* if this is broken, we are toast so die */
+    }
 }
 
 /**
@@ -523,15 +533,15 @@ static inline void now(struct timespec *ts)
  * @retval -1 if the buffer would overflow (the buffer is not modified)
  */
 
-static inline int strmaxcpy(char *dest, const char *src, size_t dest_size)
+static inline int strmaxcpy(char* dest, const char* src, size_t dest_size)
 {
-	size_t len = strlen(src);
+    size_t len = strlen(src);
 
-	if (len >= dest_size)
-		return -1;
+    if(len >= dest_size)
+        return -1;
 
-	memcpy(dest, src, len + 1);
-	return 0;
+    memcpy(dest, src, len + 1);
+    return 0;
 }
 
 /**
@@ -548,17 +558,17 @@ static inline int strmaxcpy(char *dest, const char *src, size_t dest_size)
  * @retval -1 if the buffer would overflow (the buffer is not modified).
  */
 
-static inline int strmaxcat(char *dest, const char *src, size_t dest_size)
+static inline int strmaxcat(char* dest, const char* src, size_t dest_size)
 {
-	int destlen = strlen(dest);
-	int remain = dest_size - destlen;
-	int srclen = strlen(src);
+    int destlen = strlen(dest);
+    int remain = dest_size - destlen;
+    int srclen = strlen(src);
 
-	if (remain <= srclen)
-		return -1;
+    if(remain <= srclen)
+        return -1;
 
-	memcpy(dest + destlen, src, srclen + 1);
-	return 0;
+    memcpy(dest + destlen, src, srclen + 1);
+    return 0;
 }
 
 #endif				/* !COMMON_UTILS_H */

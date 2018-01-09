@@ -38,6 +38,7 @@
 #include "../../include/nfs_proto_tools.h"
 #include "../../include/sal_functions.h"
 #include "../../include/export_mgr.h"
+#include "../../include/nfs_file_handle.h"
 
 /**
  * @brief NFSv4 SECINFO_NO_NAME operation

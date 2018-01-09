@@ -38,10 +38,11 @@
 #include "../../include/nfs_convert.h"
 #include "../../include/fsal_pnfs.h"
 #include "../../include/sal_functions.h"
+#include "../../include/nfs_file_handle.h"
 #include <string.h>
 #include <pthread.h>
 
-  /**
+/**
    *
    * @brief The NFS4_OP_LAYOUTCOMMIT operation
    *

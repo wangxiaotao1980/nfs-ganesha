@@ -53,9 +53,10 @@ typedef uint64_t nsecs_elapsed_t;
  * address/length pair.
  */
 
-struct gsh_buffdesc {
-	void *addr;		/*< First octet/byte of the buffer */
-	size_t len;		/*< Length of the buffer */
+struct gsh_buffdesc
+{
+    void* addr; /*< First octet/byte of the buffer */
+    size_t len; /*< Length of the buffer */
 };
 
 #endif				/* !GSH_TYPES_H */

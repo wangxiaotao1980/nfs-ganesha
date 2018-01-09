@@ -17,18 +17,18 @@
  *   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  */
 
-/**
- * @defgroup FSAL File-System Abstraction Layer
- * @{
- */
+ /**
+  * @defgroup FSAL File-System Abstraction Layer
+  * @{
+  */
 
-/**
- * @file include/fsal_handle_syscalls.h
- * @brief System calls for the platform dependent handle calls
- *
- * @todo This file should be in FSAL_VFS, not in the top-level include
- * directory.
- */
+  /**
+   * @file include/fsal_handle_syscalls.h
+   * @brief System calls for the platform dependent handle calls
+   *
+   * @todo This file should be in FSAL_VFS, not in the top-level include
+   * directory.
+   */
 
 #ifndef HANDLE_H
 #define HANDLE_H
@@ -49,28 +49,29 @@
 
 #define VFS_HANDLE_LEN 59
 
-typedef struct vfs_file_handle {
-	uint8_t handle_len; /* does not go on the wire */
-	uint8_t handle_data[VFS_HANDLE_LEN];
+typedef struct vfs_file_handle
+{
+    uint8_t handle_len; /* does not go on the wire */
+    uint8_t handle_data[VFS_HANDLE_LEN];
 } vfs_file_handle_t;
 
-static inline bool vfs_handle_invalid(struct gsh_buffdesc *desc)
+static inline bool vfs_handle_invalid(struct gsh_buffdesc* desc)
 {
-	return desc->len > VFS_HANDLE_LEN;
+    return desc->len > VFS_HANDLE_LEN;
 }
 
 #define vfs_alloc_handle(fh)						\
-	do {								\
-		(fh) = alloca(sizeof(struct vfs_file_handle));		\
-		memset((fh), 0, (sizeof(struct vfs_file_handle)));	\
-		(fh)->handle_len = VFS_HANDLE_LEN;			\
-	} while (0)
+    do {								\
+        (fh) = alloca(sizeof(struct vfs_file_handle));		\
+        memset((fh), 0, (sizeof(struct vfs_file_handle)));	\
+        (fh)->handle_len = VFS_HANDLE_LEN;			\
+    } while (0)
 
 #define vfs_malloc_handle(fh)						\
-	do {								\
-		(fh) = gsh_calloc(1, sizeof(struct vfs_file_handle));	\
-		(fh)->handle_len = VFS_HANDLE_LEN;			\
-	} while (0)
+    do {								\
+        (fh) = gsh_calloc(1, sizeof(struct vfs_file_handle));	\
+        (fh)->handle_len = VFS_HANDLE_LEN;			\
+    } while (0)
 
 #ifdef LINUX
 #include "os/linux/fsal_handle_syscalls.h"

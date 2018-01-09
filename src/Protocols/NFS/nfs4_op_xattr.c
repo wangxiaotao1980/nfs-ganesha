@@ -41,7 +41,8 @@
 #include "../../include/nfs_proto_tools.h"
 #include "../../include/nfs_convert.h"
 #include "../../include/sal_functions.h"
-  //#include "../../include/nfs_creds.h"
+#include "../../include/nfs_file_handle.h"
+//#include "../../include/nfs_creds.h"
 
 #define XATTR_VALUE_SIZE 1024
 

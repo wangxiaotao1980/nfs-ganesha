@@ -42,6 +42,7 @@
 #include "../../include/nfs_convert.h"
 #include "../../include/sal_functions.h"
 #include "../../include/nfs_creds.h"
+#include "../../include/nfs_file_handle.h"
 
 /**
  * @brief The NFS4_OP_SETATTR operation.
@@ -60,14 +61,14 @@ int nfs4_op_setattr(struct nfs_argop4* op, compound_data_t* data,
                     struct nfs_resop4* resp)
 {
     SETATTR4args* const arg_SETATTR4 = &op->nfs_argop4_u.opsetattr;
-    SETATTR4res* const res_SETATTR4 = &resp->nfs_resop4_u.opsetattr;
+    SETATTR4res* const res_SETATTR4  = &resp->nfs_resop4_u.opsetattr;
     struct attrlist sattr;
-    fsal_status_t fsal_status = { 0, 0 };
-    const char* tag = "SETATTR";
-    state_t* state_found = NULL;
-    state_t* state_open = NULL;
-    struct fsal_obj_handle* obj = NULL;
-    bool anonymous_started = false;
+    fsal_status_t fsal_status        = { 0, 0 };
+    const char* tag                  = "SETATTR";
+    state_t* state_found             = NULL;
+    state_t* state_open              = NULL;
+    struct fsal_obj_handle* obj      = NULL;
+    bool anonymous_started           = false;
 
     resp->resop = NFS4_OP_SETATTR;
     res_SETATTR4->status = NFS4_OK;

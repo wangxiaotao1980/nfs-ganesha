@@ -45,20 +45,20 @@
 void init_credentials(void);
 void clean_credentials(void);
 
-void squash_setattr(struct attrlist *attr);
+void squash_setattr(struct attrlist* attr);
 
-nfsstat4 nfs_req_creds(struct svc_req *req);
+nfsstat4 nfs_req_creds(struct svc_req* req);
 
-nfsstat4 nfs4_export_check_access(struct svc_req *req);
+nfsstat4 nfs4_export_check_access(struct svc_req* req);
 
-fsal_errors_t nfs_access_op(struct fsal_obj_handle *hdl,
-				   uint32_t requested_access,
-				   uint32_t *granted_access,
-				   uint32_t *supported_access);
+fsal_errors_t nfs_access_op(struct fsal_obj_handle* hdl,
+                            uint32_t requested_access,
+                            uint32_t* granted_access,
+                            uint32_t* supported_access);
 
-bool nfs_compare_clientcred(nfs_client_cred_t *cred1,
-			    nfs_client_cred_t *cred2);
+bool nfs_compare_clientcred(nfs_client_cred_t* cred1,
+                            nfs_client_cred_t* cred2);
 
-int nfs_rpc_req2client_cred(struct svc_req *req, nfs_client_cred_t *pcred);
+int nfs_rpc_req2client_cred(struct svc_req* req, nfs_client_cred_t* pcred);
 
 #endif				/* _NFS_CREDS_H */

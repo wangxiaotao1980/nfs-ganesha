@@ -34,15 +34,15 @@
 #define _NFS_PROTO_TOOLS_H
 
 #include <stdio.h>
-#include <string.h>
-#include <pthread.h>
-#include <fcntl.h>
+//#include <string.h>
+//#include <pthread.h>
+//#include <fcntl.h>
 #include <sys/file.h>		/* for having FNDELAY */
-#include "hashtable.h"
-#include "log.h"
-#include "nfs_file_handle.h"
+//#include "hashtable.h"
+//#include "log.h"
+//#include "nfs_file_handle.h"
 #include "sal_data.h"
-#include "fsal.h"
+//#include "fsal.h"
 
 /* Hard and soft limit for nfsv4 quotas */
 #define NFS_V4_MAX_QUOTA_SOFT 4294967296LL	/*  4 GB */
@@ -59,45 +59,48 @@
 #define FATTR4_ATTR_WRITE      0x00010
 #define FATTR4_ATTR_READ_WRITE 0x00011
 
-typedef enum {
-	FATTR_XDR_NOOP,
-	FATTR_XDR_SUCCESS,
-	FATTR_XDR_SUCCESS_EXP,
-	FATTR_XDR_FAILED,
-	FATTR_BADOWNER
+typedef enum
+{
+    FATTR_XDR_NOOP,
+    FATTR_XDR_SUCCESS,
+    FATTR_XDR_SUCCESS_EXP,
+    FATTR_XDR_FAILED,
+    FATTR_BADOWNER
 } fattr_xdr_result;
 
-struct xdr_attrs_args {
-	struct attrlist *attrs;
-	nfs_fh4 *hdl4;
-	uint32_t rdattr_error;
-	uint64_t mounted_on_fileid;	/*< If this is the root directory
-					   of a filesystem, the fileid of
-					   the directory on which the
-					   filesystem is mounted. */
-	/* Static attributes */
-	object_file_type_t type;	/*< Object file type */
-	fsal_fsid_t fsid;	/*< Filesystem on which this object is
-				   stored */
-	uint64_t fileid;	/*< Unique identifier for this object within
-				   the scope of the fsid, (e.g. inode number) */
-	int nfs_status;
-	compound_data_t *data;
-	bool statfscalled;
-	fsal_dynamicfsinfo_t *dynamicinfo;
+struct xdr_attrs_args
+{
+    struct attrlist* attrs;
+    nfs_fh4* hdl4;
+    uint32_t rdattr_error;
+    uint64_t mounted_on_fileid; /*< If this is the root directory
+                       of a filesystem, the fileid of
+                       the directory on which the
+                       filesystem is mounted. */
+    /* Static attributes */
+    object_file_type_t type; /*< Object file type */
+    fsal_fsid_t fsid; /*< Filesystem on which this object is
+                   stored */
+    uint64_t fileid; /*< Unique identifier for this object within
+                   the scope of the fsid, (e.g. inode number) */
+    int nfs_status;
+    compound_data_t* data;
+    bool statfscalled;
+    fsal_dynamicfsinfo_t* dynamicinfo;
 };
 
-typedef struct fattr4_dent {
-	char *name;		/* The name of the operation */
-	unsigned int supported;	/* Is this action supported? */
-	unsigned int size_fattr4; /* The size of the dedicated attr subtype */
-	unsigned int access;	/* The access type for this attributes */
-	attrmask_t attrmask;	/* attr bit for decoding to attrs */
-	attrmask_t exp_attrmask; /* attr bit for decoding to attrs in
-				    case of exepction */
-	fattr_xdr_result(*encode) (XDR * xdr, struct xdr_attrs_args *args);
-	fattr_xdr_result(*decode) (XDR * xdr, struct xdr_attrs_args *args);
-	fattr_xdr_result(*compare) (XDR * xdr1, XDR * xdr2);
+typedef struct fattr4_dent
+{
+    char* name; /* The name of the operation */
+    unsigned int supported; /* Is this action supported? */
+    unsigned int size_fattr4; /* The size of the dedicated attr subtype */
+    unsigned int access; /* The access type for this attributes */
+    attrmask_t attrmask; /* attr bit for decoding to attrs */
+    attrmask_t exp_attrmask; /* attr bit for decoding to attrs in
+                    case of exepction */
+    fattr_xdr_result (*encode)(XDR* xdr, struct xdr_attrs_args* args);
+    fattr_xdr_result (*decode)(XDR* xdr, struct xdr_attrs_args* args);
+    fattr_xdr_result (*compare)(XDR* xdr1, XDR* xdr2);
 } fattr4_dent_t;
 
 extern const struct fattr4_dent fattr4tab[];
@@ -105,30 +108,30 @@ extern const struct fattr4_dent fattr4tab[];
 #define WORD0_FATTR4_RDATTR_ERROR (1 << FATTR4_RDATTR_ERROR)
 #define WORD1_FATTR4_MOUNTED_ON_FILEID (1 << (FATTR4_MOUNTED_ON_FILEID - 32))
 
-static inline int check_for_wrongsec_ok_attr(struct bitmap4 *attr_request)
+static inline int check_for_wrongsec_ok_attr(struct bitmap4* attr_request)
 {
-	if (attr_request->bitmap4_len < 1)
-		return true;
-	if ((attr_request->map[0] & ~WORD0_FATTR4_RDATTR_ERROR) != 0)
-		return false;
-	if (attr_request->bitmap4_len < 2)
-		return true;
-	if ((attr_request->map[1] & ~WORD1_FATTR4_MOUNTED_ON_FILEID) != 0)
-		return false;
-	if (attr_request->bitmap4_len < 3)
-		return true;
-	if (attr_request->map[2] != 0)
-		return false;
-	return true;
+    if(attr_request->bitmap4_len < 1)
+        return true;
+    if((attr_request->map[0] & ~WORD0_FATTR4_RDATTR_ERROR) != 0)
+        return false;
+    if(attr_request->bitmap4_len < 2)
+        return true;
+    if((attr_request->map[1] & ~WORD1_FATTR4_MOUNTED_ON_FILEID) != 0)
+        return false;
+    if(attr_request->bitmap4_len < 3)
+        return true;
+    if(attr_request->map[2] != 0)
+        return false;
+    return true;
 }
 
-static inline int check_for_rdattr_error(struct bitmap4 *attr_request)
+static inline int check_for_rdattr_error(struct bitmap4* attr_request)
 {
-	if (attr_request->bitmap4_len < 1)
-		return false;
-	if ((attr_request->map[0] & WORD0_FATTR4_RDATTR_ERROR) != 0)
-		return true;
-	return false;
+    if(attr_request->bitmap4_len < 1)
+        return false;
+    if((attr_request->map[0] & WORD0_FATTR4_RDATTR_ERROR) != 0)
+        return true;
+    return false;
 }
 
 /**
@@ -176,136 +179,148 @@ static inline int check_for_rdattr_error(struct bitmap4 *attr_request)
  *
  */
 
-static inline int next_attr_from_bitmap(struct bitmap4 *bits, int last_attr)
+static inline int next_attr_from_bitmap(struct bitmap4* bits, int last_attr)
 {
-	int offset, bit;
+    int offset, bit;
 
-	for (offset = (last_attr + 1) / 32;
-	     offset >= 0 && offset < bits->bitmap4_len; offset++) {
-		if ((bits->map[offset] & (-1 << ((last_attr + 1) % 32))) != 0) {
-			for (bit = (last_attr + 1) % 32; bit < 32; bit++) {
-				if (bits->map[offset] & (1 << bit))
-					return offset * 32 + bit;
-			}
-		}
-		last_attr = -1;
-	}
-	return -1;
+    for(offset = (last_attr + 1) / 32;
+        offset >= 0 && offset < bits->bitmap4_len; offset++)
+    {
+        if((bits->map[offset] & (-1 << ((last_attr + 1) % 32))) != 0)
+        {
+            for(bit = (last_attr + 1) % 32; bit < 32; bit++)
+            {
+                if(bits->map[offset] & (1 << bit))
+                    return offset * 32 + bit;
+            }
+        }
+        last_attr = -1;
+    }
+    return -1;
 }
 
-static inline bool attribute_is_set(struct bitmap4 *bits, int attr)
+static inline bool attribute_is_set(struct bitmap4* bits, int attr)
 {
-	int offset = attr / 32;
+    int offset = attr / 32;
 
-	if (offset >= bits->bitmap4_len)
-		return false;
-	return (bits->map[offset] & (1 << (attr % 32))) != 0;
+    if(offset >= bits->bitmap4_len)
+        return false;
+    return (bits->map[offset] & (1 << (attr % 32))) != 0;
 }
 
-static inline bool set_attribute_in_bitmap(struct bitmap4 *bits, int attr)
+static inline bool set_attribute_in_bitmap(struct bitmap4* bits, int attr)
 {
-	int offset = attr / 32;
+    int offset = attr / 32;
 
-	if (offset >= 3)
-		return false;	/* over upper bound */
-	if (offset >= bits->bitmap4_len)
-		bits->bitmap4_len = offset + 1;	/* roll into the next word */
-	bits->map[offset] |= (1 << (attr % 32));
-	return true;
+    if(offset >= 3)
+        return false; /* over upper bound */
+    if(offset >= bits->bitmap4_len)
+        bits->bitmap4_len = offset + 1; /* roll into the next word */
+    bits->map[offset] |= (1 << (attr % 32));
+    return true;
 }
 
-static inline bool clear_attribute_in_bitmap(struct bitmap4 *bits, int attr)
+static inline bool clear_attribute_in_bitmap(struct bitmap4* bits, int attr)
 {
-	int offset = attr / 32;
+    int offset = attr / 32;
 
-	if (offset >= bits->bitmap4_len)
-		return false;
-	bits->map[offset] &= ~(1 << (attr % 32));
-	return true;
+    if(offset >= bits->bitmap4_len)
+        return false;
+    bits->map[offset] &= ~(1 << (attr % 32));
+    return true;
 }
 
 #ifdef _USE_NFS3
-void nfs_SetWccData(const struct pre_op_attr *before_attr,
-		    struct fsal_obj_handle *entry,
-		    wcc_data * pwcc_data);
+void nfs_SetWccData(const struct pre_op_attr* before_attr,
+                    struct fsal_obj_handle* entry,
+                    wcc_data* pwcc_data);
 
-void nfs_SetPostOpAttr(struct fsal_obj_handle *entry,
-		       post_op_attr *attr,
-		       struct attrlist *attrs);
+void nfs_SetPostOpAttr(struct fsal_obj_handle* entry,
+                       post_op_attr* attr,
+                       struct attrlist* attrs);
 
-void nfs_SetPreOpAttr(struct fsal_obj_handle *entry,
-		      pre_op_attr *attr);
+void nfs_SetPreOpAttr(struct fsal_obj_handle* entry,
+                      pre_op_attr* attr);
 #endif
 
 bool nfs_RetryableError(fsal_errors_t fsal_errors);
 
-int nfs3_Sattr_To_FSAL_attr(struct attrlist *pFSALattr, sattr3 *psattr);
+int nfs3_Sattr_To_FSAL_attr(struct attrlist* pFSALattr, sattr3* psattr);
 
-void nfs4_Fattr_Free(fattr4 *fattr);
+void nfs4_Fattr_Free(fattr4* fattr);
 
-nfsstat4 nfs4_return_one_state(struct fsal_obj_handle *obj,
-			       layoutreturn_type4 return_type,
-			       enum fsal_layoutreturn_circumstance circumstance,
-			       state_t *layout_state,
-			       struct pnfs_segment spec_segment,
-			       size_t body_len, const void *body_val,
-			       bool *deleted);
+nfsstat4 nfs4_return_one_state(struct fsal_obj_handle* obj,
+                               layoutreturn_type4 return_type,
+                               enum fsal_layoutreturn_circumstance circumstance,
+                               state_t* layout_state,
+                               struct pnfs_segment spec_segment,
+                               size_t body_len, const void* body_val,
+                               bool* deleted);
 
-typedef enum {
-	UTF8_SCAN_NONE = 0,	/* do no validation other than size */
-	UTF8_SCAN_NOSLASH = 1,	/* disallow '/' */
-	UTF8_SCAN_NODOT = 2,	/* disallow '.' and '..' */
-	UTF8_SCAN_CKUTF8 = 4,	/* validate utf8 */
-	UTF8_SCAN_PATH = 8,	/* validate path */
-	UTF8_SCAN_NAME = 3,	/* a name (no embedded /, "." or "..") */
-	UTF8_SCAN_ALL = 7,	/* do the whole thing, name+valid utf8 */
-	UTF8_SCAN_SYMLINK = 12	/* a symlink, allow '/', ".", "..", utf8 */
+typedef enum
+{
+    UTF8_SCAN_NONE = 0,
+    /* do no validation other than size */
+    UTF8_SCAN_NOSLASH = 1,
+    /* disallow '/' */
+    UTF8_SCAN_NODOT = 2,
+    /* disallow '.' and '..' */
+    UTF8_SCAN_CKUTF8 = 4,
+    /* validate utf8 */
+    UTF8_SCAN_PATH = 8,
+    /* validate path */
+    UTF8_SCAN_NAME = 3,
+    /* a name (no embedded /, "." or "..") */
+    UTF8_SCAN_ALL = 7,
+    /* do the whole thing, name+valid utf8 */
+    UTF8_SCAN_SYMLINK = 12 /* a symlink, allow '/', ".", "..", utf8 */
 } utf8_scantype_t;
 
-nfsstat4 nfs4_utf8string2dynamic(const utf8string *input, utf8_scantype_t scan,
-				 char **obj_name);
+nfsstat4 nfs4_utf8string2dynamic(const utf8string* input, utf8_scantype_t scan,
+                                 char** obj_name);
 
-int bitmap4_to_attrmask_t(bitmap4 *bitmap4, attrmask_t *mask);
+int bitmap4_to_attrmask_t(bitmap4* bitmap4, attrmask_t* mask);
 
-nfsstat4 file_To_Fattr(compound_data_t *data,
-		       attrmask_t mask,
-		       struct attrlist *attr,
-		       fattr4 *Fattr,
-		       struct bitmap4 *Bitmap);
+nfsstat4 file_To_Fattr(compound_data_t* data,
+                       attrmask_t mask,
+                       struct attrlist* attr,
+                       fattr4* Fattr,
+                       struct bitmap4* Bitmap);
 
-bool nfs4_Fattr_Check_Access(fattr4 *, int);
-bool nfs4_Fattr_Check_Access_Bitmap(struct bitmap4 *, int);
-bool nfs4_Fattr_Supported(fattr4 *);
-int nfs4_Fattr_cmp(fattr4 *, fattr4 *);
+bool nfs4_Fattr_Check_Access(fattr4*, int);
+bool nfs4_Fattr_Check_Access_Bitmap(struct bitmap4*, int);
+bool nfs4_Fattr_Supported(fattr4*);
+int nfs4_Fattr_cmp(fattr4*, fattr4*);
 
-void nfs3_FSALattr_To_Fattr(struct fsal_obj_handle *obj,
-			    const struct attrlist *FSAL_attr,
-			    fattr3 *Fattr);
+void nfs3_FSALattr_To_Fattr(struct fsal_obj_handle* obj,
+                            const struct attrlist* FSAL_attr,
+                            fattr3* Fattr);
 
-bool is_sticky_bit_set(struct fsal_obj_handle *obj,
-		       const struct attrlist *attr);
+bool is_sticky_bit_set(struct fsal_obj_handle* obj,
+                       const struct attrlist* attr);
 
-bool nfs3_Sattr_To_FSALattr(struct attrlist *, sattr3 *);
+bool nfs3_Sattr_To_FSALattr(struct attrlist*, sattr3*);
 
-int nfs4_Fattr_To_FSAL_attr(struct attrlist *, fattr4 *, compound_data_t *);
+int nfs4_Fattr_To_FSAL_attr(struct attrlist*, fattr4*, compound_data_t*);
 
-int nfs4_Fattr_To_fsinfo(fsal_dynamicfsinfo_t *, fattr4 *);
+int nfs4_Fattr_To_fsinfo(fsal_dynamicfsinfo_t*, fattr4*);
 
-int nfs4_Fattr_Fill_Error(fattr4 *, nfsstat4);
+int nfs4_Fattr_Fill_Error(fattr4*, nfsstat4);
 
-int nfs4_FSALattr_To_Fattr(struct xdr_attrs_args *, struct bitmap4 *,
-			   fattr4 *);
+int nfs4_FSALattr_To_Fattr(struct xdr_attrs_args*, struct bitmap4*,
+                           fattr4*);
 
-void nfs4_bitmap4_Remove_Unsupported(struct bitmap4 *);
+void nfs4_bitmap4_Remove_Unsupported(struct bitmap4*);
 
-enum nfs4_minor_vers {
-	NFS4_MINOR_VERS_0,
-	NFS4_MINOR_VERS_1,
-	NFS4_MINOR_VERS_2
+enum nfs4_minor_vers
+{
+    NFS4_MINOR_VERS_0,
+    NFS4_MINOR_VERS_1,
+    NFS4_MINOR_VERS_2
 };
 
-void nfs4_pathname4_alloc(pathname4 *, char *);
+void nfs4_pathname4_alloc(pathname4*, char*);
 
-void nfs4_pathname4_free(pathname4 *);
+void nfs4_pathname4_free(pathname4*);
 
 #endif				/* _NFS_PROTO_TOOLS_H */

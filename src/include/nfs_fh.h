@@ -53,13 +53,14 @@
  * This may be up to 64 bytes long, aligned on 32 bits
  */
 
-typedef struct file_handle_v3 {
-	uint8_t fhversion;	/*< Set to GANESHA_FH_VERSION */
-	uint8_t fhflags1;	/*< To replace things like ds_flag */
-	uint16_t exportid;	/*< Must be correlated to exportlist_t::id */
-	uint8_t fs_len;		/*< Actual length of opaque handle */
-	uint8_t fsopaque[];	/*< Persistent part of FSAL handle,
-				    <= 59 bytes */
+typedef struct file_handle_v3
+{
+    uint8_t fhversion; /*< Set to GANESHA_FH_VERSION */
+    uint8_t fhflags1; /*< To replace things like ds_flag */
+    uint16_t exportid; /*< Must be correlated to exportlist_t::id */
+    uint8_t fs_len; /*< Actual length of opaque handle */
+    uint8_t fsopaque[]; /*< Persistent part of FSAL handle,
+                    <= 59 bytes */
 } file_handle_v3_t;
 
 /**
@@ -68,15 +69,18 @@ typedef struct file_handle_v3 {
  * This may be up to 128 bytes, aligned on 32 bits.
  */
 
-typedef struct __attribute__ ((__packed__)) file_handle_v4 {
-	uint8_t fhversion;	/*< Set to 0x41 to separate from Linux knfsd */
-	uint8_t fhflags1;	/*< To replace things like ds_flag */
-	union {
-		uint16_t exports;	/*< FSAL exports, export_by_id */
-		uint16_t servers;	/*< FSAL servers, server_by_id */
-	} id;
-	uint8_t fs_len;		/*< Length of opaque handle */
-	uint8_t fsopaque[];	/*< FSAL handle */
+typedef struct __attribute__ ((__packed__)) file_handle_v4
+{
+    uint8_t fhversion; /*< Set to 0x41 to separate from Linux knfsd */
+    uint8_t fhflags1; /*< To replace things like ds_flag */
+    union
+    {
+        uint16_t exports; /*< FSAL exports, export_by_id */
+        uint16_t servers; /*< FSAL servers, server_by_id */
+    } id;
+
+    uint8_t fs_len; /*< Length of opaque handle */
+    uint8_t fsopaque[]; /*< FSAL handle */
 } file_handle_v4_t;
 
 #endif				/* NFS_FH_H */

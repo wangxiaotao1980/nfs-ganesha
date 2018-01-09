@@ -69,65 +69,65 @@
 
 #define HEARTBEAT_ARG        \
 {                            \
-	.name = "isHealthy", \
-	.type = "b",         \
-	.direction = "out"   \
+    .name = "isHealthy", \
+    .type = "b",         \
+    .direction = "out"   \
 }
 
 #define STATUS_REPLY      \
 {                         \
-	.name = "status", \
-	.type = "b",      \
-	.direction = "out"\
+    .name = "status", \
+    .type = "b",      \
+    .direction = "out"\
 },                        \
 {                         \
-	.name = "error",  \
-	.type = "s",      \
-	.direction = "out"\
+    .name = "error",  \
+    .type = "s",      \
+    .direction = "out"\
 }
 
 #define MESSAGE_REPLY		\
 {				\
-	.name = "message",	\
-	.type = "s",		\
-	.direction = "out"	\
+    .name = "message",	\
+    .type = "s",		\
+    .direction = "out"	\
 }
 
 #define END_ARG_LIST {NULL, NULL, NULL}
 
 #define IPADDR_ARG       \
 {                        \
-	.name = "ipaddr",\
-	.type = "s",     \
-	.direction = "in"\
+    .name = "ipaddr",\
+    .type = "s",     \
+    .direction = "in"\
 }
 
 #define ID_ARG			\
 {				\
-	.name = "id",		\
-	.type = "q",		\
-	.direction = "in"	\
+    .name = "id",		\
+    .type = "q",		\
+    .direction = "in"	\
 }
 
 #define PATH_ARG		\
 {				\
-	.name = "path",		\
-	.type = "s",		\
-	.direction = "in"	\
+    .name = "path",		\
+    .type = "s",		\
+    .direction = "in"	\
 }
 
 #define EXPR_ARG		\
 {				\
-	.name = "expr",		\
-	.type = "s",		\
-	.direction = "in"	\
+    .name = "expr",		\
+    .type = "s",		\
+    .direction = "in"	\
 }
 
 #define FSAL_ARG		\
 {				\
-	.name = "fsal",		\
-	.type = "s",		\
-	.direction = "in"	\
+    .name = "fsal",		\
+    .type = "s",		\
+    .direction = "in"	\
 }
 
 /* Properties list helper macros
@@ -137,46 +137,52 @@
 
 #define END_PROPS_LIST {NULL, DBUS_PROP_READ, "", NULL, NULL}
 
-typedef enum {
-	DBUS_PROP_READ = 0,
-	DBUS_PROP_WRITE,
-	DBUS_PROP_READWRITE
+typedef enum
+{
+    DBUS_PROP_READ = 0,
+    DBUS_PROP_WRITE,
+    DBUS_PROP_READWRITE
 } dbus_prop_access_t;
 
-struct gsh_dbus_prop {
-	const char *name;
-	dbus_prop_access_t access;
-	const char *type;
-	 bool (*get)(DBusMessageIter *reply);
-	 bool (*set)(DBusMessageIter *args);
+struct gsh_dbus_prop
+{
+    const char* name;
+    dbus_prop_access_t access;
+    const char* type;
+    bool (*get)(DBusMessageIter* reply);
+    bool (*set)(DBusMessageIter* args);
 };
 
-struct gsh_dbus_arg {
-	const char *name;
-	const char *type;
-	const char *direction;	/* not used for signals */
+struct gsh_dbus_arg
+{
+    const char* name;
+    const char* type;
+    const char* direction; /* not used for signals */
 };
 
-struct gsh_dbus_method {
-	const char *name;
-	 bool (*method)(DBusMessageIter *args,
-			DBusMessage *reply,
-			DBusError *error);
-	struct gsh_dbus_arg args[];
+struct gsh_dbus_method
+{
+    const char* name;
+    bool (*method)(DBusMessageIter* args,
+                   DBusMessage* reply,
+                   DBusError* error);
+    struct gsh_dbus_arg args[];
 };
 
-struct gsh_dbus_signal {
-	const char *name;
-	bool (*signal)(DBusMessageIter *args, DBusMessage *reply);
-	struct gsh_dbus_arg args[];
+struct gsh_dbus_signal
+{
+    const char* name;
+    bool (*signal)(DBusMessageIter* args, DBusMessage* reply);
+    struct gsh_dbus_arg args[];
 };
 
-struct gsh_dbus_interface {
-	const char *name;
-	bool signal_props;
-	struct gsh_dbus_prop **props;
-	struct gsh_dbus_method **methods;
-	struct gsh_dbus_signal **signals;
+struct gsh_dbus_interface
+{
+    const char* name;
+    bool signal_props;
+    struct gsh_dbus_prop** props;
+    struct gsh_dbus_method** methods;
+    struct gsh_dbus_signal** signals;
 };
 
 /**
@@ -190,41 +196,44 @@ struct gsh_dbus_interface {
 #define BCAST_STATUS_WARN  0x01
 #define BCAST_STATUS_FATAL 0x02
 
-typedef int (*dbus_bcast_callback)(void *);
-struct dbus_bcast_item {
-	struct timespec next_bcast_time;
-	uint32_t bcast_interval;
-	uint32_t count;
-	void *bcast_arg;
-	dbus_bcast_callback bcast_callback;
-	struct glist_head dbus_bcast_q;
+typedef int (*dbus_bcast_callback)(void*);
+
+struct dbus_bcast_item
+{
+    struct timespec next_bcast_time;
+    uint32_t bcast_interval;
+    uint32_t count;
+    void* bcast_arg;
+    dbus_bcast_callback bcast_callback;
+    struct glist_head dbus_bcast_q;
 };
-struct dbus_bcast_item *add_dbus_broadcast(
-					dbus_bcast_callback bcast_callback,
-					void *bcast_arg,
-					uint32_t bcast_interval,
-					int count);
-void del_dbus_broadcast(struct dbus_bcast_item *to_remove);
+
+struct dbus_bcast_item* add_dbus_broadcast(
+    dbus_bcast_callback bcast_callback,
+    void* bcast_arg,
+    uint32_t bcast_interval,
+    int count);
+void del_dbus_broadcast(struct dbus_bcast_item* to_remove);
 
 /* heartbeat function call back */
-int dbus_heartbeat_cb(void *arg);
+int dbus_heartbeat_cb(void* arg);
 void init_heartbeat(void);
 
 void gsh_dbus_pkginit(void);
 void gsh_dbus_pkgshutdown(void);
-void *gsh_dbus_thread(void *arg);
+void* gsh_dbus_thread(void* arg);
 
 /* callout method */
-void dbus_append_timestamp(DBusMessageIter *iterp, struct timespec *ts);
-void dbus_status_reply(DBusMessageIter *iter, bool success, char *errormsg);
-int32_t gsh_dbus_register_path(const char *name,
-			       struct gsh_dbus_interface **interfaces);
-int gsh_dbus_broadcast(char *obj_name, char *int_name,
-		       char *sig_name, int type, ...);
+void dbus_append_timestamp(DBusMessageIter* iterp, struct timespec* ts);
+void dbus_status_reply(DBusMessageIter* iter, bool success, char* errormsg);
+int32_t gsh_dbus_register_path(const char* name,
+                               struct gsh_dbus_interface** interfaces);
+int gsh_dbus_broadcast(char* obj_name, char* int_name,
+                       char* sig_name, int type, ...);
 /* more to come */
 
 #ifdef _USE_9P
-bool arg_9p_op(DBusMessageIter *args, u8 *opcode, char **errormsg);
+bool arg_9p_op(DBusMessageIter* args, u8* opcode, char** errormsg);
 #endif
 
 #endif				/* GSH_DBUS_H */

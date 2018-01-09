@@ -38,6 +38,7 @@
 #include "../../include/nfs_convert.h"
 #include "../../include/nfs_proto_tools.h"
 #include "../../include/client_mgr.h"
+#include "../../include/nfs_file_handle.h"
 #include <stdio.h>
 //#include <string.h>
 #include <pthread.h>
@@ -71,7 +72,8 @@ int nfs3_rename(nfs_arg_t* arg, struct svc_req* req, nfs_res_t* res)
     int from_exportid = 0;
     int rc = NFS_REQ_OK;
 
-    pre_op_attr pre_parent = {
+    pre_op_attr pre_parent = 
+    {
         .attributes_follow = false
     };
     pre_op_attr pre_new_parent = {

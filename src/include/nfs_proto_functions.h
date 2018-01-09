@@ -32,9 +32,9 @@
 #ifndef NFS_PROTO_FUNCTIONS_H
 #define NFS_PROTO_FUNCTIONS_H
 
-#include <pthread.h>
-#include <sys/types.h>
-#include <sys/param.h>
+//#include <pthread.h>
+//#include <sys/types.h>
+//#include <sys/param.h>
 
 #include "sal_data.h"
 

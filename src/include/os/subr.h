@@ -37,22 +37,23 @@
 #define UTIME_OMIT	-2
 #endif
 
-int vfs_utimesat(int fd, const char *path, const struct timespec times[2],
-		 int flags);
-int vfs_utimes(int fd, const struct timespec *times);
+int vfs_utimesat(int fd, const char* path, const struct timespec times[2],
+                 int flags);
+int vfs_utimes(int fd, const struct timespec* times);
 
-struct vfs_dirent {
-	uint64_t vd_ino;
-	uint32_t vd_reclen;
-	uint32_t vd_type;
-	off_t vd_offset;
-	char *vd_name;
+struct vfs_dirent
+{
+    uint64_t vd_ino;
+    uint32_t vd_reclen;
+    uint32_t vd_type;
+    off_t vd_offset;
+    char* vd_name;
 };
 
-int vfs_readents(int fd, char *buf, unsigned int bcount, off_t *basepp);
-bool to_vfs_dirent(char *buf, int bpos, struct vfs_dirent *vd, off_t base);
+int vfs_readents(int fd, char* buf, unsigned int bcount, off_t* basepp);
+bool to_vfs_dirent(char* buf, int bpos, struct vfs_dirent* vd, off_t base);
 uid_t setuser(uid_t uid);
 gid_t setgroup(gid_t gid);
-int set_threadgroups(size_t size, const gid_t *list);
+int set_threadgroups(size_t size, const gid_t* list);
 
 #endif/* SUBR_OS_H */

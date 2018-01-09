@@ -47,18 +47,18 @@ namespace bf = boost::filesystem;
 
 namespace {
 
-  char* ganesha_conf = nullptr;
-  char* lpath = nullptr;
-  int dlevel = -1;
-  uint16_t export_id = 77;
+    char* ganesha_conf                 = nullptr;
+    char* lpath                        = nullptr;
+    int dlevel                         = -1;
+    uint16_t export_id                 = 77;
 
-  struct req_op_context req_ctx;
-  struct user_cred user_credentials;
-  struct attrlist object_attributes;
+    struct req_op_context req_ctx;
+    struct user_cred user_credentials;
+    struct attrlist object_attributes;
 
-  struct gsh_export* a_export = nullptr;
-  struct fsal_obj_handle *root_entry = nullptr;
-  struct fsal_obj_handle *test_root = nullptr;
+    struct gsh_export* a_export        = nullptr;
+    struct fsal_obj_handle *root_entry = nullptr;
+    struct fsal_obj_handle *test_root  = nullptr;
 
 #if 0
   std::uniform_int_distribution<uint8_t> uint_dist;
@@ -113,8 +113,8 @@ TEST(CI_HASH_DIST1, CREATE_ROOT)
   object_attributes.group = 766;
 
   status = root_entry->obj_ops.mkdir(root_entry, "ci_hash_dist1",
-				    &object_attributes, &test_root,
-				    attrs_out);
+                    &object_attributes, &test_root,
+                    attrs_out);
   ASSERT_NE(test_root, nullptr);
 }
 
@@ -133,16 +133,16 @@ int main(int argc, char *argv[])
 
     opts.add_options()
       ("config", po::value<string>(),
-	"path to Ganesha conf file")
+    "path to Ganesha conf file")
 
       ("logfile", po::value<string>(),
-	"log to the provided file path")
+    "log to the provided file path")
 
       ("export", po::value<uint16_t>(),
-	"id of export on which to operate (must exist)")
+    "id of export on which to operate (must exist)")
 
       ("debug", po::value<string>(),
-	"ganesha debug level")
+    "ganesha debug level")
       ;
 
     po::variables_map::iterator vm_iter;
@@ -161,7 +161,7 @@ int main(int argc, char *argv[])
     vm_iter = vm.find("debug");
     if (vm_iter != vm.end()) {
       dlevel = ReturnLevelAscii(
-	(char*) vm_iter->second.as<std::string>().c_str());
+    (char*) vm_iter->second.as<std::string>().c_str());
     }
     vm_iter = vm.find("export");
     if (vm_iter != vm.end()) {

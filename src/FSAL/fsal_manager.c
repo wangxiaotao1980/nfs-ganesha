@@ -86,15 +86,11 @@ static struct fsal_module* new_fsal;
 
 static enum load_state
 {
-    init,
-    /*< In server start state. .init sections can run */
-    idle,
-    /*< Switch from init->idle early in main() */
-    loading,
-    /*< In dlopen(). set by load_fsal() just prior */
-    registered,
-    /*< signal by registration that all is well */
-    error /*< signal by registration that all is not well */
+    init,       /*< In server start state. .init sections can run */
+    idle,       /*< Switch from init->idle early in main() */
+    loading,    /*< In dlopen(). set by load_fsal() just prior */
+    registered, /*< signal by registration that all is well */
+    error       /*< signal by registration that all is not well */
 } load_state = init;
 
 
@@ -119,7 +115,9 @@ static void load_fsal_static(const char* name, void (*init)(void))
     PTHREAD_MUTEX_lock(&fsal_lock);
 
     if(load_state != idle)
+    {
         LogFatal(COMPONENT_INIT, "Couldn't Register FSAL_%s", name);
+    }
 
     if(dl_error)
     {
@@ -141,12 +139,12 @@ static void load_fsal_static(const char* name, void (*init)(void))
 
     /* we now finish things up, doing things the module can't see */
 
-    fsal = new_fsal; /* recover handle from .ctor and poison again */
-    new_fsal = NULL;
-    fsal->path = dl_path;
+    fsal            = new_fsal; /* recover handle from .ctor and poison again */
+    new_fsal        = NULL;
+    fsal->path      = dl_path;
     fsal->dl_handle = NULL;
-    so_error = 0;
-    load_state = idle;
+    so_error        = 0;
+    load_state      = idle;
     PTHREAD_MUTEX_unlock(&fsal_lock);
 }
 

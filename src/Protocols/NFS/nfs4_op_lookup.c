@@ -40,7 +40,8 @@
 #include "../../include/nfs_creds.h"
 #include "../../include/nfs_proto_tools.h"
 #include "../../include/nfs_convert.h"
-  //#include "../../include/export_mgr.h"
+#include "../../include/nfs_file_handle.h"
+//#include "../../include/export_mgr.h"
 
   /**
    * @brief NFS4_OP_LOOKUP

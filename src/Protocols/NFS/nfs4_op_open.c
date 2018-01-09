@@ -43,7 +43,8 @@
 #include "../../include/fsal_convert.h"
 #include "../../include/nfs_creds.h"
 #include "../../include/export_mgr.h"
-  //#include "../../include/nfs_rpc_callback.h"
+#include "../../include/nfs_file_handle.h"
+//#include "../../include/nfs_rpc_callback.h"
 
 static const char* open_tag = "OPEN";
 

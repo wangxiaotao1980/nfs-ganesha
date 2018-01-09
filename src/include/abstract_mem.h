@@ -71,18 +71,19 @@
  *
  * @return Pointer to a block of memory.
  */
-static inline void *
+static inline void*
 gsh_malloc__(size_t n,
-	     const char *file, int line, const char *function)
+             const char* file, int line, const char* function)
 {
-	void *p = malloc(n);
+    void* p = malloc(n);
 
-	if (p == NULL) {
-		LogMallocFailure(file, line, function, "gsh_malloc");
-		abort();
-	}
+    if(p == NULL)
+    {
+        LogMallocFailure(file, line, function, "gsh_malloc");
+        abort();
+    }
 
-	return p;
+    return p;
 }
 
 #define gsh_malloc(n) gsh_malloc__(n, __FILE__, __LINE__, __func__)
@@ -102,28 +103,29 @@ gsh_malloc__(size_t n,
  *
  * @return Pointer to a block of memory or NULL.
  */
-static inline void *
+static inline void*
 gsh_malloc_aligned__(size_t a, size_t n,
-		     const char *file, int line, const char *function)
+                     const char* file, int line, const char* function)
 {
-	void *p;
+    void* p;
 
 #ifdef __APPLE__
-	p = valloc(n);
+    p = valloc(n);
 #else
-	if (posix_memalign(&p, a, n) != 0)
-		p = NULL;
+    if(posix_memalign(&p, a, n) != 0)
+        p = NULL;
 #endif
-	if (p == NULL) {
-		LogMallocFailure(file, line, function, "gsh_malloc_aligned");
-		abort();
-	}
+    if(p == NULL)
+    {
+        LogMallocFailure(file, line, function, "gsh_malloc_aligned");
+        abort();
+    }
 
-	return p;
+    return p;
 }
 
 #define gsh_malloc_aligned(a, n) \
-	gsh_malloc_aligned__(a, n, __FILE__, __LINE__, __func__)
+    gsh_malloc_aligned__(a, n, __FILE__, __LINE__, __func__)
 
 /**
  * @brief Allocate zeroed memory
@@ -138,18 +140,19 @@ gsh_malloc_aligned__(size_t a, size_t n,
  *
  * @return Pointer to a block of zeroed memory.
  */
-static inline void *
+static inline void*
 gsh_calloc__(size_t n, size_t s,
-	     const char *file, int line, const char *function)
+             const char* file, int line, const char* function)
 {
-	void *p = calloc(n, s);
+    void* p = calloc(n, s);
 
-	if (p == NULL) {
-		LogMallocFailure(file, line, function, "gsh_calloc");
-		abort();
-	}
+    if(p == NULL)
+    {
+        LogMallocFailure(file, line, function, "gsh_calloc");
+        abort();
+    }
 
-	return p;
+    return p;
 }
 
 #define gsh_calloc(n, s) gsh_calloc__(n, s, __FILE__, __LINE__, __func__)
@@ -171,18 +174,19 @@ gsh_calloc__(size_t n, size_t s,
  *
  * @return Pointer to the address of the resized block.
  */
-static inline void *
-gsh_realloc__(void *p, size_t n,
-	      const char *file, int line, const char *function)
+static inline void*
+gsh_realloc__(void* p, size_t n,
+              const char* file, int line, const char* function)
 {
-	void *p2 = realloc(p, n);
+    void* p2 = realloc(p, n);
 
-	if (n != 0 && p2 == NULL) {
-		LogMallocFailure(file, line, function, "gsh_realloc");
-		abort();
-	}
+    if(n != 0 && p2 == NULL)
+    {
+        LogMallocFailure(file, line, function, "gsh_realloc");
+        abort();
+    }
 
-	return p2;
+    return p2;
 }
 
 #define gsh_realloc(p, n) gsh_realloc__(p, n, __FILE__, __LINE__, __func__)
@@ -202,17 +206,18 @@ gsh_realloc__(void *p, size_t n,
  *
  * @return Pointer to new copy of string.
  */
-static inline char *
-gsh_strdup__(const char *s, const char *file, int line, const char *function)
+static inline char*
+gsh_strdup__(const char* s, const char* file, int line, const char* function)
 {
-	char *p = strdup(s);
+    char* p = strdup(s);
 
-	if (p == NULL) {
-		LogMallocFailure(file, line, function, "gsh_strdup");
-		abort();
-	}
+    if(p == NULL)
+    {
+        LogMallocFailure(file, line, function, "gsh_strdup");
+        abort();
+    }
 
-	return p;
+    return p;
 }
 
 #define gsh_strdup(s) gsh_strdup__(s, __FILE__, __LINE__, __func__)
@@ -236,26 +241,27 @@ gsh_strdup__(const char *s, const char *file, int line, const char *function)
  *
  * @return Pointer to new copy of string.
  */
-static inline char *
-gsh_strldup__(const char *s, size_t length, size_t *copied,
-	     const char *file, int line, const char *function)
+static inline char*
+gsh_strldup__(const char* s, size_t length, size_t* copied,
+              const char* file, int line, const char* function)
 {
-	char *p = (char *) gsh_malloc__(length+1, file, line, function);
+    char* p = (char *)gsh_malloc__(length + 1, file, line, function);
 
-	if (p == NULL) {
-		LogMallocFailure(file, line, function, "gsh_strldup");
-		abort();
-	}
+    if(p == NULL)
+    {
+        LogMallocFailure(file, line, function, "gsh_strldup");
+        abort();
+    }
 
-	memcpy(p, s, length);
-	p[length] = '\0';
-	*copied = length + 1;
+    memcpy(p, s, length);
+    p[length] = '\0';
+    *copied = length + 1;
 
-	return p;
+    return p;
 }
 
 #define gsh_strldup(s, l, n) gsh_strldup__(s, l, n, __FILE__, __LINE__, \
-						__func__)
+                        __func__)
 
 /**
  * @brief Free a block of memory
@@ -266,9 +272,9 @@ gsh_strldup__(const char *s, size_t length, size_t *copied,
  * @param[in] p Block of memory to free.
  */
 static inline void
-gsh_free(void *p)
+gsh_free(void* p)
 {
-	free(p);
+    free(p);
 }
 
 /**
@@ -282,9 +288,9 @@ gsh_free(void *p)
  * @param[in] n  Size of block (unused)
  */
 static inline void
-gsh_free_size(void *p, size_t n __attribute__ ((unused)))
+gsh_free_size(void* p, size_t n __attribute__ ((unused)))
 {
-	free(p);
+    free(p);
 }
 
 /**
@@ -299,9 +305,10 @@ gsh_free_size(void *p, size_t n __attribute__ ((unused)))
  * This allows for flexible growth in the future.
  */
 
-typedef struct pool {
-	char *name; /*< The name of the pool */
-	size_t object_size; /*< The size of the objects created */
+typedef struct pool
+{
+    char* name; /*< The name of the pool */
+    size_t object_size; /*< The size of the objects created */
 } pool_t;
 
 /**
@@ -329,25 +336,27 @@ typedef struct pool {
  *         pool_destroy.
  */
 
-static inline pool_t *
-pool_basic_init__(const char *name, size_t object_size,
-		  const char *file, int line, const char *function)
+static inline pool_t*
+pool_basic_init__(const char* name, size_t object_size,
+                  const char* file, int line, const char* function)
 {
-	pool_t *pool = (pool_t *) gsh_malloc__(sizeof(pool_t), file, line,
-					function);
+    pool_t* pool = (pool_t *)gsh_malloc__(sizeof(pool_t),
+                                          file,
+                                          line,
+                                          function);
 
-	pool->object_size = object_size;
+    pool->object_size = object_size;
 
-	if (name)
-		pool->name = gsh_strdup__(name, file, line, function);
-	else
-		pool->name = NULL;
+    if(name)
+        pool->name = gsh_strdup__(name, file, line, function);
+    else
+        pool->name = NULL;
 
-	return pool;
+    return pool;
 }
 
 #define pool_basic_init(name, object_size) \
-	pool_basic_init__(name, object_size, __FILE__, __LINE__, __func__)
+    pool_basic_init__(name, object_size, __FILE__, __LINE__, __func__)
 
 /**
  * @brief Destroy a memory pool
@@ -359,10 +368,10 @@ pool_basic_init__(const char *name, size_t object_size,
  */
 
 static inline void
-pool_destroy(pool_t *pool)
+pool_destroy(pool_t* pool)
 {
-	gsh_free(pool->name);
-	gsh_free(pool);
+    gsh_free(pool->name);
+    gsh_free(pool);
 }
 
 /**
@@ -389,14 +398,14 @@ pool_destroy(pool_t *pool)
  * @return A pointer to the allocated pool item.
  */
 
-static inline void *
-pool_alloc__(pool_t *pool, const char *file, int line, const char *function)
+static inline void*
+pool_alloc__(pool_t* pool, const char* file, int line, const char* function)
 {
-	return gsh_calloc__(1, pool->object_size, file, line, function);
+    return gsh_calloc__(1, pool->object_size, file, line, function);
 }
 
 #define pool_alloc(pool) \
-	pool_alloc__(pool, __FILE__, __LINE__, __func__)
+    pool_alloc__(pool, __FILE__, __LINE__, __func__)
 
 /**
  * @brief Return an entry to a pool
@@ -415,9 +424,9 @@ pool_alloc__(pool_t *pool, const char *file, int line, const char *function)
  */
 
 static inline void
-pool_free(pool_t *pool, void *object)
+pool_free(pool_t* pool, void* object)
 {
-	gsh_free(object);
+    gsh_free(object);
 }
 
 #endif /* ABSTRACT_MEM_H */

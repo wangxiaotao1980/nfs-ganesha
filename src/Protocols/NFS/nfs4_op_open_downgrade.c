@@ -38,7 +38,8 @@
 #include "../../include/sal_functions.h"
 #include "../../include/nfs_proto_functions.h"
 #include "../../include/nfs_proto_tools.h"
-  //#include "../../include/fsal.h"
+#include "../../include/nfs_file_handle.h"
+//#include "../../include/fsal.h"
 
 /**
  * @brief NFS4_OP_OPEN_DOWNGRADE

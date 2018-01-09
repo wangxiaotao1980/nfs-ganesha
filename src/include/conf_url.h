@@ -25,20 +25,21 @@
 #include <stdio.h>
 #include "gsh_list.h"
 
-struct gsh_url_provider {
-	struct glist_head link;
-	const char *name;
-	void (*url_init)(void); /* XXX needs config info */
-	void (*url_shutdown)(void);
-	int (*url_fetch)(const char *url, FILE **f, char **fbuf);
+struct gsh_url_provider
+{
+    struct glist_head link;
+    const char* name;
+    void (*url_init)(void); /* XXX needs config info */
+    void (*url_shutdown)(void);
+    int (*url_fetch)(const char* url, FILE** f, char** fbuf);
 };
 
 /** @brief package initializer
  */
 
 void config_url_init(void);
-int register_url_provider(struct gsh_url_provider *nurl_p);
-int config_url_fetch(const char *url, FILE **f, char **fbuf);
-void config_url_release(FILE *f, char *fbuf);
+int register_url_provider(struct gsh_url_provider* nurl_p);
+int config_url_fetch(const char* url, FILE** f, char** fbuf);
+void config_url_release(FILE* f, char* fbuf);
 
 #endif /* CONF_URL_H */

@@ -45,29 +45,30 @@
 #include "avltree.h"
 #include "gsh_types.h"
 
-struct gsh_client {
-	struct avltree_node node_k;
-	pthread_rwlock_t lock;
-	struct gsh_buffdesc addr;
-	int64_t refcnt;
-	nsecs_elapsed_t last_update;
-	char *hostaddr_str;
-	unsigned char addrbuf[];
+struct gsh_client
+{
+    struct avltree_node node_k;
+    pthread_rwlock_t lock;
+    struct gsh_buffdesc addr;
+    int64_t refcnt;
+    nsecs_elapsed_t last_update;
+    char* hostaddr_str;
+    unsigned char addrbuf[];
 };
 
-static inline int64_t inc_gsh_client_refcount(struct gsh_client *client)
+static inline int64_t inc_gsh_client_refcount(struct gsh_client* client)
 {
-	return atomic_inc_int64_t(&client->refcnt);
+    return atomic_inc_int64_t(&client->refcnt);
 }
 
 void client_pkginit(void);
 #ifdef USE_DBUS
 void dbus_client_init(void);
 #endif
-struct gsh_client *get_gsh_client(sockaddr_t *client_ipaddr, bool lookup_only);
-void put_gsh_client(struct gsh_client *client);
-int foreach_gsh_client(bool(*cb) (struct gsh_client *cl, void *state),
-		       void *state);
+struct gsh_client* get_gsh_client(sockaddr_t* client_ipaddr, bool lookup_only);
+void put_gsh_client(struct gsh_client* client);
+int foreach_gsh_client(bool (*cb)(struct gsh_client* cl, void* state),
+                       void* state);
 
 #endif				/* !CLIENT_MGR_H */
 /** @} */

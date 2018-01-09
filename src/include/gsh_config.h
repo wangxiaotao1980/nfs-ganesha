@@ -53,13 +53,19 @@
  * @brief An enumeration of protocols in the NFS family
  */
 
-typedef enum protos {
-	P_NFS,			/*< NFS, of course. */
-	P_MNT,			/*< Mount (for v3) */
-	P_NLM,			/*< NLM (for v3) */
-	P_RQUOTA,		/*< RQUOTA (for v3) */
-	P_NFS_VSOCK,		/*< NFS over vmware, qemu vmci sockets */
-	P_COUNT			/*< Number of protocols */
+typedef enum protos
+{
+    P_NFS,
+    /*< NFS, of course. */
+    P_MNT,
+    /*< Mount (for v3) */
+    P_NLM,
+    /*< NLM (for v3) */
+    P_RQUOTA,
+    /*< RQUOTA (for v3) */
+    P_NFS_VSOCK,
+    /*< NFS over vmware, qemu vmci sockets */
+    P_COUNT /*< Number of protocols */
 } protos;
 
 /**
@@ -188,213 +194,225 @@ typedef enum protos {
  * @brief Support all protocols
  */
 #define CORE_OPTION_ALL_VERS (CORE_OPTION_NFSV3 |			\
-				CORE_OPTION_NFSV4 |			\
-				CORE_OPTION_NFS_VSOCK |			\
-				CORE_OPTION_9P)
+                CORE_OPTION_NFSV4 |			\
+                CORE_OPTION_NFS_VSOCK |			\
+                CORE_OPTION_9P)
 
-typedef struct nfs_core_param {
-	/** An array of port numbers, one for each protocol.  Set by
-	    the NFS_Port, MNT_Port, NLM_Port, and Rquota_Port options. */
-	uint16_t port[P_COUNT];
-	/** The address to which to bind for our listening port.
-	    IPv4 only, for now.  Set by the Bind_Addr option. */
-	struct sockaddr_storage bind_addr;
-	/** An array of RPC program numbers.  The correct values, by
-	    default, they may be set to incorrect values with the
-	    NFS_Program, MNT_Program, NLM_Program, and
-	    Rquota_Program.  It is debatable whether this is a
-	    worthwhile option to have. */
-	uint32_t program[P_COUNT];
-	/** Number of worker threads.  Set to NB_WORKER_DEFAULT by
-	    default and changed with the Nb_Worker option. */
-	uint32_t nb_worker;
-	/** For NFSv3, whether to drop rather than reply to requests
-	    yielding I/O errors.  True by default and settable with
-	    Drop_IO_Errors.  As this generally results in client
-	    retry, this seems like a dubious idea. */
-	bool drop_io_errors;
-	/** For NFSv3, whether to drop rather than reply to requests
-	    yielding invalid argument errors.  False by default and
-	    settable with Drop_Inval_Errors.  As this generally
-	    results in client retry, this seems like a really awful
-	    idea. */
-	bool drop_inval_errors;
-	/** For NFSv3, whether to drop rather than reply to requests
-	    yielding delay errors.  True by default and settable with
-	    Drop_Delay_Errors.  As this generally results in client
-	    retry and there is no NFSERR_DELAY, this seems like an
-	    excellent idea. */
-	bool drop_delay_errors;
-	/** Total number of requests to allow into the dispatcher at
-	    once.  Defaults to 5000 and settable by Dispatch_Max_Reqs */
-	uint32_t dispatch_max_reqs;
-	/** Number of requests to allow into the dispatcher from one
-	    specific transport.  Defaults to 512 and settable by
-	    Dispatch_Max_Reqs_Xprt. */
-	uint32_t dispatch_max_reqs_xprt;
-	/** Parameters controlling the Duplicate Request Cache.  */
-	struct {
-		/** Whether to disable the DRC entirely.  Defaults to
-		    false, settable by DRC_Disabled. */
-		bool disabled;
-		/* Parameters controlling TCP specific DRC behavior. */
-		struct {
-			/** Number of partitions in the tree for the
-			    TCP DRC.  Defaults to DRC_TCP_NPART,
-			    settable by DRC_TCP_Npart. */
-			uint32_t npart;
-			/** Maximum number of requests in a transport's
-			    DRC.  Defaults to DRC_TCP_SIZE and
-			    settable by DRC_TCP_Size. */
-			uint32_t size;
-			/** Number of entries in the O(1) front-end
-			    cache to a TCP Duplicate Request
-			    Cache.  Defaults to DRC_TCP_CACHESZ and
-			    settable by DRC_TCP_Cachesz. */
-			uint32_t cachesz;
-			/** High water mark for a TCP connection's
-			    DRC at which to start retiring entries if
-			    we can.  Defaults to DRC_TCP_HIWAT and
-			    settable by DRC_TCP_Hiwat. */
-			uint32_t hiwat;
-			/** Number of partitions in the recycle
-			    tree that holds per-connection DRCs so
-			    they can be used on reconnection (or
-			    recycled.)  Defaults to
-			    DRC_TCP_RECYCLE_NPART and settable by
-			    DRC_TCP_Recycle_Npart. */
-			uint32_t recycle_npart;
-			/** How long to wait (in seconds) before
-			    freeing the DRC of a disconnected
-			    client.  Defaults to
-			    DRC_TCP_RECYCLE_EXPIRE_S and settable by
-			    DRC_TCP_Recycle_Expire_S. */
-			uint32_t recycle_expire_s;
-			/** Whether to use a checksum to match
-			    requests as well as the XID.  Defaults to
-			    DRC_TCP_CHECKSUM and settable by
-			    DRC_TCP_Checksum. */
-			bool checksum;
-		} tcp;
-		/** Parameters controlling UDP DRC behavior. */
-		struct {
-			/** Number of partitions in the tree for the
-			    UDP DRC.  Defaults to DRC_UDP_NPART,
-			    settable by DRC_UDP_Npart. */
-			uint32_t npart;
-			/** Maximum number of requests in the UDP DRC.
-			    Defaults to DRC_UDP_SIZE and settable by
-			    DRC_UDP_Size. */
-			uint32_t size;
-			/** Number of entries in the O(1) front-end
-			    cache to the UDP Duplicate Request
-			    Cache.  Defaults to DRC_UDP_CACHESZ and
-			    settable by DRC_UDP_Cachesz. */
-			uint32_t cachesz;
-			/** High water mark for the UDP DRC at which
-			    to start retiring entries if we can.
-			    Defaults to DRC_UDP_HIWAT and settable by
-			    DRC_UDP_Hiwat. */
-			uint32_t hiwat;
-			/** Whether to use a checksum to match
-			    requests as well as the XID.  Defaults to
-			    DRC_UDP_CHECKSUM and settable by
-			    DRC_UDP_Checksum. */
-			bool checksum;
-		} udp;
-	} drc;
-	/** Parameters affecting the relation with TIRPC.   */
-	struct {
-		/** Debug flags for TIRPC.  Defaults to
-		    TIRPC_DEBUG_FLAGS and settable by
-		    RPC_Debug_Flags. */
-		uint32_t debug_flags;
-		/** Maximum number of connections for TIRPC.
-		    Defaults to 1024 and settable by
-		    RPC_Max_Connections. */
-		uint32_t max_connections;
-		/** Size of RPC send buffer.  Defaults to
-		    NFS_DEFAULT_SEND_BUFFER_SIZE and is settable by
-		    MaxRPCSendBufferSize.  */
-		uint32_t max_send_buffer_size;
-		/** Size of RPC receive buffer.  Defaults to
-		    NFS_DEFAULT_RECV_BUFFER_SIZE and is settable by
-		    MaxRPCRecvBufferSize. */
-		uint32_t max_recv_buffer_size;
-		/** Idle timeout (seconds).  Defaults to 5m */
-		uint32_t idle_timeout_s;
-		/** TIRPC ioq max simultaneous io threads.  Defaults to
-		    200 and settable by RPC_Ioq_ThrdMax. */
-		uint32_t ioq_thrd_max;
-		struct {
-			/** Partitions in GSS ctx cache table (default 13). */
-			uint32_t ctx_hash_partitions;
-			/** Max GSS contexts in cache (i.e.,
-			 * max GSS clients, default 16K)
-			 */
-			uint32_t max_ctx;
-			/** Max entries to expire in one idle
-			 * check (default 200)
-			 */
-			uint32_t max_gc;
-		} gss;
-	} rpc;
-	/** How long (in seconds) to let unused decoder threads wait before
-	    exiting.  Settable with Decoder_Fridge_Expiration_Delay. */
-	time_t decoder_fridge_expiration_delay;
-	/** How long (in seconds) to wait for the decoder fridge to
-	    accept a task before erroring.  Settable with
-	    Decoder_Fridge_Block_Timeout. */
-	time_t decoder_fridge_block_timeout;
-	/** Polling interval for blocked lock polling thread. */
-	time_t blocked_lock_poller_interval;
-	/** Protocols to support.  Should probably be renamed.
-	    Defaults to CORE_OPTION_ALL_VERS and is settable with
-	    NFS_Protocols (as a comma-separated list of 3 and 4.) */
-	unsigned int core_options;
-	/** Whether to use the supplied name rather than the IP
-	    address in NSM operations.  Settable with
-	    NSM_Use_Caller_Name. */
-	bool nsm_use_caller_name;
-	/** Whether this Ganesha is part of a cluster of Ganeshas.
-	    This is somewhat vendor-specific and should probably be
-	    moved somewhere else.  Settable with Clustered. */
-	bool clustered;
-	/** Whether to support the Network Lock Manager protocol.
-	    Defaults to true and is settable with Enable_NLM. */
-	bool enable_NLM;
-	/** Whether to support the Remote Quota protocol.  Defaults
-	    to true and is settable with Enable_RQUOTA. */
-	bool enable_RQUOTA;
-	/** Whether to use fast stats.  Defaults to false. */
-	bool enable_FASTSTATS;
-	/** Whether tcp sockets should use SO_KEEPALIVE */
-	bool enable_tcp_keepalive;
-	/** Maximum number of TCP probes before dropping the connection */
-	uint32_t tcp_keepcnt;
-	/** Idle time before TCP starts to send keepalive probes */
-	uint32_t tcp_keepidle;
-	/** Time between each keepalive probe */
-	uint32_t tcp_keepintvl;
-	/** Whether to use short NFS file handle to accommodate VMware
-	    NFS client. Enable this if you have a VMware NFSv3 client.
-	    VMware NFSv3 client has a max limit of 56 byte file handles!
-	    Defaults to false. */
-	bool short_file_handle;
-	/** How long the server will trust information it got by
-	    calling getgroups() when "Manage_Gids = TRUE" is
-	    used in a export entry. */
-	time_t manage_gids_expiration;
-	/** Path to the directory containing server specific
-	    modules.  In particular, this is where FSALs live. */
-	char *ganesha_modules_loc;
-	/** Frequency of dbus health heartbeat in ms. Set to 0 to disable */
-	uint32_t heartbeat_freq;
-	/** Whether to use device major/minor for fsid. Defaults to false. */
-	bool fsid_device;
-	/** Whether to use Pseudo (true) or Path (false) for NFS v3 and 9P
-	    mounts. */
-	bool mount_path_pseudo;
+typedef struct nfs_core_param
+{
+    /** An array of port numbers, one for each protocol.  Set by
+        the NFS_Port, MNT_Port, NLM_Port, and Rquota_Port options. */
+    uint16_t port[P_COUNT];
+    /** The address to which to bind for our listening port.
+        IPv4 only, for now.  Set by the Bind_Addr option. */
+    struct sockaddr_storage bind_addr;
+    /** An array of RPC program numbers.  The correct values, by
+        default, they may be set to incorrect values with the
+        NFS_Program, MNT_Program, NLM_Program, and
+        Rquota_Program.  It is debatable whether this is a
+        worthwhile option to have. */
+    uint32_t program[P_COUNT];
+    /** Number of worker threads.  Set to NB_WORKER_DEFAULT by
+        default and changed with the Nb_Worker option. */
+    uint32_t nb_worker;
+    /** For NFSv3, whether to drop rather than reply to requests
+        yielding I/O errors.  True by default and settable with
+        Drop_IO_Errors.  As this generally results in client
+        retry, this seems like a dubious idea. */
+    bool drop_io_errors;
+    /** For NFSv3, whether to drop rather than reply to requests
+        yielding invalid argument errors.  False by default and
+        settable with Drop_Inval_Errors.  As this generally
+        results in client retry, this seems like a really awful
+        idea. */
+    bool drop_inval_errors;
+    /** For NFSv3, whether to drop rather than reply to requests
+        yielding delay errors.  True by default and settable with
+        Drop_Delay_Errors.  As this generally results in client
+        retry and there is no NFSERR_DELAY, this seems like an
+        excellent idea. */
+    bool drop_delay_errors;
+    /** Total number of requests to allow into the dispatcher at
+        once.  Defaults to 5000 and settable by Dispatch_Max_Reqs */
+    uint32_t dispatch_max_reqs;
+    /** Number of requests to allow into the dispatcher from one
+        specific transport.  Defaults to 512 and settable by
+        Dispatch_Max_Reqs_Xprt. */
+    uint32_t dispatch_max_reqs_xprt;
+
+    /** Parameters controlling the Duplicate Request Cache.  */
+    struct
+    {
+        /** Whether to disable the DRC entirely.  Defaults to
+            false, settable by DRC_Disabled. */
+        bool disabled;
+
+        /* Parameters controlling TCP specific DRC behavior. */
+        struct
+        {
+            /** Number of partitions in the tree for the
+                TCP DRC.  Defaults to DRC_TCP_NPART,
+                settable by DRC_TCP_Npart. */
+            uint32_t npart;
+            /** Maximum number of requests in a transport's
+                DRC.  Defaults to DRC_TCP_SIZE and
+                settable by DRC_TCP_Size. */
+            uint32_t size;
+            /** Number of entries in the O(1) front-end
+                cache to a TCP Duplicate Request
+                Cache.  Defaults to DRC_TCP_CACHESZ and
+                settable by DRC_TCP_Cachesz. */
+            uint32_t cachesz;
+            /** High water mark for a TCP connection's
+                DRC at which to start retiring entries if
+                we can.  Defaults to DRC_TCP_HIWAT and
+                settable by DRC_TCP_Hiwat. */
+            uint32_t hiwat;
+            /** Number of partitions in the recycle
+                tree that holds per-connection DRCs so
+                they can be used on reconnection (or
+                recycled.)  Defaults to
+                DRC_TCP_RECYCLE_NPART and settable by
+                DRC_TCP_Recycle_Npart. */
+            uint32_t recycle_npart;
+            /** How long to wait (in seconds) before
+                freeing the DRC of a disconnected
+                client.  Defaults to
+                DRC_TCP_RECYCLE_EXPIRE_S and settable by
+                DRC_TCP_Recycle_Expire_S. */
+            uint32_t recycle_expire_s;
+            /** Whether to use a checksum to match
+                requests as well as the XID.  Defaults to
+                DRC_TCP_CHECKSUM and settable by
+                DRC_TCP_Checksum. */
+            bool checksum;
+        } tcp;
+
+        /** Parameters controlling UDP DRC behavior. */
+        struct
+        {
+            /** Number of partitions in the tree for the
+                UDP DRC.  Defaults to DRC_UDP_NPART,
+                settable by DRC_UDP_Npart. */
+            uint32_t npart;
+            /** Maximum number of requests in the UDP DRC.
+                Defaults to DRC_UDP_SIZE and settable by
+                DRC_UDP_Size. */
+            uint32_t size;
+            /** Number of entries in the O(1) front-end
+                cache to the UDP Duplicate Request
+                Cache.  Defaults to DRC_UDP_CACHESZ and
+                settable by DRC_UDP_Cachesz. */
+            uint32_t cachesz;
+            /** High water mark for the UDP DRC at which
+                to start retiring entries if we can.
+                Defaults to DRC_UDP_HIWAT and settable by
+                DRC_UDP_Hiwat. */
+            uint32_t hiwat;
+            /** Whether to use a checksum to match
+                requests as well as the XID.  Defaults to
+                DRC_UDP_CHECKSUM and settable by
+                DRC_UDP_Checksum. */
+            bool checksum;
+        } udp;
+    } drc;
+
+    /** Parameters affecting the relation with TIRPC.   */
+    struct
+    {
+        /** Debug flags for TIRPC.  Defaults to
+            TIRPC_DEBUG_FLAGS and settable by
+            RPC_Debug_Flags. */
+        uint32_t debug_flags;
+        /** Maximum number of connections for TIRPC.
+            Defaults to 1024 and settable by
+            RPC_Max_Connections. */
+        uint32_t max_connections;
+        /** Size of RPC send buffer.  Defaults to
+            NFS_DEFAULT_SEND_BUFFER_SIZE and is settable by
+            MaxRPCSendBufferSize.  */
+        uint32_t max_send_buffer_size;
+        /** Size of RPC receive buffer.  Defaults to
+            NFS_DEFAULT_RECV_BUFFER_SIZE and is settable by
+            MaxRPCRecvBufferSize. */
+        uint32_t max_recv_buffer_size;
+        /** Idle timeout (seconds).  Defaults to 5m */
+        uint32_t idle_timeout_s;
+        /** TIRPC ioq max simultaneous io threads.  Defaults to
+            200 and settable by RPC_Ioq_ThrdMax. */
+        uint32_t ioq_thrd_max;
+
+        struct
+        {
+            /** Partitions in GSS ctx cache table (default 13). */
+            uint32_t ctx_hash_partitions;
+            /** Max GSS contexts in cache (i.e.,
+             * max GSS clients, default 16K)
+             */
+            uint32_t max_ctx;
+            /** Max entries to expire in one idle
+             * check (default 200)
+             */
+            uint32_t max_gc;
+        } gss;
+    } rpc;
+
+    /** How long (in seconds) to let unused decoder threads wait before
+        exiting.  Settable with Decoder_Fridge_Expiration_Delay. */
+    time_t decoder_fridge_expiration_delay;
+    /** How long (in seconds) to wait for the decoder fridge to
+        accept a task before erroring.  Settable with
+        Decoder_Fridge_Block_Timeout. */
+    time_t decoder_fridge_block_timeout;
+    /** Polling interval for blocked lock polling thread. */
+    time_t blocked_lock_poller_interval;
+    /** Protocols to support.  Should probably be renamed.
+        Defaults to CORE_OPTION_ALL_VERS and is settable with
+        NFS_Protocols (as a comma-separated list of 3 and 4.) */
+    unsigned int core_options;
+    /** Whether to use the supplied name rather than the IP
+        address in NSM operations.  Settable with
+        NSM_Use_Caller_Name. */
+    bool nsm_use_caller_name;
+    /** Whether this Ganesha is part of a cluster of Ganeshas.
+        This is somewhat vendor-specific and should probably be
+        moved somewhere else.  Settable with Clustered. */
+    bool clustered;
+    /** Whether to support the Network Lock Manager protocol.
+        Defaults to true and is settable with Enable_NLM. */
+    bool enable_NLM;
+    /** Whether to support the Remote Quota protocol.  Defaults
+        to true and is settable with Enable_RQUOTA. */
+    bool enable_RQUOTA;
+    /** Whether to use fast stats.  Defaults to false. */
+    bool enable_FASTSTATS;
+    /** Whether tcp sockets should use SO_KEEPALIVE */
+    bool enable_tcp_keepalive;
+    /** Maximum number of TCP probes before dropping the connection */
+    uint32_t tcp_keepcnt;
+    /** Idle time before TCP starts to send keepalive probes */
+    uint32_t tcp_keepidle;
+    /** Time between each keepalive probe */
+    uint32_t tcp_keepintvl;
+    /** Whether to use short NFS file handle to accommodate VMware
+        NFS client. Enable this if you have a VMware NFSv3 client.
+        VMware NFSv3 client has a max limit of 56 byte file handles!
+        Defaults to false. */
+    bool short_file_handle;
+    /** How long the server will trust information it got by
+        calling getgroups() when "Manage_Gids = TRUE" is
+        used in a export entry. */
+    time_t manage_gids_expiration;
+    /** Path to the directory containing server specific
+        modules.  In particular, this is where FSALs live. */
+    char* ganesha_modules_loc;
+    /** Frequency of dbus health heartbeat in ms. Set to 0 to disable */
+    uint32_t heartbeat_freq;
+    /** Whether to use device major/minor for fsid. Defaults to false. */
+    bool fsid_device;
+    /** Whether to use Pseudo (true) or Path (false) for NFS v3 and 9P
+        mounts. */
+    bool mount_path_pseudo;
 } nfs_core_parameter_t;
 
 /** @} */
@@ -435,61 +453,63 @@ typedef struct nfs_core_param {
  */
 #define RECOVERY_BACKEND_DEFAULT "fs"
 
-typedef struct nfs_version4_parameter {
-	/** Whether to disable the NFSv4 grace period.  Defaults to
-	    false and settable with Graceless. */
-	bool graceless;
-	/** The NFSv4 lease lifetime.  Defaults to
-	    LEASE_LIFETIME_DEFAULT and is settable with
-	    Lease_Lifetime. */
-	uint32_t lease_lifetime;
-	/** The NFS grace period.  Defaults to
-	    GRACE_PERIOD_DEFAULT and is settable with Grace_Period. */
-	uint32_t grace_period;
-	/** Domain to use if we aren't using the nfsidmap.  Defaults
-	    to DOMAINNAME_DEFAULT and is set with DomainName. */
-	char *domainname;
-	/** Path to the idmap configuration file.  Defaults to
-	    IDMAPCONF_DEFAULT, settable with IdMapConf */
-	char *idmapconf;
-	/** Whether to use local password (PAM, on Linux) rather than
-	    nfsidmap.  Defaults to false if nfsidmap support is
-	    compiled in and true if it isn't.  Settable with
-	    UseGetpwnam. */
-	bool use_getpwnam;
-	/** Whether to allow bare numeric IDs in NFSv4 owner and
-	    group identifiers.  Defaults to true and is settable with
-	    Allow_Numeric_Owners. */
-	bool allow_numeric_owners;
-	/** Whether to ONLY use bare numeric IDs in NFSv4 owner and
-	    group identifiers.  Defaults to false and is settable with
-	    Only_Numeric_Owners. NB., this is permissible for a server
-	    implementation (RFC 5661). */
-	bool only_numeric_owners;
-	/** Whether to allow delegations. Defaults to false and settable
-	    with Delegations */
-	bool allow_delegations;
-	/** Delay after which server will retry a recall in case of failures */
-	uint32_t deleg_recall_retry_delay;
-	/** Whether this a pNFS MDS server. Defaults to false */
-	bool pnfs_mds;
-	/** Whether this a pNFS DS server. Defaults to false */
-	bool pnfs_ds;
-	/** Recovery backend */
-	char *recovery_backend;
+typedef struct nfs_version4_parameter
+{
+    /** Whether to disable the NFSv4 grace period.  Defaults to
+        false and settable with Graceless. */
+    bool graceless;
+    /** The NFSv4 lease lifetime.  Defaults to
+        LEASE_LIFETIME_DEFAULT and is settable with
+        Lease_Lifetime. */
+    uint32_t lease_lifetime;
+    /** The NFS grace period.  Defaults to
+        GRACE_PERIOD_DEFAULT and is settable with Grace_Period. */
+    uint32_t grace_period;
+    /** Domain to use if we aren't using the nfsidmap.  Defaults
+        to DOMAINNAME_DEFAULT and is set with DomainName. */
+    char* domainname;
+    /** Path to the idmap configuration file.  Defaults to
+        IDMAPCONF_DEFAULT, settable with IdMapConf */
+    char* idmapconf;
+    /** Whether to use local password (PAM, on Linux) rather than
+        nfsidmap.  Defaults to false if nfsidmap support is
+        compiled in and true if it isn't.  Settable with
+        UseGetpwnam. */
+    bool use_getpwnam;
+    /** Whether to allow bare numeric IDs in NFSv4 owner and
+        group identifiers.  Defaults to true and is settable with
+        Allow_Numeric_Owners. */
+    bool allow_numeric_owners;
+    /** Whether to ONLY use bare numeric IDs in NFSv4 owner and
+        group identifiers.  Defaults to false and is settable with
+        Only_Numeric_Owners. NB., this is permissible for a server
+        implementation (RFC 5661). */
+    bool only_numeric_owners;
+    /** Whether to allow delegations. Defaults to false and settable
+        with Delegations */
+    bool allow_delegations;
+    /** Delay after which server will retry a recall in case of failures */
+    uint32_t deleg_recall_retry_delay;
+    /** Whether this a pNFS MDS server. Defaults to false */
+    bool pnfs_mds;
+    /** Whether this a pNFS DS server. Defaults to false */
+    bool pnfs_ds;
+    /** Recovery backend */
+    char* recovery_backend;
 } nfs_version4_parameter_t;
 
 /** @} */
 
-typedef struct nfs_param {
-	/** NFS Core parameters, settable in the NFS_Core_Param
-	    stanza. */
-	nfs_core_parameter_t core_param;
-	/** NFSv4 specific parameters, settable in the NFSv4 stanza. */
-	nfs_version4_parameter_t nfsv4_param;
+typedef struct nfs_param
+{
+    /** NFS Core parameters, settable in the NFS_Core_Param
+        stanza. */
+    nfs_core_parameter_t core_param;
+    /** NFSv4 specific parameters, settable in the NFSv4 stanza. */
+    nfs_version4_parameter_t nfsv4_param;
 #ifdef _HAVE_GSSAPI
-	/** kerberos configuration.  Settable in the NFS_KRB5 stanza. */
-	nfs_krb5_parameter_t krb5_param;
+    /** kerberos configuration.  Settable in the NFS_KRB5 stanza. */
+    nfs_krb5_parameter_t krb5_param;
 #endif				/* _HAVE_GSSAPI */
 } nfs_parameter_t;
 

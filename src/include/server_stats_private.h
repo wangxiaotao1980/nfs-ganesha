@@ -1,4 +1,3 @@
-
 /*
  * vim:noexpandtab:shiftwidth=8:tabstop=8:
  *
@@ -51,7 +50,7 @@
 /* Forward references to build pointers to private defs.
  */
 
-struct nfsv3_stats;
+struct nfsv3_stats;   
 struct mnt_stats;
 struct nlmv4_stats;
 struct rquota_stats;
@@ -61,16 +60,17 @@ struct nfsv42_stats;
 struct deleg_stats;
 struct _9p_stats;
 
-struct gsh_stats {
-	struct nfsv3_stats *nfsv3;
-	struct mnt_stats *mnt;
-	struct nlmv4_stats *nlm4;
-	struct rquota_stats *rquota;
-	struct nfsv40_stats *nfsv40;
-	struct nfsv41_stats *nfsv41;
-	struct nfsv41_stats *nfsv42;
-	struct deleg_stats *deleg;
-	struct _9p_stats *_9p;
+struct gsh_stats
+{
+    struct nfsv3_stats* nfsv3;
+    struct mnt_stats* mnt;
+    struct nlmv4_stats* nlm4;
+    struct rquota_stats* rquota;
+    struct nfsv40_stats* nfsv40;
+    struct nfsv41_stats* nfsv41;
+    struct nfsv41_stats* nfsv42;
+    struct deleg_stats* deleg;
+    struct _9p_stats* _9p;
 };
 
 /**
@@ -87,9 +87,10 @@ struct gsh_stats {
  *       key).
  */
 
-struct server_stats {
-	struct gsh_stats st;
-	struct gsh_client client;	/* must be last element! */
+struct server_stats
+{
+    struct gsh_stats st;
+    struct gsh_client client; /* must be last element! */
 };
 
 /**
@@ -99,9 +100,10 @@ struct server_stats {
  * server_stats.c
  */
 
-struct export_stats {
-	struct gsh_stats st;
-	struct gsh_export export;
+struct export_stats
+{
+    struct gsh_stats st;
+    struct gsh_export export;
 };
 
 #ifdef USE_DBUS
@@ -111,135 +113,135 @@ struct export_stats {
 
 #define EXPORT_ID_ARG    \
 {                        \
-	.name = "exp_id",\
-	.type = "q",     \
-	.direction = "in"\
+    .name = "exp_id",\
+    .type = "q",     \
+    .direction = "in"\
 }
 
 #define TIMESTAMP_REPLY    \
 {                          \
-	.name = "time",    \
-	.type = "(tt)",    \
-	.direction = "out" \
+    .name = "time",    \
+    .type = "(tt)",    \
+    .direction = "out" \
 }
 
 #define IOSTATS_REPLY      \
 {                          \
-	.name = "read",    \
-	.type = "(tttttt)",\
-	.direction = "out" \
+    .name = "read",    \
+    .type = "(tttttt)",\
+    .direction = "out" \
 },                         \
 {                          \
-	.name = "write",   \
-	.type = "(tttttt)",\
-	.direction = "out" \
+    .name = "write",   \
+    .type = "(tttttt)",\
+    .direction = "out" \
 }
 
 #define TRANSPORT_REPLY    \
 {                          \
-	.name = "rx_bytes",\
-	.type = "(t)",     \
-	.direction = "out" \
+    .name = "rx_bytes",\
+    .type = "(t)",     \
+    .direction = "out" \
 },                         \
 {                          \
-	.name = "rx_pkt",  \
-	.type = "(t)",     \
-	.direction = "out" \
+    .name = "rx_pkt",  \
+    .type = "(t)",     \
+    .direction = "out" \
 },                         \
 {                          \
-	.name = "rx_err",  \
-	.type = "(t)",     \
-	.direction = "out" \
+    .name = "rx_err",  \
+    .type = "(t)",     \
+    .direction = "out" \
 },                         \
 {                          \
-	.name = "tx_bytes",\
-	.type = "(t)",     \
-	.direction = "out" \
+    .name = "tx_bytes",\
+    .type = "(t)",     \
+    .direction = "out" \
 },                         \
 {                          \
-	.name = "tx_pkt",  \
-	.type = "(t)",     \
-	.direction = "out" \
+    .name = "tx_pkt",  \
+    .type = "(t)",     \
+    .direction = "out" \
 },                         \
 {                          \
-	.name = "tx_err",  \
-	.type = "(t)",     \
-	.direction = "out" \
+    .name = "tx_err",  \
+    .type = "(t)",     \
+    .direction = "out" \
 }
 
 #define TOTAL_OPS_REPLY      \
 {                            \
-	.name = "op",        \
-	.type = "a(st)",     \
-	.direction = "out"   \
+    .name = "op",        \
+    .type = "a(st)",     \
+    .direction = "out"   \
 }
 
 #define FSAL_OPS_REPLY      \
 {                            \
-	.name = "op",        \
-	.type = "(qa(sq(tdtt)))",     \
-	.direction = "out"   \
+    .name = "op",        \
+    .type = "(qa(sq(tdtt)))",     \
+    .direction = "out"   \
 }
 
 #define LAYOUTS_REPLY		\
 {				\
-	.name = "getdevinfo",	\
-	.type = "(ttt)",	\
-	.direction = "out"	\
+    .name = "getdevinfo",	\
+    .type = "(ttt)",	\
+    .direction = "out"	\
 },				\
 {				\
-	.name = "layout_get",	\
-	.type = "(ttt)",	\
-	.direction = "out"	\
+    .name = "layout_get",	\
+    .type = "(ttt)",	\
+    .direction = "out"	\
 },				\
 {				\
-	.name = "layout_commit",\
-	.type = "(ttt)",	\
-	.direction = "out"	\
+    .name = "layout_commit",\
+    .type = "(ttt)",	\
+    .direction = "out"	\
 },				\
 {				\
-	.name = "layout_return",\
-	.type = "(ttt)",	\
-	.direction = "out"	\
+    .name = "layout_return",\
+    .type = "(ttt)",	\
+    .direction = "out"	\
 },				\
 {				\
-	.name = "layout_recall",\
-	.type = "(ttt)",	\
-	.direction = "out"	\
+    .name = "layout_recall",\
+    .type = "(ttt)",	\
+    .direction = "out"	\
 }
 
 /* number of delegations, number of sent recalls,
  * number of failed recalls, number of revokes */
 #define DELEG_REPLY		       \
 {				       \
-	.name = "delegation_stats",    \
-	.type = "(tttt)",	       \
-	.direction = "out"	       \
+    .name = "delegation_stats",    \
+    .type = "(tttt)",	       \
+    .direction = "out"	       \
 }
 
 #define NFS_ALL_IO_REPLY_ARRAY_TYPE "(qs(tttttt)(tttttt))"
 #define NFS_ALL_IO_REPLY			\
 {						\
-	.name = "iostats",			\
-	.type = DBUS_TYPE_ARRAY_AS_STRING	\
-		NFS_ALL_IO_REPLY_ARRAY_TYPE,	\
-	.direction = "out"			\
+    .name = "iostats",			\
+    .type = DBUS_TYPE_ARRAY_AS_STRING	\
+        NFS_ALL_IO_REPLY_ARRAY_TYPE,	\
+    .direction = "out"			\
 }						\
 
 
 #define _9P_OP_ARG           \
 {                            \
-	.name = "_9p_opname",\
-	.type = "s",         \
-	.direction = "in"    \
+    .name = "_9p_opname",\
+    .type = "s",         \
+    .direction = "in"    \
 }
 
 
 #define OP_STATS_REPLY      \
 {                           \
-	.name = "op_stats", \
-	.type = "(tt)",     \
-	.direction = "out"  \
+    .name = "op_stats", \
+    .type = "(tt)",     \
+    .direction = "out"  \
 }
 
 
@@ -252,9 +254,9 @@ void server_dbus_v42_iostats(struct nfsv41_stats *v42p, DBusMessageIter *iter);
 void server_dbus_v42_layouts(struct nfsv41_stats *v42p, DBusMessageIter *iter);
 void server_dbus_delegations(struct deleg_stats *ds, DBusMessageIter *iter);
 void server_dbus_all_iostats(struct export_stats *export_statistics,
-			     DBusMessageIter *iter);
+                 DBusMessageIter *iter);
 void server_dbus_total_ops(struct export_stats *export_st,
-			   DBusMessageIter *iter);
+               DBusMessageIter *iter);
 void global_dbus_total_ops(DBusMessageIter *iter);
 void server_dbus_fast_ops(DBusMessageIter *iter);
 void mdcache_dbus_show(DBusMessageIter *iter);
@@ -269,14 +271,14 @@ void server_dbus_9p_transstats(struct _9p_stats *_9pp, DBusMessageIter *iter);
 void server_dbus_9p_tcpstats(struct _9p_stats *_9pp, DBusMessageIter *iter);
 void server_dbus_9p_rdmastats(struct _9p_stats *_9pp, DBusMessageIter *iter);
 void server_dbus_9p_opstats(struct _9p_stats *_9pp, u8 opcode,
-			    DBusMessageIter *iter);
+                DBusMessageIter *iter);
 #endif
 
 extern struct glist_head fsal_list;
 
 #endif				/* USE_DBUS */
 
-void server_stats_free(struct gsh_stats *statsp);
+void server_stats_free(struct gsh_stats* statsp);
 
 void server_stats_init(void);
 

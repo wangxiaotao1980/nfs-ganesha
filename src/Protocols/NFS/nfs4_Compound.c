@@ -42,6 +42,7 @@
 #include "../../include/server_stats.h"
 #include "../../include/export_mgr.h"
 #include "../../include/nfs_creds.h"
+#include "../../include/nfs_file_handle.h"
 
 #ifdef USE_LTTNG
 #include "gsh_lttng/nfs_rpc.h"

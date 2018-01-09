@@ -4,9 +4,10 @@
  *          defined in fsal_internal.c.
  */
 
-#include  "fsal.h"
-#include "FSAL/common_functions.h"
-#include "nfs4.h"
+#include "sal.h"
+#include "SAL/common_functions.h"
+#include "fs4.h"
+#include "../../include/fsal.h"
 
 #ifndef FSAL_INTERNAL_H
 #define FSAL_INTERNAL_H

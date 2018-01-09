@@ -21,12 +21,12 @@
  *
  */
 
-/**
- * @file mdcache_int.h
- * @brief MDCache main internal interface.
- *
- * Main data structures and profiles for MDCache
- */
+ /**
+  * @file mdcache_int.h
+  * @brief MDCache main internal interface.
+  *
+  * Main data structures and profiles for MDCache
+  */
 
 #ifndef MDCACHE_H
 #define MDCACHE_H
@@ -35,15 +35,15 @@
 #include "fsal_types.h"
 #include "fsal_up.h"
 
-/* Initialize MDCACHE stacked on top of the current export. For PSEUDO */
-fsal_status_t mdcache_export_init(const struct fsal_up_vector *super_up_ops,
-				  const struct fsal_up_vector **mdc_up_ops);
+  /* Initialize MDCACHE stacked on top of the current export. For PSEUDO */
+fsal_status_t mdcache_export_init(const struct fsal_up_vector* super_up_ops,
+                                  const struct fsal_up_vector** mdc_up_ops);
 
 /* Create an MDCACHE instance at the top of a stack */
 fsal_status_t
-mdcache_fsal_create_export(struct fsal_module *fsal_hdl, void *parse_node,
-			   struct config_error_type *err_type,
-			   const struct fsal_up_vector *super_up_ops);
+mdcache_fsal_create_export(struct fsal_module* fsal_hdl, void* parse_node,
+                           struct config_error_type* err_type,
+                           const struct fsal_up_vector* super_up_ops);
 
 /* Clean up on init failure */
 void mdcache_export_uninit(void);
@@ -53,7 +53,7 @@ fsal_status_t mdcache_pkginit(void);
 
 /* Parse mdcache config */
 int mdcache_set_param_from_conf(config_file_t parse_tree,
-				struct config_error_type *err_type);
+                                struct config_error_type* err_type);
 
 bool mdcache_lru_fds_available(void);
 void init_fds_limit(void);

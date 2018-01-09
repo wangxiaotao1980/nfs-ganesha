@@ -22,15 +22,15 @@
  * ---------------------------------------
  */
 
-/**
- * @defgroup FSAL File-System Abstraction Layer
- * @{
- */
+ /**
+  * @defgroup FSAL File-System Abstraction Layer
+  * @{
+  */
 
-/**
- * @file fsal_convert.h
- * @brief FSAL conversion function.
- */
+  /**
+   * @file fsal_convert.h
+   * @brief FSAL conversion function.
+   */
 
 #ifndef FSAL_CONVERT_H
 #define FSAL_CONVERT_H
@@ -42,16 +42,16 @@
 
 #include "fsal_types.h"
 
-/* convert error codes */
+   /* convert error codes */
 int posix2fsal_error(int posix_errorcode);
 
 static inline fsal_status_t posix2fsal_status(int posix_errorcode)
 {
-	return fsalstat(posix2fsal_error(posix_errorcode), posix_errorcode);
+    return fsalstat(posix2fsal_error(posix_errorcode), posix_errorcode);
 }
 
 /** converts an fsal open flag to a POSIX open flag. */
-void fsal2posix_openflags(fsal_openflags_t fsal_flags, int *p_posix_flags);
+void fsal2posix_openflags(fsal_openflags_t fsal_flags, int* p_posix_flags);
 
 /** converts an FSAL permission test to a Posix permission test. */
 int fsal2posix_testperm(fsal_accessflags_t testperm);
@@ -60,10 +60,10 @@ int fsal2posix_testperm(fsal_accessflags_t testperm);
  * Converts POSIX attributes (struct stat) to FSAL attributes
  * (fsal_attrib_list_t)
  */
-void posix2fsal_attributes(const struct stat *buffstat,
-			   struct attrlist *fsalattr_out);
-void posix2fsal_attributes_all(const struct stat *buffstat,
-			       struct attrlist *fsalattr_out);
+void posix2fsal_attributes(const struct stat* buffstat,
+                           struct attrlist* fsalattr_out);
+void posix2fsal_attributes_all(const struct stat* buffstat,
+                               struct attrlist* fsalattr_out);
 
 /** converts FSAL access mode to unix mode. */
 mode_t fsal2unix_mode(uint32_t fsal_mode);
@@ -77,18 +77,18 @@ object_file_type_t posix2fsal_type(mode_t posix_type_in);
 /** converts posix fsid to fsal FSid. */
 fsal_fsid_t posix2fsal_fsid(dev_t posix_devid);
 
- /**
- * posix2fsal_time:
- * Convert POSIX time structure (time_t)
- * to FSAL time type (now struct timespec).
- */
+/**
+* posix2fsal_time:
+* Convert POSIX time structure (time_t)
+* to FSAL time type (now struct timespec).
+*/
 static inline struct timespec posix2fsal_time(time_t tsec, time_t nsec)
 {
-	struct timespec ts = {.tv_sec = tsec, .tv_nsec = nsec};
-	return ts;
+    struct timespec ts = { .tv_sec = tsec,.tv_nsec = nsec };
+    return ts;
 }
 
-const char *object_file_type_to_str(object_file_type_t type);
+const char* object_file_type_to_str(object_file_type_t type);
 
 #define my_high32m(a) ((unsigned int)(a >> 32))
 #define my_low32m(a) ((unsigned int)a)

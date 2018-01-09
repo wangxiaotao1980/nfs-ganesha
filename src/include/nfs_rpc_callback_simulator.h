@@ -30,8 +30,8 @@
 #ifndef _NFS_RPC_CALLBACK_SIMULATOR_H
 #define _NFS_RPC_CALLBACK_SIMULATOR_H
 
-#include "config.h"
-#include "log.h"
+//#include "config.h"
+//#include "log.h"
 
 /**
  *

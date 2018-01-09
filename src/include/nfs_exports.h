@@ -24,20 +24,20 @@
  * ---------------------------------------
  */
 
-/**
- * @file nfs_exports.h
- * @brief Prototypes for what's related to export list management.
- * @note  not called by other header files.
- *
- * This file contains prototypes and data structures for related to
- * export list management and the NFSv4 compound.
- */
+ /**
+  * @file nfs_exports.h
+  * @brief Prototypes for what's related to export list management.
+  * @note  not called by other header files.
+  *
+  * This file contains prototypes and data structures for related to
+  * export list management and the NFSv4 compound.
+  */
 
 #ifndef NFS_EXPORTS_H
 #define NFS_EXPORTS_H
 
 #include <sys/types.h>
-#include <sys/param.h>
+  //#include <sys/param.h>
 
 #ifdef _HAVE_GSSAPI
 #include <gssapi/gssapi.h>
@@ -47,7 +47,7 @@
 #include "config_parsing.h"
 #include "export_mgr.h"
 #include "fsal_types.h"
-#include "log.h"
+//#include "log.h"
 
 /*
  * Export List structure
@@ -60,51 +60,60 @@
 #define INPUT_SIZE 1024
 
 
-typedef enum exportlist_client_type__ {
-	PROTO_CLIENT = 0,
-	HOSTIF_CLIENT = 1,
-	NETWORK_CLIENT = 2,
-	NETGROUP_CLIENT = 3,
-	WILDCARDHOST_CLIENT = 4,
-	GSSPRINCIPAL_CLIENT = 5,
-	HOSTIF_CLIENT_V6 = 6,
-	MATCH_ANY_CLIENT = 7,
-	BAD_CLIENT = 8
+typedef enum exportlist_client_type__
+{
+    PROTO_CLIENT = 0,
+    HOSTIF_CLIENT = 1,
+    NETWORK_CLIENT = 2,
+    NETGROUP_CLIENT = 3,
+    WILDCARDHOST_CLIENT = 4,
+    GSSPRINCIPAL_CLIENT = 5,
+    HOSTIF_CLIENT_V6 = 6,
+    MATCH_ANY_CLIENT = 7,
+    BAD_CLIENT = 8
 } exportlist_client_type_t;
 
-struct global_export_perms {
-	struct export_perms def;
-	struct export_perms conf;
-	/** Expiration time interval in seconds for attributes.  Settable with
-	    Attr_Expiration_Time. */
-	int32_t  expire_time_attr;
+struct global_export_perms
+{
+    struct export_perms def;
+    struct export_perms conf;
+    /** Expiration time interval in seconds for attributes.  Settable with
+        Attr_Expiration_Time. */
+    int32_t  expire_time_attr;
 };
 
 #define GSS_DEFINE_LEN_TEMP 255
 
-typedef struct exportlist_client_entry__ {
-	struct glist_head cle_list;
-	exportlist_client_type_t type;
-	union {
-		union {
-			uint32_t clientaddr; /* wrong! fix to be struct */
-			struct in6_addr clientaddr6;
-		} hostif;
-		struct {
-			unsigned int netaddr;
-			unsigned int netmask;
-		} network;
-		struct {
-			char *netgroupname;
-		} netgroup;
-		struct {
-			char *wildcard;
-		} wildcard;
-		struct {
-			char *princname;
-		} gssprinc;
-	} client;
-	struct export_perms client_perms;	/*< Available mount options */
+typedef struct exportlist_client_entry__
+{
+    struct glist_head cle_list;
+    exportlist_client_type_t type;
+    union
+    {
+        union
+        {
+            uint32_t clientaddr; /* wrong! fix to be struct */
+            struct in6_addr clientaddr6;
+        } hostif;
+        struct
+        {
+            unsigned int netaddr;
+            unsigned int netmask;
+        } network;
+        struct
+        {
+            char *netgroupname;
+        } netgroup;
+        struct
+        {
+            char *wildcard;
+        } wildcard;
+        struct
+        {
+            char *princname;
+        } gssprinc;
+    } client;
+    struct export_perms client_perms;	/*< Available mount options */
 } exportlist_client_entry_t;
 
 /* Constants for export options masks */
@@ -116,79 +125,79 @@ typedef struct exportlist_client_entry__ {
 #define EXPORT_OPTION_TRUST_READIR_NEGATIVE_CACHE 0x00000008
 #define EXPORT_OPTION_MAXREAD_SET 0x00000010 /* Set if MaxRead was specified */
 #define EXPORT_OPTION_MAXWRITE_SET 0x00000020 /* Set if MaxWrite was
-						 specified */
+                         specified */
 #define EXPORT_OPTION_PREFREAD_SET 0x00000040 /* Set if PrefRead was
-						 specified */
+                         specified */
 #define EXPORT_OPTION_PREFWRITE_SET 0x00000080 /* Set if PrefWrite was
-						  specified */
+                          specified */
 
-/* Constants for export permissions masks */
+                          /* Constants for export permissions masks */
 #define EXPORT_OPTION_ROOT 0	/*< Allow root access as root uid */
 #define EXPORT_OPTION_ROOT_ID_SQUASH 0x00000001	/*< Disallow root access as
-						    root uid but preserve
-						    alt_groups */
+                            root uid but preserve
+                            alt_groups */
 #define EXPORT_OPTION_ROOT_SQUASH 0x00000002	/*< Disallow root access as root
-						    uid */
+                            uid */
 #define EXPORT_OPTION_ALL_ANONYMOUS 0x00000004	/*< all users are squashed to
-						    anonymous */
+                            anonymous */
 #define EXPORT_OPTION_SQUASH_TYPES (EXPORT_OPTION_ROOT_SQUASH | \
-				    EXPORT_OPTION_ROOT_ID_SQUASH | \
-				    EXPORT_OPTION_ALL_ANONYMOUS) /*< All squash
-								   types */
+                    EXPORT_OPTION_ROOT_ID_SQUASH | \
+                    EXPORT_OPTION_ALL_ANONYMOUS) /*< All squash
+                                   types */
 #define EXPORT_OPTION_ANON_UID_SET 0x00000008	/*< Indicates Anon_uid was set
-						 */
+                         */
 #define EXPORT_OPTION_ANON_GID_SET 0x00000010	/*< Indicates Anon_gid was set
-						 */
+                         */
 #define EXPORT_OPTION_READ_ACCESS 0x00000020	/*< R_Access= option specified
-						 */
+                         */
 #define EXPORT_OPTION_WRITE_ACCESS 0x00000040	/*< RW_Access= option specified
-						 */
+                         */
 #define EXPORT_OPTION_RW_ACCESS       (EXPORT_OPTION_READ_ACCESS     | \
-				       EXPORT_OPTION_WRITE_ACCESS)
+                       EXPORT_OPTION_WRITE_ACCESS)
 #define EXPORT_OPTION_MD_READ_ACCESS 0x00000080	/*< MDONLY_RO_Access= option
-						    specified */
+                            specified */
 #define EXPORT_OPTION_MD_WRITE_ACCESS 0x00000100 /*< MDONLY_Access= option
-						     specified */
+                             specified */
 #define EXPORT_OPTION_MD_ACCESS       (EXPORT_OPTION_MD_WRITE_ACCESS | \
-				       EXPORT_OPTION_MD_READ_ACCESS)
+                       EXPORT_OPTION_MD_READ_ACCESS)
 #define EXPORT_OPTION_MODIFY_ACCESS   (EXPORT_OPTION_WRITE_ACCESS | \
-				       EXPORT_OPTION_MD_WRITE_ACCESS)
+                       EXPORT_OPTION_MD_WRITE_ACCESS)
 #define EXPORT_OPTION_ACCESS_MASK     (EXPORT_OPTION_READ_ACCESS     | \
-				       EXPORT_OPTION_WRITE_ACCESS    | \
-				       EXPORT_OPTION_MD_WRITE_ACCESS | \
-				       EXPORT_OPTION_MD_READ_ACCESS)
+                       EXPORT_OPTION_WRITE_ACCESS    | \
+                       EXPORT_OPTION_MD_WRITE_ACCESS | \
+                       EXPORT_OPTION_MD_READ_ACCESS)
 
 #define EXPORT_OPTION_NO_ACCESS 0	/*< Access_Type = None */
 
 #define EXPORT_OPTION_PRIVILEGED_PORT 0x00000200	/*< Clients use only
-							   privileged port */
+                               privileged port */
 
 #define EXPORT_OPTION_COMMIT 0x00000400		/*< NFS Commit writes */
 #define EXPORT_OPTION_DISABLE_ACL   0x00000800	/*< ACL is disabled */
 
-/* @todo BUGAZOMEU : Mettre au carre les flags des flavors */
+                               /* @todo BUGAZOMEU : Mettre au carre les flags des flavors */
 
 #define EXPORT_OPTION_AUTH_NONE 0x00001000	/*< Auth None authentication
-						   supported  */
+                           supported  */
 #define EXPORT_OPTION_AUTH_UNIX 0x00002000	/*< Auth Unix authentication
-						   supported  */
+                           supported  */
 
 #define EXPORT_OPTION_RPCSEC_GSS_NONE 0x00004000	/*< RPCSEC_GSS_NONE
-							    supported */
+                                supported */
 #define EXPORT_OPTION_RPCSEC_GSS_INTG 0x00008000	/*< RPCSEC_GSS
-							    INTEGRITY supported
-							 */
+                                INTEGRITY supported
+                             */
 #define EXPORT_OPTION_RPCSEC_GSS_PRIV 0x00010000	/*< RPCSEC_GSS PRIVACY
-							    supported	    */
+                                supported	    */
 #define EXPORT_OPTION_AUTH_TYPES      (EXPORT_OPTION_AUTH_NONE	     | \
-				       EXPORT_OPTION_AUTH_UNIX	     | \
-				       EXPORT_OPTION_RPCSEC_GSS_NONE | \
-				       EXPORT_OPTION_RPCSEC_GSS_INTG | \
-				       EXPORT_OPTION_RPCSEC_GSS_PRIV)
+                       EXPORT_OPTION_AUTH_UNIX	     | \
+                       EXPORT_OPTION_RPCSEC_GSS_NONE | \
+                       EXPORT_OPTION_RPCSEC_GSS_INTG | \
+                       EXPORT_OPTION_RPCSEC_GSS_PRIV)
 #define EXPORT_OPTION_AUTH_DEFAULTS   (EXPORT_OPTION_AUTH_NONE	     | \
-				       EXPORT_OPTION_AUTH_UNIX)
+                       EXPORT_OPTION_AUTH_UNIX)
 
-/* Protocol flags */
+                                /* Protocol flags */
 #define EXPORT_OPTION_NFSV3 0x00100000	/*< NFSv3 operations are supported */
 #define EXPORT_OPTION_NFSV4 0x00200000	/*< NFSv4 operations are supported */
 #define EXPORT_OPTION_9P 0x00400000	/*< 9P operations are supported */
@@ -196,27 +205,27 @@ typedef struct exportlist_client_entry__ {
 #define EXPORT_OPTION_TCP 0x02000000	/*< TCP protocol is supported */
 #define EXPORT_OPTION_RDMA 0x04000000	/*< RDMA protocol is supported */
 #define EXPORT_OPTION_PROTOCOLS	      (EXPORT_OPTION_NFSV3	     | \
-				       EXPORT_OPTION_NFSV4	     | \
-				       EXPORT_OPTION_9P)
+                       EXPORT_OPTION_NFSV4	     | \
+                       EXPORT_OPTION_9P)
 #define EXPORT_OPTION_PROTO_DEFAULTS  (EXPORT_OPTION_NFSV3	     | \
-				       EXPORT_OPTION_NFSV4)
+                       EXPORT_OPTION_NFSV4)
 #define EXPORT_OPTION_TRANSPORTS      (EXPORT_OPTION_UDP	     | \
-				       EXPORT_OPTION_TCP	     | \
-				       EXPORT_OPTION_RDMA)
+                       EXPORT_OPTION_TCP	     | \
+                       EXPORT_OPTION_RDMA)
 #define EXPORT_OPTION_XPORT_DEFAULTS  (EXPORT_OPTION_UDP	     | \
-				       EXPORT_OPTION_TCP)
+                       EXPORT_OPTION_TCP)
 
 #define EXPORT_OPTION_READ_DELEG 0x10000000	/*< Enable read delegations */
 #define EXPORT_OPTION_WRITE_DELEG 0x20000000	/*< Using write delegations */
 #define EXPORT_OPTION_DELEGATIONS (EXPORT_OPTION_READ_DELEG | \
-				   EXPORT_OPTION_WRITE_DELEG)
+                   EXPORT_OPTION_WRITE_DELEG)
 #define EXPORT_OPTION_NO_DELEGATIONS 0
 
 #define EXPORT_OPTION_MANAGE_GIDS 0x40000000 /*< Do not trust
-						    altgrp in AUTH_SYS creds */
+                            altgrp in AUTH_SYS creds */
 #define EXPORT_OPTION_NO_READDIR_PLUS 0x80000000 /*< Disallow readdir plus */
 
-/* Export list related functions */
+                            /* Export list related functions */
 uid_t get_anonymous_uid(void);
 gid_t get_anonymous_gid(void);
 void export_check_access(void);
@@ -226,16 +235,16 @@ bool export_check_security(struct svc_req *req);
 int init_export_root(struct gsh_export *exp);
 
 fsal_status_t nfs_export_get_root_entry(struct gsh_export *exp,
-					struct fsal_obj_handle **obj);
+                                        struct fsal_obj_handle **obj);
 void unexport(struct gsh_export *exp);
 /* XXX */
 /*void kill_export_root_entry(cache_entry_t *entry);*/
 /*void kill_export_junction_entry(cache_entry_t *entry);*/
 
 int ReadExports(config_file_t in_config,
-		struct config_error_type *err_type);
+                struct config_error_type *err_type);
 int reread_exports(config_file_t in_config,
-		struct config_error_type *err_type);
+                   struct config_error_type *err_type);
 void free_export_resources(struct gsh_export *exp);
 
 void exports_pkginit(void);
