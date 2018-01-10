@@ -25,7 +25,7 @@
 #include "../../include/fsal.h"
 #include "../../include/fsal_types.h"
 #include "../../include/fsal_api.h"
-//#include "../../include/fsal_up.h"
+ //#include "../../include/fsal_up.h"
 #include "../../include/gsh_rpc.h"
 //#include "../../include/FSAL/fsal_commonlib.h"
 //#include "../../include/FSAL/fsal_config.h"
@@ -151,13 +151,13 @@ static nfsstat4 pnfs_layout_get(struct fsal_obj_handle* obj_pub,
                                 struct fsal_layoutget_res* res)
 {
     struct glusterfs_export* export =
-    container_of(req_ctx->fsal_export,
-                struct glusterfs_export, export)
-    ;
+        container_of(req_ctx->fsal_export,
+                     struct glusterfs_export, export)
+        ;
 
     struct glusterfs_handle* handle =
-    container_of(obj_pub, struct glusterfs_handle, handle)
-    ;
+        container_of(obj_pub, struct glusterfs_handle, handle)
+        ;
     int rc = 0;
     /* Structure containing the storage parameters of the file within
        glusterfs. */
@@ -173,10 +173,10 @@ static nfsstat4 pnfs_layout_get(struct fsal_obj_handle* obj_pub,
     struct glfs_ds_wire ds_wire;
 
     /* Supports only LAYOUT4_NFSV4_1_FILES layouts */
-    if(arg->type != LAYOUT4_NFSV4_1_FILES)
+    if (arg->type != LAYOUT4_NFSV4_1_FILES)
     {
         LogMajor(COMPONENT_PNFS, "Unsupported layout type: %x",
-            arg->type);
+                 arg->type);
 
         return NFS4ERR_UNKNOWN_LAYOUTTYPE;
     }
@@ -202,7 +202,7 @@ static nfsstat4 pnfs_layout_get(struct fsal_obj_handle* obj_pub,
     rc = glfs_get_ds_addr(export->gl_fs->fs, handle->glhandle,
                           &deviceid.device_id4);
 
-    if(rc)
+    if (rc)
     {
         LogMajor(COMPONENT_PNFS, "Invalid hostname for DS");
         return NFS4ERR_INVAL;
@@ -216,14 +216,14 @@ static nfsstat4 pnfs_layout_get(struct fsal_obj_handle* obj_pub,
      */
 
 
-    /* We return exactly one wirehandle, filling in the necessary
-     * information for the DS server to speak to the gluster bricks
-     * For this, wire handle stores gfid and file layout
-     */
+     /* We return exactly one wirehandle, filling in the necessary
+      * information for the DS server to speak to the gluster bricks
+      * For this, wire handle stores gfid and file layout
+      */
 
     rc = glfs_h_extract_handle(handle->glhandle, ds_wire.gfid,
                                GFAPI_HANDLE_LENGTH);
-    if(rc < 0)
+    if (rc < 0)
     {
         rc = errno;
         LogMajor(COMPONENT_PNFS, "Invalid glfs_object");
@@ -236,10 +236,10 @@ static nfsstat4 pnfs_layout_get(struct fsal_obj_handle* obj_pub,
     nfs_status = FSAL_encode_file_layout(loc_body, &deviceid, util, 0, 0,
                                          &req_ctx->ctx_export->export_id, 1,
                                          &ds_desc);
-    if(nfs_status)
+    if (nfs_status)
     {
         LogMajor(COMPONENT_PNFS,
-            "Failed to encode nfsv4_1_file_layout.");
+                 "Failed to encode nfsv4_1_file_layout.");
         goto out;
     }
 
@@ -272,10 +272,10 @@ static nfsstat4 pnfs_layout_return(struct fsal_obj_handle* obj_pub,
                                    XDR* lrf_body,
                                    const struct fsal_layoutreturn_arg* arg)
 {
-    if(arg->lo_type != LAYOUT4_NFSV4_1_FILES)
+    if (arg->lo_type != LAYOUT4_NFSV4_1_FILES)
     {
         LogDebug(COMPONENT_PNFS, "Unsupported layout type: %x",
-            arg->lo_type);
+                 arg->lo_type);
         return NFS4ERR_UNKNOWN_LAYOUTTYPE;
     }
 
@@ -309,21 +309,21 @@ static nfsstat4 pnfs_layout_commit(struct fsal_obj_handle* obj_pub,
     /* new stat to set time and size */
     struct stat new_stat;
     struct glusterfs_export* glfs_export =
-    container_of(op_ctx->fsal_export,
-                struct glusterfs_export, export)
-    ;
+        container_of(op_ctx->fsal_export,
+                     struct glusterfs_export, export)
+        ;
     struct glusterfs_handle* objhandle =
-    container_of(obj_pub, struct glusterfs_handle, handle)
-    ;
+        container_of(obj_pub, struct glusterfs_handle, handle)
+        ;
     /* Mask to determine exactly what gets set */
     int mask = 0;
     int rc = 0;
     fsal_status_t status = { ERR_FSAL_NO_ERROR, 0 };
 
-    if(arg->type != LAYOUT4_NFSV4_1_FILES)
+    if (arg->type != LAYOUT4_NFSV4_1_FILES)
     {
         LogMajor(COMPONENT_PNFS, "Unsupported layout type: %x",
-            arg->type);
+                 arg->type);
         return NFS4ERR_UNKNOWN_LAYOUTTYPE;
     }
 
@@ -331,17 +331,17 @@ static nfsstat4 pnfs_layout_commit(struct fsal_obj_handle* obj_pub,
     rc = glfs_h_stat(glfs_export->gl_fs->fs,
                      objhandle->glhandle, &old_stat);
 
-    if(rc != 0)
+    if (rc != 0)
     {
         LogMajor(COMPONENT_PNFS,
-            "Commit layout, stat unsucessfully completed");
+                 "Commit layout, stat unsucessfully completed");
         return NFS4ERR_INVAL;
     }
     memset(&new_stat, 0, sizeof(struct stat));
     /* Set the new attributes for the file if it is changed */
-    if(arg->new_offset)
+    if (arg->new_offset)
     {
-        if(old_stat.st_size < arg->last_write + 1)
+        if (old_stat.st_size < arg->last_write + 1)
         {
             new_stat.st_size = arg->last_write + 1;
             res->size_supplied = true;
@@ -349,16 +349,16 @@ static nfsstat4 pnfs_layout_commit(struct fsal_obj_handle* obj_pub,
             rc = glfs_h_truncate(glfs_export->gl_fs->fs,
                                  objhandle->glhandle,
                                  res->new_size);
-            if(rc != 0)
+            if (rc != 0)
             {
                 LogMajor(COMPONENT_PNFS,
-                    "Commit layout, size changed unsucessfully completed");
+                         "Commit layout, size changed unsucessfully completed");
                 return NFS4ERR_INVAL;
             }
         }
     }
 
-    if((arg->time_changed) &&
+    if ((arg->time_changed) &&
         (arg->new_time.seconds > old_stat.st_mtime))
         new_stat.st_mtime = arg->new_time.seconds;
     else
@@ -368,9 +368,9 @@ static nfsstat4 pnfs_layout_commit(struct fsal_obj_handle* obj_pub,
     mask |= GLAPI_SET_ATTR_MTIME;
 
     SET_GLUSTER_CREDS(glfs_export, &op_ctx->creds->caller_uid,
-        &op_ctx->creds->caller_gid,
-        op_ctx->creds->caller_glen,
-        op_ctx->creds->caller_garray);
+                      &op_ctx->creds->caller_gid,
+                      op_ctx->creds->caller_glen,
+                      op_ctx->creds->caller_garray);
 
     rc = glfs_h_setattrs(glfs_export->gl_fs->fs,
                          objhandle->glhandle,
@@ -379,10 +379,10 @@ static nfsstat4 pnfs_layout_commit(struct fsal_obj_handle* obj_pub,
 
     SET_GLUSTER_CREDS(glfs_export, NULL, NULL, 0, NULL);
 
-    if((rc != 0) || (status.major != ERR_FSAL_NO_ERROR))
+    if ((rc != 0) || (status.major != ERR_FSAL_NO_ERROR))
     {
         LogMajor(COMPONENT_PNFS,
-            "commit layout, setattr unsucessflly completed");
+                 "commit layout, setattr unsucessflly completed");
         return NFS4ERR_INVAL;
     }
     res->commit_done = true;
@@ -417,33 +417,33 @@ nfsstat4 getdeviceinfo(struct fsal_module* fsal_hdl,
     uint32_t stripe_ind = 0;
 
 
-    if(type != LAYOUT4_NFSV4_1_FILES)
+    if (type != LAYOUT4_NFSV4_1_FILES)
     {
         LogMajor(COMPONENT_PNFS, "Unsupported layout type: %x", type);
         return NFS4ERR_UNKNOWN_LAYOUTTYPE;
     }
 
-    if(!inline_xdr_u_int32_t(da_addr_body, &stripes))
+    if (!inline_xdr_u_int32_t(da_addr_body, &stripes))
     {
         LogMajor(COMPONENT_PNFS,
-            "Failed to encode length of stripe_indices array: %"
-            PRIu32 ".", stripes);
+                 "Failed to encode length of stripe_indices array: %"
+                 PRIu32 ".", stripes);
         return NFS4ERR_SERVERFAULT;
     }
 
-    if(!inline_xdr_u_int32_t(da_addr_body, &stripe_ind))
+    if (!inline_xdr_u_int32_t(da_addr_body, &stripe_ind))
     {
         LogMajor(COMPONENT_PNFS,
-            "Failed to encode ds for the stripe:  %"
-            PRIu32 ".", stripe_ind);
+                 "Failed to encode ds for the stripe:  %"
+                 PRIu32 ".", stripe_ind);
         return NFS4ERR_SERVERFAULT;
     }
 
-    if(!inline_xdr_u_int32_t(da_addr_body, &num_ds))
+    if (!inline_xdr_u_int32_t(da_addr_body, &num_ds))
     {
         LogMajor(COMPONENT_PNFS,
-            "Failed to encode length of multipath_ds_list array: %u",
-            num_ds);
+                 "Failed to encode length of multipath_ds_list array: %u",
+                 num_ds);
         return NFS4ERR_SERVERFAULT;
     }
     memset(&host, 0, sizeof(fsal_multipath_member_t));
@@ -452,10 +452,10 @@ nfsstat4 getdeviceinfo(struct fsal_module* fsal_hdl,
     host.proto = 6;
     nfs_status = FSAL_encode_v4_multipath(da_addr_body, 1, &host);
 
-    if(nfs_status != NFS4_OK)
+    if (nfs_status != NFS4_OK)
     {
         LogMajor(COMPONENT_PNFS,
-            "Failed to encode data server address");
+                 "Failed to encode data server address");
         return nfs_status;
     }
 
@@ -485,7 +485,7 @@ nfsstat4 getdeviceinfo(struct fsal_module* fsal_hdl,
  */
 static nfsstat4 getdevicelist(struct fsal_export* export_pub, layouttype4 type,
                               void* opaque,
-                              bool (*cb)(void* opaque, const uint64_t id),
+                              bool(*cb)(void* opaque, const uint64_t id),
                               struct fsal_getdevicelist_res* res)
 {
     res->eof = true;
@@ -527,30 +527,30 @@ uint32_t superfasthash(const unsigned char* data, uint32_t len)
     len >>= 2;
 
     /* Main loop */
-    for(; len > 0; len--)
+    for (; len > 0; len--)
     {
         hash += get16bits(data);
-        tmp = (get16bits(data+2) << 11) ^ hash;
+        tmp = (get16bits(data + 2) << 11) ^ hash;
         hash = (hash << 16) ^ tmp;
         data += 2 * sizeof(uint16_t);
         hash += hash >> 11;
     }
 
     /* Handle end cases */
-    switch(rem)
+    switch (rem)
     {
-        case 3 :
+        case 3:
             hash += get16bits(data);
             hash ^= hash << 16;
             hash ^= data[sizeof(uint16_t)] << 18;
             hash += hash >> 11;
             break;
-        case 2 :
+        case 2:
             hash += get16bits(data);
             hash ^= hash << 11;
             hash += hash >> 17;
             break;
-        case 1 :
+        case 1:
             hash += *data;
             hash ^= hash << 10;
             hash += hash >> 1;
@@ -599,11 +599,11 @@ select_ds(struct glfs_object* object, char* pathinfo, char* hostname,
     /* counts no of available ds */
     int no_of_ds = 0;
 
-    if(!pathinfo || !size)
+    if (!pathinfo || !size)
         goto out;
 
     tmp = pathinfo;
-    while((tmp = strstr(tmp, posix)))
+    while ((tmp = strstr(tmp, posix)))
     {
         ds_path_info[no_of_ds] = tmp;
         tmp++;
@@ -612,39 +612,39 @@ select_ds(struct glfs_object* object, char* pathinfo, char* hostname,
          * If no of dses reaches maxmium count, then
          * perform load balance on current list
          */
-        if(no_of_ds == MAX_DS_COUNT)
+        if (no_of_ds == MAX_DS_COUNT)
             break;
     }
 
-    if(no_of_ds == 0)
+    if (no_of_ds == 0)
     {
         LogCrit(COMPONENT_PNFS,
-            "Invalid pathinfo(%s) attribute found while selecting DS.",
-            pathinfo);
+                "Invalid pathinfo(%s) attribute found while selecting DS.",
+                pathinfo);
         goto out;
     }
 
     ret = glfs_h_extract_handle(object, key, GFAPI_HANDLE_LENGTH);
-    if(ret < 0)
+    if (ret < 0)
         goto out;
 
     /* Pick DS from the list */
-    if(no_of_ds == 1)
+    if (no_of_ds == 1)
         ret = 0;
     else
         ret = superfasthash(key, 16) % no_of_ds;
 
     start = strchr(ds_path_info[ret], ':');
-    if(!start)
+    if (!start)
         goto out;
     end = start + 1;
     end = strchr(end, ':');
-    if(start == end)
+    if (start == end)
         goto out;
 
     memset(hostname, 0, size);
 
-    while(++start != end)
+    while (++start != end)
         hostname[i++] = *start;
     ret = 0;
     LogDebug(COMPONENT_PNFS, "hostname %s", hostname);
@@ -681,7 +681,7 @@ glfs_get_ds_addr(struct glfs* fs, struct glfs_object* object, uint32_t* ds_addr)
     LogDebug(COMPONENT_PNFS, "pathinfo %s", pathinfo);
 
     ret = select_ds(object, pathinfo, hostname, sizeof(hostname));
-    if(ret)
+    if (ret)
     {
         LogMajor(COMPONENT_PNFS, "No DS found");
         goto out;
@@ -691,7 +691,7 @@ glfs_get_ds_addr(struct glfs* fs, struct glfs_object* object, uint32_t* ds_addr)
     hints.ai_family = AF_INET;
     ret = getaddrinfo(hostname, NULL, &hints, &res);
     /* we trust getaddrinfo() never returns EAI_AGAIN! */
-    if(ret != 0)
+    if (ret != 0)
     {
         *ds_addr = 0;
         LogMajor(COMPONENT_PNFS, "error %s\n", gai_strerror(ret));

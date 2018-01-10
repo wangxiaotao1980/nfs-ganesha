@@ -39,12 +39,12 @@
 #include <stdint.h>
 #include <sys/statvfs.h>
 #include <cephfs/libcephfs.h>
-#include "abstract_mem.h"
-#include "fsal.h"
-#include "fsal_types.h"
-#include "fsal_api.h"
-#include "FSAL/fsal_commonlib.h"
-#include "FSAL/fsal_config.h"
+#include "../../include/abstract_mem.h"
+#include "../../include/fsal.h"
+#include "../../include/fsal_types.h"
+#include "../../include/fsal_api.h"
+#include "../../include/FSAL/fsal_commonlib.h"
+#include "../../include/FSAL/fsal_config.h"
 #include "internal.h"
 #include "statx_compat.h"
 

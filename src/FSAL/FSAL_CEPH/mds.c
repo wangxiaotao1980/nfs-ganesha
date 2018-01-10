@@ -20,17 +20,20 @@
  * -------------
  */
 
-#include "gsh_rpc.h"
-#include <cephfs/libcephfs.h>
-#include "fsal.h"
-#include "fsal_types.h"
-#include "fsal_api.h"
-#include "fsal_up.h"
-#include "pnfs_utils.h"
+#include "../../include/gsh_rpc.h"
+#include "../../include/fsal.h"
+#include "../../include/fsal_types.h"
+#include "../../include/fsal_api.h"
+#include "../../include/fsal_up.h"
+#include "../../include/pnfs_utils.h"
+#include "../../include/nfs_exports.h"
+#include "../../include/FSAL/fsal_commonlib.h"
+
 #include "internal.h"
-#include "nfs_exports.h"
-#include "FSAL/fsal_commonlib.h"
 #include "statx_compat.h"
+
+
+#include <cephfs/libcephfs.h>
 
 #ifdef CEPH_PNFS
 

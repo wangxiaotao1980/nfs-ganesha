@@ -23,66 +23,64 @@
  * -------------
  */
 
-/* export_panfs.c
- * XFS Sub-FSAL export object
- */
+ /* export_panfs.c
+  * XFS Sub-FSAL export object
+  */
 
-#include "config.h"
-#include "fsal_types.h"
-#include "fsal_api.h"
+#include "../../../include/config.h"
+#include "../../../include/fsal_types.h"
+#include "../../../include/fsal_api.h"
 #include "../vfs_methods.h"
 #include "../subfsal.h"
 
-/* Export */
+  /* Export */
 
 static struct config_item export_params[] = {
-	CONF_ITEM_NOOP("name"),
-	CONFIG_EOL
+    CONF_ITEM_NOOP("name"),
+    CONFIG_EOL
 };
 
 static struct config_block export_param_block = {
-	.dbus_interface_name = "org.ganesha.nfsd.config.fsal.xfs-export%d",
-	.blk_desc.name = "FSAL",
-	.blk_desc.type = CONFIG_BLOCK,
-	.blk_desc.u.blk.init = noop_conf_init,
-	.blk_desc.u.blk.params = export_params,
-	.blk_desc.u.blk.commit = noop_conf_commit
+    .dbus_interface_name = "org.ganesha.nfsd.config.fsal.xfs-export%d",
+    .blk_desc.name = "FSAL",
+    .blk_desc.type = CONFIG_BLOCK,
+    .blk_desc.u.blk.init = noop_conf_init,
+    .blk_desc.u.blk.params = export_params,
+    .blk_desc.u.blk.commit = noop_conf_commit
 };
 
-struct config_block *vfs_sub_export_param = &export_param_block;
+struct config_block* vfs_sub_export_param = &export_param_block;
 
 /* Handle syscalls */
 
-void vfs_sub_fini(struct vfs_fsal_export *myself)
+void vfs_sub_fini(struct vfs_fsal_export* myself)
+{}
+
+void vfs_sub_init_export_ops(struct vfs_fsal_export* myself,
+                             const char* export_path)
+{}
+
+int vfs_sub_init_export(struct vfs_fsal_export* myself)
 {
+    return 0;
 }
 
-void vfs_sub_init_export_ops(struct vfs_fsal_export *myself,
-			      const char *export_path)
+struct vfs_fsal_obj_handle* vfs_sub_alloc_handle(void)
 {
+    struct vfs_fsal_obj_handle* hdl;
+
+    hdl = gsh_calloc(1,
+        (sizeof(struct vfs_fsal_obj_handle) +
+                     sizeof(vfs_file_handle_t)));
+
+    hdl->handle = (vfs_file_handle_t *)&hdl[1];
+
+    return hdl;
 }
 
-int vfs_sub_init_export(struct vfs_fsal_export *myself)
+int vfs_sub_init_handle(struct vfs_fsal_export* myself,
+                        struct vfs_fsal_obj_handle* hdl,
+                        const char* path)
 {
-	return 0;
-}
-
-struct vfs_fsal_obj_handle *vfs_sub_alloc_handle(void)
-{
-	struct vfs_fsal_obj_handle *hdl;
-
-	hdl = gsh_calloc(1,
-			 (sizeof(struct vfs_fsal_obj_handle) +
-			  sizeof(vfs_file_handle_t)));
-
-	hdl->handle = (vfs_file_handle_t *) &hdl[1];
-
-	return hdl;
-}
-
-int vfs_sub_init_handle(struct vfs_fsal_export *myself,
-		struct vfs_fsal_obj_handle *hdl,
-		const char *path)
-{
-	return 0;
+    return 0;
 }

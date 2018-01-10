@@ -21,13 +21,16 @@
  * 02110-1301 USA
  *
  */
+
+#include "../../include/common_utils.h"
+#include "../../include/fsal_types.h"
+
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>
 #include <string.h>
 #include <cephfs/libcephfs.h>
-#include "common_utils.h"
-#include "fsal_types.h"
+
 #include "statx_compat.h"
 
 static void posix2ceph_statx(struct stat *st, struct ceph_statx *stx)

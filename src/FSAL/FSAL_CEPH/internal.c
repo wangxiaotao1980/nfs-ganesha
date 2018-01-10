@@ -36,12 +36,13 @@
  * exposed as part of the API.
  */
 
+#include "../../include/fsal_types.h"
+#include "../../include/fsal_convert.h"
+#include "../../include/FSAL/fsal_commonlib.h"
+//#include "../../include/fsal.h"
+
 #include <sys/stat.h>
 #include <cephfs/libcephfs.h>
-#include "fsal_types.h"
-#include "fsal.h"
-#include "fsal_convert.h"
-#include "FSAL/fsal_commonlib.h"
 #include "statx_compat.h"
 #include "internal.h"
 

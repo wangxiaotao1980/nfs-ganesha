@@ -2723,32 +2723,32 @@ static void handle_to_key(struct fsal_obj_handle *obj_hdl,
 
 void handle_ops_init(struct fsal_obj_ops *ops)
 {
-    ops->release = handle_release;
-    ops->merge = glusterfs_merge;
-    ops->lookup = lookup;
-    ops->create = create;
-    ops->mkdir = makedir;
-    ops->mknode = makenode;
-    ops->readdir = read_dirents;
-    ops->symlink = makesymlink;
-    ops->readlink = readsymlink;
-    ops->getattrs = getattrs;
-    ops->link = linkfile;
-    ops->rename = renamefile;
-    ops->unlink = file_unlink;
+    ops->release        = handle_release;
+    ops->merge          = glusterfs_merge;
+    ops->lookup         = lookup;
+    ops->create         = create;
+    ops->mkdir          = makedir;
+    ops->mknode         = makenode;
+    ops->readdir        = read_dirents;
+    ops->symlink        = makesymlink;
+    ops->readlink       = readsymlink;
+    ops->getattrs       = getattrs;
+    ops->link           = linkfile;
+    ops->rename         = renamefile;
+    ops->unlink         = file_unlink;
     ops->handle_to_wire = handle_to_wire;
-    ops->handle_to_key = handle_to_key;
-    ops->close = file_close;
+    ops->handle_to_key  = handle_to_key;
+    ops->close          = file_close;
 
     /* fops with OpenTracking (multi-fd) enabled */
-    ops->open2 = glusterfs_open2;
-    ops->reopen2 = glusterfs_reopen2;
-    ops->read2 = glusterfs_read2;
-    ops->write2 = glusterfs_write2;
-    ops->commit2 = glusterfs_commit2;
-    ops->lock_op2 = glusterfs_lock_op2;
-    ops->setattr2 = glusterfs_setattr2;
-    ops->close2 = glusterfs_close2;
+    ops->open2          = glusterfs_open2;
+    ops->reopen2        = glusterfs_reopen2;
+    ops->read2          = glusterfs_read2;
+    ops->write2         = glusterfs_write2;
+    ops->commit2        = glusterfs_commit2;
+    ops->lock_op2       = glusterfs_lock_op2;
+    ops->setattr2       = glusterfs_setattr2;
+    ops->close2         = glusterfs_close2;
 
 
     /* pNFS related ops */

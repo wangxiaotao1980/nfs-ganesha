@@ -30,9 +30,20 @@
  * VFS Super-FSAL export object
  */
 
-#include "config.h"
+#include "../../include/config.h"
+#include "../../include/fsal.h"
+#include "../../include/gsh_list.h"
+#include "../../include/fsal_convert.h"
+#include "../../include/config_parsing.h"
+#include "../../include/FSAL/fsal_commonlib.h"
+#include "../../include/FSAL/fsal_config.h"
+#include "../../include/fsal_handle_syscalls.h"
+#include "../../include/nfs_exports.h"
+#include "../../include/export_mgr.h"
+#include "vfs_methods.h"
+#include "subfsal.h"
 
-#include "fsal.h"
+
 #include <libgen.h>		/* used for 'dirname' */
 #include <pthread.h>
 #include <string.h>
@@ -41,16 +52,7 @@
 #include <os/mntent.h>
 #include <os/quota.h>
 #include <dlfcn.h>
-#include "gsh_list.h"
-#include "fsal_convert.h"
-#include "config_parsing.h"
-#include "FSAL/fsal_commonlib.h"
-#include "FSAL/fsal_config.h"
-#include "fsal_handle_syscalls.h"
-#include "vfs_methods.h"
-#include "nfs_exports.h"
-#include "export_mgr.h"
-#include "subfsal.h"
+
 
 /* helpers to/from other VFS objects
  */

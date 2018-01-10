@@ -51,24 +51,24 @@
 
 static void release(struct fsal_export *export_pub)
 {
-	/* The private, expanded export */
-	struct rgw_export *export =
-	    container_of(export_pub, struct rgw_export, export);
+    /* The private, expanded export */
+    struct rgw_export *export =
+        container_of(export_pub, struct rgw_export, export);
 
-	int rc = rgw_umount(export->rgw_fs, RGW_UMOUNT_FLAG_NONE);
-	assert(rc == 0);
-	deconstruct_handle(export->root);
-	export->rgw_fs = NULL;
-	export->root = NULL;
+    int rc = rgw_umount(export->rgw_fs, RGW_UMOUNT_FLAG_NONE);
+    assert(rc == 0);
+    deconstruct_handle(export->root);
+    export->rgw_fs = NULL;
+    export->root = NULL;
 
-	fsal_detach_export(export->export.fsal, &export->export.exports);
-	free_export_ops(&export->export);
+    fsal_detach_export(export->export.fsal, &export->export.exports);
+    free_export_ops(&export->export);
 
-	/* XXX we might need/want an rgw_unmount here, but presently,
-	 * it wouldn't do anything */
+    /* XXX we might need/want an rgw_unmount here, but presently,
+     * it wouldn't do anything */
 
-	gsh_free(export);
-	export = NULL;
+    gsh_free(export);
+    export = NULL;
 }
 
 /**
@@ -85,76 +85,76 @@ static void release(struct fsal_export *export_pub)
  */
 
 static fsal_status_t lookup_path(struct fsal_export *export_pub,
-				 const char *path,
-				 struct fsal_obj_handle **pub_handle,
-				 struct attrlist *attrs_out)
+                 const char *path,
+                 struct fsal_obj_handle **pub_handle,
+                 struct attrlist *attrs_out)
 {
-	/* The 'private' full export handle */
-	struct rgw_export *export =
-	    container_of(export_pub, struct rgw_export, export);
-	/* The 'private' full object handle */
-	struct rgw_handle *handle = NULL;
-	/* FSAL status structure */
-	fsal_status_t status = { ERR_FSAL_NO_ERROR, 0 };
-	/* The buffer in which to store stat info */
-	struct stat st;
-	/* Return code from Ceph */
-	int rc;
-	/* temp filehandle */
-	struct rgw_file_handle *rgw_fh;
+    /* The 'private' full export handle */
+    struct rgw_export *export =
+        container_of(export_pub, struct rgw_export, export);
+    /* The 'private' full object handle */
+    struct rgw_handle *handle = NULL;
+    /* FSAL status structure */
+    fsal_status_t status = { ERR_FSAL_NO_ERROR, 0 };
+    /* The buffer in which to store stat info */
+    struct stat st;
+    /* Return code from Ceph */
+    int rc;
+    /* temp filehandle */
+    struct rgw_file_handle *rgw_fh;
 
-	*pub_handle = NULL;
+    *pub_handle = NULL;
 
-	/* should only be "/" or "bucket_name" */
-	if (strcmp(path, "/") && strchr(path, '/')) {
-		status.major = ERR_FSAL_INVAL;
-		return status;
-	}
+    /* should only be "/" or "bucket_name" */
+    if (strcmp(path, "/") && strchr(path, '/')) {
+        status.major = ERR_FSAL_INVAL;
+        return status;
+    }
 
 #ifndef USE_FSAL_RGW_MOUNT2
-	/* XXX in FSAL_CEPH, the equivalent code here looks for path == "/"
-	 * and returns the root handle with no extra ref.  That seems
-	 * suspicious, so let RGW figure it out (hopefully, that does not
-	 * leak refs)
-	 */
-	rc = rgw_lookup(export->rgw_fs, export->rgw_fs->root_fh, path,
-			&rgw_fh, RGW_LOOKUP_FLAG_NONE);
-	if (rc < 0)
-		return rgw2fsal_error(rc);
+    /* XXX in FSAL_CEPH, the equivalent code here looks for path == "/"
+     * and returns the root handle with no extra ref.  That seems
+     * suspicious, so let RGW figure it out (hopefully, that does not
+     * leak refs)
+     */
+    rc = rgw_lookup(export->rgw_fs, export->rgw_fs->root_fh, path,
+            &rgw_fh, RGW_LOOKUP_FLAG_NONE);
+    if (rc < 0)
+        return rgw2fsal_error(rc);
 #else
-	rgw_fh = export->rgw_fs->root_fh;
+    rgw_fh = export->rgw_fs->root_fh;
 #endif
 
-	/* get Unix attrs */
-	rc = rgw_getattr(export->rgw_fs, export->rgw_fs->root_fh,
-			 &st, RGW_GETATTR_FLAG_NONE);
-	if (rc < 0) {
-		return rgw2fsal_error(rc);
-	}
+    /* get Unix attrs */
+    rc = rgw_getattr(export->rgw_fs, export->rgw_fs->root_fh,
+             &st, RGW_GETATTR_FLAG_NONE);
+    if (rc < 0) {
+        return rgw2fsal_error(rc);
+    }
 
 #ifndef USE_FSAL_RGW_MOUNT2
-	struct stat st_root;
+    struct stat st_root;
 
-	/* fixup export fsid */
-	rc = rgw_getattr(export->rgw_fs, export->rgw_fs->root_fh,
-			 &st_root, RGW_GETATTR_FLAG_NONE);
-	if (rc < 0) {
-		return rgw2fsal_error(rc);
-	}
-	st.st_dev = st_root.st_dev;
+    /* fixup export fsid */
+    rc = rgw_getattr(export->rgw_fs, export->rgw_fs->root_fh,
+             &st_root, RGW_GETATTR_FLAG_NONE);
+    if (rc < 0) {
+        return rgw2fsal_error(rc);
+    }
+    st.st_dev = st_root.st_dev;
 #endif
-	rc = construct_handle(export, rgw_fh, &st, &handle);
-	if (rc < 0) {
-		return rgw2fsal_error(rc);
-	}
+    rc = construct_handle(export, rgw_fh, &st, &handle);
+    if (rc < 0) {
+        return rgw2fsal_error(rc);
+    }
 
-	*pub_handle = &handle->handle;
+    *pub_handle = &handle->handle;
 
-	if (attrs_out != NULL) {
-		posix2fsal_attributes_all(&st, attrs_out);
-	}
+    if (attrs_out != NULL) {
+        posix2fsal_attributes_all(&st, attrs_out);
+    }
 
-	return status;
+    return status;
 }
 
 /**
@@ -167,22 +167,22 @@ static fsal_status_t lookup_path(struct fsal_export *export_pub,
  * @param[out] fh_desc  Address and length of key
  */
 static fsal_status_t wire_to_host(struct fsal_export *exp_hdl,
-				  fsal_digesttype_t in_type,
-				  struct gsh_buffdesc *fh_desc,
-				  int flags)
+                  fsal_digesttype_t in_type,
+                  struct gsh_buffdesc *fh_desc,
+                  int flags)
 {
-	switch (in_type) {
-		/* Digested Handles */
-	case FSAL_DIGEST_NFSV3:
-	case FSAL_DIGEST_NFSV4:
-		/* wire handles */
-		fh_desc->len = sizeof(struct rgw_fh_hk);
-		break;
-	default:
-		return fsalstat(ERR_FSAL_SERVERFAULT, 0);
-	}
+    switch (in_type) {
+        /* Digested Handles */
+    case FSAL_DIGEST_NFSV3:
+    case FSAL_DIGEST_NFSV4:
+        /* wire handles */
+        fh_desc->len = sizeof(struct rgw_fh_hk);
+        break;
+    default:
+        return fsalstat(ERR_FSAL_SERVERFAULT, 0);
+    }
 
-	return fsalstat(ERR_FSAL_NO_ERROR, 0);
+    return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
 
 /**
@@ -198,57 +198,57 @@ static fsal_status_t wire_to_host(struct fsal_export *exp_hdl,
  * @return FSAL status.
  */
 static fsal_status_t create_handle(struct fsal_export *export_pub,
-				   struct gsh_buffdesc *desc,
-				   struct fsal_obj_handle **pub_handle,
-				   struct attrlist *attrs_out)
+                   struct gsh_buffdesc *desc,
+                   struct fsal_obj_handle **pub_handle,
+                   struct attrlist *attrs_out)
 {
-	/* Full 'private' export structure */
-	struct rgw_export *export =
-	    container_of(export_pub, struct rgw_export, export);
-	/* FSAL status to return */
-	fsal_status_t status = { ERR_FSAL_NO_ERROR, 0 };
-	/* The FSAL specific portion of the handle received by the
-	   client */
-	int rc = 0;
-	/* Stat buffer */
-	struct stat st;
-	/* Handle to be created */
-	struct rgw_handle *handle = NULL;
-	/* RGW fh hash key */
-	struct rgw_fh_hk fh_hk;
-	/* RGW file handle instance */
-	struct rgw_file_handle *rgw_fh;
+    /* Full 'private' export structure */
+    struct rgw_export *export =
+        container_of(export_pub, struct rgw_export, export);
+    /* FSAL status to return */
+    fsal_status_t status = { ERR_FSAL_NO_ERROR, 0 };
+    /* The FSAL specific portion of the handle received by the
+       client */
+    int rc = 0;
+    /* Stat buffer */
+    struct stat st;
+    /* Handle to be created */
+    struct rgw_handle *handle = NULL;
+    /* RGW fh hash key */
+    struct rgw_fh_hk fh_hk;
+    /* RGW file handle instance */
+    struct rgw_file_handle *rgw_fh;
 
-	*pub_handle = NULL;
+    *pub_handle = NULL;
 
-	if (desc->len != sizeof(struct rgw_fh_hk)) {
-		status.major = ERR_FSAL_INVAL;
-		return status;
-	}
+    if (desc->len != sizeof(struct rgw_fh_hk)) {
+        status.major = ERR_FSAL_INVAL;
+        return status;
+    }
 
-	memcpy((char *) &fh_hk, desc->addr, desc->len);
+    memcpy((char *) &fh_hk, desc->addr, desc->len);
 
-	rc = rgw_lookup_handle(export->rgw_fs, &fh_hk, &rgw_fh,
-			RGW_LOOKUP_FLAG_NONE);
-	if (rc < 0)
-		return rgw2fsal_error(-ESTALE);
+    rc = rgw_lookup_handle(export->rgw_fs, &fh_hk, &rgw_fh,
+            RGW_LOOKUP_FLAG_NONE);
+    if (rc < 0)
+        return rgw2fsal_error(-ESTALE);
 
-	rc = rgw_getattr(export->rgw_fs, rgw_fh, &st, RGW_GETATTR_FLAG_NONE);
-	if (rc < 0)
-		return rgw2fsal_error(rc);
+    rc = rgw_getattr(export->rgw_fs, rgw_fh, &st, RGW_GETATTR_FLAG_NONE);
+    if (rc < 0)
+        return rgw2fsal_error(rc);
 
-	rc = construct_handle(export, rgw_fh, &st, &handle);
-	if (rc < 0) {
-		return rgw2fsal_error(rc);
-	}
+    rc = construct_handle(export, rgw_fh, &st, &handle);
+    if (rc < 0) {
+        return rgw2fsal_error(rc);
+    }
 
-	*pub_handle = &handle->handle;
+    *pub_handle = &handle->handle;
 
-	if (attrs_out != NULL) {
-		posix2fsal_attributes_all(&st, attrs_out);
-	}
+    if (attrs_out != NULL) {
+        posix2fsal_attributes_all(&st, attrs_out);
+    }
 
-	return status;
+    return status;
 }
 
 /**
@@ -264,35 +264,35 @@ static fsal_status_t create_handle(struct fsal_export *export_pub,
  */
 
 static fsal_status_t get_fs_dynamic_info(struct fsal_export *export_pub,
-					 struct fsal_obj_handle *obj_hdl,
-					 fsal_dynamicfsinfo_t *info)
+                     struct fsal_obj_handle *obj_hdl,
+                     fsal_dynamicfsinfo_t *info)
 {
-	/* Full 'private' export */
-	struct rgw_export *export =
-	    container_of(export_pub, struct rgw_export, export);
+    /* Full 'private' export */
+    struct rgw_export *export =
+        container_of(export_pub, struct rgw_export, export);
 
-	int rc = 0;
+    int rc = 0;
 
-	/* Filesystem stat */
-	struct rgw_statvfs vfs_st;
+    /* Filesystem stat */
+    struct rgw_statvfs vfs_st;
 
-	rc = rgw_statfs(export->rgw_fs, export->rgw_fs->root_fh, &vfs_st,
-			RGW_STATFS_FLAG_NONE);
-	if (rc < 0)
-		return rgw2fsal_error(rc);
+    rc = rgw_statfs(export->rgw_fs, export->rgw_fs->root_fh, &vfs_st,
+            RGW_STATFS_FLAG_NONE);
+    if (rc < 0)
+        return rgw2fsal_error(rc);
 
-	/* TODO: implement in rgw_file */
-	memset(info, 0, sizeof(fsal_dynamicfsinfo_t));
-	info->total_bytes = vfs_st.f_frsize * vfs_st.f_blocks;
-	info->free_bytes = vfs_st.f_frsize * vfs_st.f_bfree;
-	info->avail_bytes = vfs_st.f_frsize * vfs_st.f_bavail;
-	info->total_files = vfs_st.f_files;
-	info->free_files = vfs_st.f_ffree;
-	info->avail_files = vfs_st.f_favail;
-	info->time_delta.tv_sec = 1;
-	info->time_delta.tv_nsec = 0;
+    /* TODO: implement in rgw_file */
+    memset(info, 0, sizeof(fsal_dynamicfsinfo_t));
+    info->total_bytes = vfs_st.f_frsize * vfs_st.f_blocks;
+    info->free_bytes = vfs_st.f_frsize * vfs_st.f_bfree;
+    info->avail_bytes = vfs_st.f_frsize * vfs_st.f_bavail;
+    info->total_files = vfs_st.f_files;
+    info->free_files = vfs_st.f_ffree;
+    info->avail_files = vfs_st.f_favail;
+    info->time_delta.tv_sec = 1;
+    info->time_delta.tv_nsec = 0;
 
-	return fsalstat(ERR_FSAL_NO_ERROR, 0);
+    return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
 
 /**
@@ -308,10 +308,10 @@ static fsal_status_t get_fs_dynamic_info(struct fsal_export *export_pub,
  */
 
 static bool fs_supports(struct fsal_export *export_pub,
-			fsal_fsinfo_options_t option)
+            fsal_fsinfo_options_t option)
 {
-	struct fsal_staticfsinfo_t *info = rgw_staticinfo(export_pub->fsal);
-	return fsal_supports(info, option);
+    struct fsal_staticfsinfo_t *info = rgw_staticinfo(export_pub->fsal);
+    return fsal_supports(info, option);
 }
 
 /**
@@ -326,7 +326,7 @@ static bool fs_supports(struct fsal_export *export_pub,
 
 static uint64_t fs_maxfilesize(struct fsal_export *export_pub)
 {
-	return UINT64_MAX;
+    return UINT64_MAX;
 }
 
 /**
@@ -341,7 +341,7 @@ static uint64_t fs_maxfilesize(struct fsal_export *export_pub)
 
 static uint32_t fs_maxread(struct fsal_export *export_pub)
 {
-	return 0x400000;
+    return 0x400000;
 }
 
 /**
@@ -356,7 +356,7 @@ static uint32_t fs_maxread(struct fsal_export *export_pub)
 
 static uint32_t fs_maxwrite(struct fsal_export *export_pub)
 {
-	return 0x400000;
+    return 0x400000;
 }
 
 /**
@@ -372,10 +372,10 @@ static uint32_t fs_maxwrite(struct fsal_export *export_pub)
 
 static uint32_t fs_maxlink(struct fsal_export *export_pub)
 {
-	/* Ceph does not like hard links.  See the anchor table
-	   design.  We should fix this, but have to do it in the Ceph
-	   core. */
-	return 1024;
+    /* Ceph does not like hard links.  See the anchor table
+       design.  We should fix this, but have to do it in the Ceph
+       core. */
+    return 1024;
 }
 
 /**
@@ -390,10 +390,10 @@ static uint32_t fs_maxlink(struct fsal_export *export_pub)
 
 static uint32_t fs_maxnamelen(struct fsal_export *export_pub)
 {
-	/* Ceph actually supports filenames of unlimited length, at
-	   least according to the protocol docs.  We may wish to
-	   constrain this later. */
-	return UINT32_MAX;
+    /* Ceph actually supports filenames of unlimited length, at
+       least according to the protocol docs.  We may wish to
+       constrain this later. */
+    return UINT32_MAX;
 }
 
 /**
@@ -408,8 +408,8 @@ static uint32_t fs_maxnamelen(struct fsal_export *export_pub)
 
 static uint32_t fs_maxpathlen(struct fsal_export *export_pub)
 {
-	/* Similarly unlimited int he protocol */
-	return UINT32_MAX;
+    /* Similarly unlimited int he protocol */
+    return UINT32_MAX;
 }
 
 /**
@@ -424,9 +424,9 @@ static uint32_t fs_maxpathlen(struct fsal_export *export_pub)
 
 static struct timespec fs_lease_time(struct fsal_export *export_pub)
 {
-	struct timespec lease = { 300, 0 };
+    struct timespec lease = { 300, 0 };
 
-	return lease;
+    return lease;
 }
 
 /**
@@ -441,7 +441,7 @@ static struct timespec fs_lease_time(struct fsal_export *export_pub)
 
 static fsal_aclsupp_t fs_acl_support(struct fsal_export *export_pub)
 {
-	return FSAL_ACLSUPPORT_DENY;
+    return FSAL_ACLSUPPORT_DENY;
 }
 
 /**
@@ -456,7 +456,7 @@ static fsal_aclsupp_t fs_acl_support(struct fsal_export *export_pub)
 
 static attrmask_t fs_supported_attrs(struct fsal_export *export_pub)
 {
-	return RGW_SUPPORTED_ATTRIBUTES;
+    return RGW_SUPPORTED_ATTRIBUTES;
 }
 
 /**
@@ -471,7 +471,7 @@ static attrmask_t fs_supported_attrs(struct fsal_export *export_pub)
 
 static uint32_t fs_umask(struct fsal_export *export_pub)
 {
-	return fsal_umask(rgw_staticinfo(export_pub->fsal));
+    return fsal_umask(rgw_staticinfo(export_pub->fsal));
 }
 
 /**
@@ -487,7 +487,7 @@ static uint32_t fs_umask(struct fsal_export *export_pub)
 
 static uint32_t fs_xattr_access_rights(struct fsal_export *export_pub)
 {
-	return fsal_xattr_access_rights(rgw_staticinfo(export_pub->fsal));
+    return fsal_xattr_access_rights(rgw_staticinfo(export_pub->fsal));
 }
 
 /**
@@ -501,22 +501,22 @@ static uint32_t fs_xattr_access_rights(struct fsal_export *export_pub)
 
 void export_ops_init(struct export_ops *ops)
 {
-	ops->release = release;
-	ops->lookup_path = lookup_path;
-	ops->wire_to_host = wire_to_host;
-	ops->create_handle = create_handle;
-	ops->get_fs_dynamic_info = get_fs_dynamic_info;
-	ops->fs_supports = fs_supports;
-	ops->fs_maxfilesize = fs_maxfilesize;
-	ops->fs_maxread = fs_maxread;
-	ops->fs_maxwrite = fs_maxwrite;
-	ops->fs_maxlink = fs_maxlink;
-	ops->fs_maxnamelen = fs_maxnamelen;
-	ops->fs_maxpathlen = fs_maxpathlen;
-	ops->fs_lease_time = fs_lease_time;
-	ops->fs_acl_support = fs_acl_support;
-	ops->fs_supported_attrs = fs_supported_attrs;
-	ops->fs_umask = fs_umask;
-	ops->fs_xattr_access_rights = fs_xattr_access_rights;
-	ops->alloc_state = rgw_alloc_state;
+    ops->release                = release;
+    ops->lookup_path            = lookup_path;
+    ops->wire_to_host           = wire_to_host;
+    ops->create_handle          = create_handle;
+    ops->get_fs_dynamic_info    = get_fs_dynamic_info;
+    ops->fs_supports            = fs_supports;
+    ops->fs_maxfilesize         = fs_maxfilesize;
+    ops->fs_maxread             = fs_maxread;
+    ops->fs_maxwrite            = fs_maxwrite;
+    ops->fs_maxlink             = fs_maxlink;
+    ops->fs_maxnamelen          = fs_maxnamelen;
+    ops->fs_maxpathlen          = fs_maxpathlen;
+    ops->fs_lease_time          = fs_lease_time;
+    ops->fs_acl_support         = fs_acl_support;
+    ops->fs_supported_attrs     = fs_supported_attrs;
+    ops->fs_umask               = fs_umask;
+    ops->fs_xattr_access_rights = fs_xattr_access_rights;
+    ops->alloc_state            = rgw_alloc_state;
 }
