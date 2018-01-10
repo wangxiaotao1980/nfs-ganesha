@@ -373,3 +373,4 @@ ASALocalRun/
 *.binlog
 # nfs-ganesha visual studio project for visualgdb folder
 nfs-ganesha/
+nfs-ganesha-vs2013/

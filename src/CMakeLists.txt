@@ -202,6 +202,7 @@ option(USE_FSAL_CEPH "build CEPH FSAL shared library" ON)
 option(USE_FSAL_GPFS "build GPFS FSAL" ON)
 option(USE_FSAL_ZFS "build ZFS FSAL" ON)
 option(USE_FSAL_XFS "build XFS support in VFS FSAL" ON)
+option(USE_FSAL_KODO "build KODO FSAL shared library" ON)
 option(USE_FSAL_PANFS "build PanFS support in VFS FSAL" OFF)
 option(USE_FSAL_GLUSTER "build GLUSTER FSAL shared library" ON)
 option(USE_FSAL_NULL "build NULL FSAL shared library" ON)
@@ -646,6 +647,10 @@ if(USE_FSAL_XFS)
   endif((NOT HAVE_XFS_LIB) OR (NOT HAVE_XFS_H))
 endif(USE_FSAL_XFS)
 
+if(USE_FSAL_KODO)
+#test the kodo env todo list
+endif(USE_FSAL_KODO)
+
 if(USE_FSAL_ZFS)
   check_library_exists(
     zfswrap
@@ -1013,6 +1018,7 @@ message(STATUS "USE_FSAL_CEPH_LL_LOOKUP_ROOT = ${USE_FSAL_CEPH_LL_LOOKUP_ROOT}")
 message(STATUS "USE_FSAL_CEPH_STATX = ${USE_FSAL_CEPH_STATX}")
 message(STATUS "USE_FSAL_RGW = ${USE_FSAL_RGW}")
 message(STATUS "USE_FSAL_XFS = ${USE_FSAL_XFS}")
+message(STATUS "USE_FSAL_KODO = ${USE_FSAL_KODO}")
 message(STATUS "USE_FSAL_PANFS = ${USE_FSAL_PANFS}")
 message(STATUS "USE_FSAL_GPFS = ${USE_FSAL_GPFS}")
 message(STATUS "USE_FSAL_ZFS = ${USE_FSAL_ZFS}")
@@ -1102,6 +1108,11 @@ set(USE_FSAL_CEPH ${USE_FSAL_CEPH}
 set(USE_FSAL_XFS ${USE_FSAL_XFS}
   CACHE BOOL
    "build XFS FSAL"
+   FORCE)
+
+set(USE_FSAL_KODO ${USE_FSAL_KODO}
+   CACHE BOOL
+   "build KODO FSAL"
    FORCE)
 
 set(USE_FSAL_PANFS ${USE_FSAL_PANFS}
