@@ -664,8 +664,7 @@ out:
  * On success, returns zero with ip address of
  * the server will be send
  */
-int
-glfs_get_ds_addr(struct glfs* fs, struct glfs_object* object, uint32_t* ds_addr)
+int glfs_get_ds_addr(struct glfs* fs, struct glfs_object* object, uint32_t* ds_addr)
 {
     int ret = 0;
     char pathinfo[1024] = { 0, };

@@ -24,7 +24,33 @@ struct kodo_fsal_module
     fsal_staticfsinfo_t fs_info;
 };
 
-extern struct kodo_fsal_module KODOFSM;
+extern struct kodo_fsal_module g_kodoFileSystemModule;
 
+
+/**
+ * KODO Private export object
+ */
+struct kodo_export
+{
+    struct fsal_export export;  /*< The public export object */
+
+};
+
+/**
+ * The 'private' KODO FASL handle
+ */
+
+struct kodo_handle
+{
+    struct fsal_obj_handle handle;
+};
+
+void kodo_export_ops_init(struct export_ops* ops);
+void kodo_handle_ops_init(struct fsal_obj_ops* ops);
+
+//for pnfs init function
+void pnfs_ds_ops_init(struct fsal_pnfs_ds_ops* ops);
+void export_ops_pnfs(struct export_ops* ops);
+void handle_ops_pnfs(struct fsal_obj_ops* ops);
 /*******************************************************************************************/
 #endif// FSAL_KODO_INTERNAL_CD7F7735_C8E9_43E2_9635_0ADBD791521F_H__

@@ -8,7 +8,9 @@ add_definitions(
 set(
     fskodo_LIB_SRCS
     fsal_kodo_main.c
+    fsal_kodo_handle.c
     fsal_kodo_internal.c
+    fsal_kodo_ds.c
 )
 
 add_library(fsalkodo MODULE ${fskodo_LIB_SRCS})

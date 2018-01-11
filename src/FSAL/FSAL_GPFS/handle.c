@@ -995,40 +995,40 @@ static fsal_status_t gpfs_fs_locations(struct fsal_obj_handle *obj_hdl,
 */
 void gpfs_handle_ops_init(struct fsal_obj_ops *ops)
 {
-	ops->release = release;
-	ops->lookup = lookup;
-	ops->readdir = read_dirents;
-	ops->create = create;
-	ops->mkdir = makedir;
-	ops->mknode = makenode;
-	ops->symlink = makesymlink;
-	ops->readlink = readsymlink;
-	ops->getattrs = getattrs;
-	ops->link = linkfile;
-	ops->rename = renamefile;
-	ops->unlink = file_unlink;
-	ops->fs_locations = gpfs_fs_locations;
-	ops->status = gpfs_status;
-	ops->seek = gpfs_seek;
-	ops->io_advise = gpfs_io_advise;
-	ops->share_op = share_op;
-	ops->close = gpfs_close;
+	ops->release        = release;
+	ops->lookup         = lookup;
+	ops->readdir        = read_dirents;
+	ops->create         = create;
+	ops->mkdir          = makedir;
+	ops->mknode         = makenode;
+	ops->symlink        = makesymlink;
+	ops->readlink       = readsymlink;
+	ops->getattrs       = getattrs;
+	ops->link           = linkfile;
+	ops->rename         = renamefile;
+	ops->unlink         = file_unlink;
+	ops->fs_locations   = gpfs_fs_locations;
+	ops->status         = gpfs_status;
+	ops->seek           = gpfs_seek;
+	ops->io_advise      = gpfs_io_advise;
+	ops->share_op       = share_op;
+	ops->close          = gpfs_close;
 	ops->handle_to_wire = handle_to_wire;
-	ops->handle_to_key = handle_to_key;
+	ops->handle_to_key  = handle_to_key;
 	handle_ops_pnfs(ops);
-	ops->getxattrs = getxattrs;
-	ops->setxattrs = setxattrs;
-	ops->removexattrs = removexattrs;
-	ops->listxattrs = listxattrs;
-	ops->open2 = gpfs_open2;
-	ops->reopen2 = gpfs_reopen2;
-	ops->read2 = gpfs_read2;
-	ops->write2 = gpfs_write2;
-	ops->commit2 = gpfs_commit2;
-	ops->setattr2 = gpfs_setattr2;
-	ops->close2 = gpfs_close2;
-	ops->lock_op2 = gpfs_lock_op2;
-	ops->merge = gpfs_merge;
+	ops->getxattrs      = getxattrs;
+	ops->setxattrs      = setxattrs;
+	ops->removexattrs   = removexattrs;
+	ops->listxattrs     = listxattrs;
+	ops->open2          = gpfs_open2;
+	ops->reopen2        = gpfs_reopen2;
+	ops->read2          = gpfs_read2;
+	ops->write2         = gpfs_write2;
+	ops->commit2        = gpfs_commit2;
+	ops->setattr2       = gpfs_setattr2;
+	ops->close2         = gpfs_close2;
+	ops->lock_op2       = gpfs_lock_op2;
+	ops->merge          = gpfs_merge;
 }
 
 /**

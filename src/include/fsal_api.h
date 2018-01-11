@@ -410,7 +410,7 @@ struct req_op_context
     int cred_flags; /* Various cred flags */
     sockaddr_t* caller_addr; /*< IP connection info */
     const uint64_t* clientid; /*< Client ID of caller, NULL if
-					   unknown/not applicable. */
+                       unknown/not applicable. */
     uint32_t nfs_vers; /*< NFS protocol version of request */
     uint32_t nfs_minorvers; /*< NFSv4 minor version */
     uint32_t req_type; /*< request_type NFS | 9P */
@@ -3016,17 +3016,17 @@ struct fsal_module
 {
     struct glist_head fsals; /*< link in list of loaded fsals */
     struct glist_head exports; /*< Head of list of exports from
-					   this FSAL */
+                       this FSAL */
     struct glist_head handles; /*< Head of list of object handles */
     struct glist_head servers; /*< Head of list of Data Servers */
     char* path; /*< Path to .so file */
     char* name; /*< Name set from .so and/or config */
     void* dl_handle; /*< Handle to the dlopen()d shared
-				   library. NULL if statically linked */
+                   library. NULL if statically linked */
     struct fsal_ops m_ops; /*< FSAL module methods vector */
 
     pthread_rwlock_t lock; /*< Lock to be held when
-					    manipulating its lists (above). */
+                        manipulating its lists (above). */
     int32_t refcount; /*< Reference count */
     struct fsal_stats* stats; /*< for storing the FSAL specific stats */
 };
@@ -3080,14 +3080,14 @@ static inline void fsal_put(struct fsal_module* fsal_hdl)
 struct fsal_export
 {
     struct glist_head exports; /*< Link in list of exports from
-					   the same FSAL. */
+                       the same FSAL. */
     struct fsal_module* fsal; /*< Link back to the FSAL module */
     const struct fsal_up_vector* up_ops; /*< Upcall operations */
     struct export_ops exp_ops; /*< Vector of operations */
     struct fsal_export* sub_export; /*< Sub export for stacking */
     struct fsal_export* super_export;/*< Super export for stacking */
     uint16_t export_id; /*< Export ID copied from gsh_export, initialized
-				by  fsal_export_init */
+                by  fsal_export_init */
 };
 
 /**
@@ -3105,7 +3105,7 @@ struct fsal_filesystem
     struct glist_head filesystems; /*< List of file systems */
     struct glist_head children; /*< Child file systems */
     struct glist_head siblings; /*< Entry in list of parent's child
-					    file systems */
+                        file systems */
     struct fsal_filesystem* parent; /*< Parent file system */
     struct fsal_module* fsal; /*< Link back to fsal module */
     void* private_data; /*< Private data for owning FSAL */
@@ -3149,7 +3149,7 @@ struct fsal_filesystem
 struct fsal_obj_handle
 {
     struct glist_head handles; /*< Link in list of handles under
-					   the same FSAL. */
+                       the same FSAL. */
     struct fsal_filesystem* fs; /*< Owning filesystem */
     struct fsal_module* fsal; /*< Link back to fsal module */
     struct fsal_obj_ops obj_ops; /*< Operations vector */
@@ -3171,9 +3171,9 @@ struct fsal_obj_handle
     /* Static attributes */
     object_file_type_t type; /*< Object file type */
     fsal_fsid_t fsid; /*< Filesystem on which this object is
-				   stored */
+                   stored */
     uint64_t fileid; /*< Unique identifier for this object within
-				   the scope of the fsid, (e.g. inode number) */
+                   the scope of the fsid, (e.g. inode number) */
 
     struct state_hdl* state_hdl; /*< State related to this handle */
 };
@@ -3199,17 +3199,17 @@ enum pnfs_ds_status
 struct fsal_pnfs_ds
 {
     struct glist_head server; /*< Link in list of Data Servers under
-					   the same FSAL. */
+                       the same FSAL. */
     struct glist_head ds_handles; /*< Head of list of DS handles */
     struct fsal_module* fsal; /*< Link back to fsal module */
     struct fsal_pnfs_ds_ops s_ops; /*< Operations vector */
     struct gsh_export* mds_export; /*< related export */
     struct fsal_export* mds_fsal_export; /*< related FSAL export (avoids
-						  MDS stacking) */
+                          MDS stacking) */
 
     struct avltree_node ds_node; /*< Node in tree of all Data Servers. */
     pthread_rwlock_t lock; /*< Lock to be held when
-					    manipulating its list (above). */
+                        manipulating its list (above). */
     int32_t refcount; /*< Reference count */
     uint16_t id_servers; /*< Identifier */
     uint8_t pnfs_ds_status; /*< current condition */
@@ -3228,7 +3228,7 @@ struct fsal_pnfs_ds
 struct fsal_ds_handle
 {
     struct glist_head ds_handle; /*< Link in list of DS handles under
-					   the same pDS. */
+                       the same pDS. */
     struct fsal_pnfs_ds* pds; /*< Link back to pDS */
     struct fsal_dsh_ops dsh_ops; /*< Operations vector */
 
