@@ -160,12 +160,15 @@ int nfs_libmain(const char* ganesha_conf,
     sigemptyset(&signals_to_block);
     sigaddset(&signals_to_block, SIGPIPE); /* XXX */
     if(pthread_sigmask(SIG_BLOCK, &signals_to_block, NULL) != 0)
-        LogFatal(COMPONENT_MAIN,
-        "pthread_sigmask failed");
+    {
+        LogFatal(COMPONENT_MAIN, "pthread_sigmask failed");
+    }
 
     /* Create a memstream for parser+processing error messages */
     if(!init_error_type(&err_type))
+    {
         goto fatal_die;
+    }
 
     if(config_path == NULL || config_path[0] == '\0')
     {
@@ -174,8 +177,9 @@ int nfs_libmain(const char* ganesha_conf,
         config_struct = NULL;
     }
     else
-        config_struct = config_ParseFile(config_path,
-                                         &err_type);
+    {
+        config_struct = config_ParseFile(config_path,&err_type);
+    }
 
     if(!config_error_no_error(&err_type))
     {
@@ -183,25 +187,21 @@ int nfs_libmain(const char* ganesha_conf,
 
         if(!config_error_is_harmless(&err_type))
         {
-            LogCrit(COMPONENT_INIT,
-                "Error %s while parsing (%s)",
-                errstr != NULL ? errstr : "unknown",
-                config_path)
-            
-            ;
+            LogCrit(COMPONENT_INIT, "Error %s while parsing (%s)", errstr != NULL ? errstr : "unknown", config_path);
             if(errstr != NULL)
+            {
                 gsh_free(errstr);
+            }
             goto fatal_die;
         }
         else
-            LogWarn(COMPONENT_INIT,
-            "Error %s while parsing (%s)",
-            errstr != NULL ? errstr : "unknown",
-            config_path)
-            
-            ;
+        {
+            LogWarn(COMPONENT_INIT, "Error %s while parsing (%s)", errstr != NULL ? errstr : "unknown", config_path);
+        }
         if(errstr != NULL)
+        {
             gsh_free(errstr);
+        }
     }
 
     if(read_log_config(config_struct, &err_type) < 0)

@@ -245,13 +245,13 @@ uint64_t _9p_owner_rbt_hash_func(hash_parameter_t* hparam,
 }
 
 static hash_parameter_t _9p_owner_hash_param = {
-    .index_size = PRIME_STATE,
+    .index_size    = PRIME_STATE,
     .hash_func_key = _9p_owner_value_hash_func,
     .hash_func_rbt = _9p_owner_rbt_hash_func,
-    .compare_key = compare_9p_owner_key,
-    .key_to_str = display_9p_owner_key,
-    .val_to_str = display_9p_owner_val,
-    .flags = HT_FLAG_NONE,
+    .compare_key   = compare_9p_owner_key,
+    .key_to_str    = display_9p_owner_key,
+    .val_to_str    = display_9p_owner_val,
+    .flags         = HT_FLAG_NONE,
 };
 
 /**

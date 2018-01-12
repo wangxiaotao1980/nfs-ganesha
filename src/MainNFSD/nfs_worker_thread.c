@@ -74,203 +74,204 @@ pool_t* request_pool;
 
 static struct fridgethr* worker_fridge;
 
-const nfs_function_desc_t invalid_funcdesc = {
-    .service_function = nfs_null,
-    .free_function = nfs_null_free,
-    .xdr_decode_func = (xdrproc_t)xdr_void,
-    .xdr_encode_func = (xdrproc_t)xdr_void,
-    .funcname = "invalid_function",
+const nfs_function_desc_t invalid_funcdesc = 
+{
+    .service_function   = nfs_null,
+    .free_function      = nfs_null_free,
+    .xdr_decode_func    = (xdrproc_t)xdr_void,
+    .xdr_encode_func    = (xdrproc_t)xdr_void,
+    .funcname           = "invalid_function",
     .dispatch_behaviour = NOTHING_SPECIAL
 };
 
 #ifdef _USE_NFS3
 const nfs_function_desc_t nfs3_func_desc[] = {
     {
-        .service_function = nfs_null,
-        .free_function = nfs_null_free,
-        .xdr_decode_func = (xdrproc_t)xdr_void,
-        .xdr_encode_func = (xdrproc_t)xdr_void,
-        .funcname = "nfs3_null",
+        .service_function   = nfs_null,
+        .free_function      = nfs_null_free,
+        .xdr_decode_func    = (xdrproc_t)xdr_void,
+        .xdr_encode_func    = (xdrproc_t)xdr_void,
+        .funcname           = "nfs3_null",
         .dispatch_behaviour = NOTHING_SPECIAL
     },
     {
-        .service_function = nfs3_getattr,
-        .free_function = nfs3_getattr_free,
-        .xdr_decode_func = (xdrproc_t)xdr_GETATTR3args,
-        .xdr_encode_func = (xdrproc_t)xdr_GETATTR3res,
-        .funcname = "nfs3_getattr",
+        .service_function   = nfs3_getattr,
+        .free_function      = nfs3_getattr_free,
+        .xdr_decode_func    = (xdrproc_t)xdr_GETATTR3args,
+        .xdr_encode_func    = (xdrproc_t)xdr_GETATTR3res,
+        .funcname           = "nfs3_getattr",
         .dispatch_behaviour = NEEDS_CRED | SUPPORTS_GSS
     },
     {
-        .service_function = nfs3_setattr,
-        .free_function = nfs3_setattr_free,
-        .xdr_decode_func = (xdrproc_t)xdr_SETATTR3args,
-        .xdr_encode_func = (xdrproc_t)xdr_SETATTR3res,
-        .funcname = "nfs3_setattr",
+        .service_function   = nfs3_setattr,
+        .free_function      = nfs3_setattr_free,
+        .xdr_decode_func    = (xdrproc_t)xdr_SETATTR3args,
+        .xdr_encode_func    = (xdrproc_t)xdr_SETATTR3res,
+        .funcname           = "nfs3_setattr",
         .dispatch_behaviour =
         (MAKES_WRITE | NEEDS_CRED | CAN_BE_DUP | SUPPORTS_GSS)
     },
     {
-        .service_function = nfs3_lookup,
-        .free_function = nfs3_lookup_free,
-        .xdr_decode_func = (xdrproc_t)xdr_LOOKUP3args,
-        .xdr_encode_func = (xdrproc_t)xdr_LOOKUP3res,
-        .funcname = "nfs3_lookup",
+        .service_function   = nfs3_lookup,
+        .free_function      = nfs3_lookup_free,
+        .xdr_decode_func    = (xdrproc_t)xdr_LOOKUP3args,
+        .xdr_encode_func    = (xdrproc_t)xdr_LOOKUP3res,
+        .funcname           = "nfs3_lookup",
         .dispatch_behaviour = NEEDS_CRED | SUPPORTS_GSS
     },
     {
-        .service_function = nfs3_access,
-        .free_function = nfs3_access_free,
-        .xdr_decode_func = (xdrproc_t)xdr_ACCESS3args,
-        .xdr_encode_func = (xdrproc_t)xdr_ACCESS3res,
-        .funcname = "nfs3_access",
+        .service_function   = nfs3_access,
+        .free_function      = nfs3_access_free,
+        .xdr_decode_func    = (xdrproc_t)xdr_ACCESS3args,
+        .xdr_encode_func    = (xdrproc_t)xdr_ACCESS3res,
+        .funcname           = "nfs3_access",
         .dispatch_behaviour = NEEDS_CRED | SUPPORTS_GSS
     },
     {
-        .service_function = nfs3_readlink,
-        .free_function = nfs3_readlink_free,
-        .xdr_decode_func = (xdrproc_t)xdr_READLINK3args,
-        .xdr_encode_func = (xdrproc_t)xdr_READLINK3res,
-        .funcname = "nfs3_readlink",
+        .service_function   = nfs3_readlink,
+        .free_function      = nfs3_readlink_free,
+        .xdr_decode_func    = (xdrproc_t)xdr_READLINK3args,
+        .xdr_encode_func    = (xdrproc_t)xdr_READLINK3res,
+        .funcname           = "nfs3_readlink",
         .dispatch_behaviour = NEEDS_CRED | SUPPORTS_GSS
     },
     {
-        .service_function = nfs3_read,
-        .free_function = nfs3_read_free,
-        .xdr_decode_func = (xdrproc_t)xdr_READ3args,
-        .xdr_encode_func = (xdrproc_t)xdr_READ3res,
-        .funcname = "nfs3_read",
+        .service_function   = nfs3_read,
+        .free_function      = nfs3_read_free,
+        .xdr_decode_func    = (xdrproc_t)xdr_READ3args,
+        .xdr_encode_func    = (xdrproc_t)xdr_READ3res,
+        .funcname           = "nfs3_read",
         .dispatch_behaviour =
         NEEDS_CRED | SUPPORTS_GSS | MAKES_IO
     },
     {
-        .service_function = nfs3_write,
-        .free_function = nfs3_write_free,
-        .xdr_decode_func = (xdrproc_t)xdr_WRITE3args,
-        .xdr_encode_func = (xdrproc_t)xdr_WRITE3res,
-        .funcname = "nfs3_write",
+        .service_function   = nfs3_write,
+        .free_function      = nfs3_write_free,
+        .xdr_decode_func    = (xdrproc_t)xdr_WRITE3args,
+        .xdr_encode_func    = (xdrproc_t)xdr_WRITE3res,
+        .funcname           = "nfs3_write",
         .dispatch_behaviour =
         (MAKES_WRITE | NEEDS_CRED | CAN_BE_DUP | SUPPORTS_GSS |
             MAKES_IO)
     },
     {
-        .service_function = nfs3_create,
-        .free_function = nfs3_create_free,
-        .xdr_decode_func = (xdrproc_t)xdr_CREATE3args,
-        .xdr_encode_func = (xdrproc_t)xdr_CREATE3res,
-        .funcname = "nfs3_create",
+        .service_function   = nfs3_create,
+        .free_function      = nfs3_create_free,
+        .xdr_decode_func    = (xdrproc_t)xdr_CREATE3args,
+        .xdr_encode_func    = (xdrproc_t)xdr_CREATE3res,
+        .funcname           = "nfs3_create",
         .dispatch_behaviour =
         (MAKES_WRITE | NEEDS_CRED | CAN_BE_DUP | SUPPORTS_GSS)
     },
     {
-        .service_function = nfs3_mkdir,
-        .free_function = nfs3_mkdir_free,
-        .xdr_decode_func = (xdrproc_t)xdr_MKDIR3args,
-        .xdr_encode_func = (xdrproc_t)xdr_MKDIR3res,
-        .funcname = "nfs3_mkdir",
+        .service_function   = nfs3_mkdir,
+        .free_function      = nfs3_mkdir_free,
+        .xdr_decode_func    = (xdrproc_t)xdr_MKDIR3args,
+        .xdr_encode_func    = (xdrproc_t)xdr_MKDIR3res,
+        .funcname           = "nfs3_mkdir",
         .dispatch_behaviour =
         (MAKES_WRITE | NEEDS_CRED | CAN_BE_DUP | SUPPORTS_GSS)
     },
     {
-        .service_function = nfs3_symlink,
-        .free_function = nfs3_symlink_free,
-        .xdr_decode_func = (xdrproc_t)xdr_SYMLINK3args,
-        .xdr_encode_func = (xdrproc_t)xdr_SYMLINK3res,
-        .funcname = "nfs3_symlink",
+        .service_function   = nfs3_symlink,
+        .free_function      = nfs3_symlink_free,
+        .xdr_decode_func    = (xdrproc_t)xdr_SYMLINK3args,
+        .xdr_encode_func    = (xdrproc_t)xdr_SYMLINK3res,
+        .funcname           = "nfs3_symlink",
         .dispatch_behaviour =
         (MAKES_WRITE | NEEDS_CRED | CAN_BE_DUP | SUPPORTS_GSS)
     },
     {
-        .service_function = nfs3_mknod,
-        .free_function = nfs3_mknod_free,
-        .xdr_decode_func = (xdrproc_t)xdr_MKNOD3args,
-        .xdr_encode_func = (xdrproc_t)xdr_MKNOD3res,
-        .funcname = "nfs3_mknod",
+        .service_function   = nfs3_mknod,
+        .free_function      = nfs3_mknod_free,
+        .xdr_decode_func    = (xdrproc_t)xdr_MKNOD3args,
+        .xdr_encode_func    = (xdrproc_t)xdr_MKNOD3res,
+        .funcname           = "nfs3_mknod",
         .dispatch_behaviour =
         (MAKES_WRITE | NEEDS_CRED | CAN_BE_DUP | SUPPORTS_GSS)
     },
     {
-        .service_function = nfs3_remove,
-        .free_function = nfs3_remove_free,
-        .xdr_decode_func = (xdrproc_t)xdr_REMOVE3args,
-        .xdr_encode_func = (xdrproc_t)xdr_REMOVE3res,
-        .funcname = "nfs3_remove",
+        .service_function   = nfs3_remove,
+        .free_function      = nfs3_remove_free,
+        .xdr_decode_func    = (xdrproc_t)xdr_REMOVE3args,
+        .xdr_encode_func    = (xdrproc_t)xdr_REMOVE3res,
+        .funcname           = "nfs3_remove",
         .dispatch_behaviour =
         (MAKES_WRITE | NEEDS_CRED | CAN_BE_DUP | SUPPORTS_GSS)
     },
     {
-        .service_function = nfs3_rmdir,
-        .free_function = nfs3_rmdir_free,
-        .xdr_decode_func = (xdrproc_t)xdr_RMDIR3args,
-        .xdr_encode_func = (xdrproc_t)xdr_RMDIR3res,
-        .funcname = "nfs3_rmdir",
+        .service_function   = nfs3_rmdir,
+        .free_function      = nfs3_rmdir_free,
+        .xdr_decode_func    = (xdrproc_t)xdr_RMDIR3args,
+        .xdr_encode_func    = (xdrproc_t)xdr_RMDIR3res,
+        .funcname           = "nfs3_rmdir",
         .dispatch_behaviour =
         (MAKES_WRITE | NEEDS_CRED | CAN_BE_DUP | SUPPORTS_GSS)
     },
     {
-        .service_function = nfs3_rename,
-        .free_function = nfs3_rename_free,
-        .xdr_decode_func = (xdrproc_t)xdr_RENAME3args,
-        .xdr_encode_func = (xdrproc_t)xdr_RENAME3res,
-        .funcname = "nfs3_rename",
+        .service_function   = nfs3_rename,
+        .free_function      = nfs3_rename_free,
+        .xdr_decode_func    = (xdrproc_t)xdr_RENAME3args,
+        .xdr_encode_func    = (xdrproc_t)xdr_RENAME3res,
+        .funcname           = "nfs3_rename",
         .dispatch_behaviour =
         (MAKES_WRITE | NEEDS_CRED | CAN_BE_DUP | SUPPORTS_GSS)
     },
     {
-        .service_function = nfs3_link,
-        .free_function = nfs3_link_free,
-        .xdr_decode_func = (xdrproc_t)xdr_LINK3args,
-        .xdr_encode_func = (xdrproc_t)xdr_LINK3res,
-        .funcname = "nfs3_link",
+        .service_function   = nfs3_link,
+        .free_function      = nfs3_link_free,
+        .xdr_decode_func    = (xdrproc_t)xdr_LINK3args,
+        .xdr_encode_func    = (xdrproc_t)xdr_LINK3res,
+        .funcname           = "nfs3_link",
         .dispatch_behaviour =
         (MAKES_WRITE | NEEDS_CRED | CAN_BE_DUP | SUPPORTS_GSS)
     },
     {
-        .service_function = nfs3_readdir,
-        .free_function = nfs3_readdir_free,
-        .xdr_decode_func = (xdrproc_t)xdr_READDIR3args,
-        .xdr_encode_func = (xdrproc_t)xdr_READDIR3res,
-        .funcname = "nfs3_readdir",
+        .service_function   = nfs3_readdir,
+        .free_function      = nfs3_readdir_free,
+        .xdr_decode_func    = (xdrproc_t)xdr_READDIR3args,
+        .xdr_encode_func    = (xdrproc_t)xdr_READDIR3res,
+        .funcname           = "nfs3_readdir",
         .dispatch_behaviour = (NEEDS_CRED | SUPPORTS_GSS)
     },
     {
-        .service_function = nfs3_readdirplus,
-        .free_function = nfs3_readdirplus_free,
-        .xdr_decode_func = (xdrproc_t)xdr_READDIRPLUS3args,
-        .xdr_encode_func = (xdrproc_t)xdr_READDIRPLUS3res,
-        .funcname = "nfs3_readdirplus",
+        .service_function   = nfs3_readdirplus,
+        .free_function      = nfs3_readdirplus_free,
+        .xdr_decode_func    = (xdrproc_t)xdr_READDIRPLUS3args,
+        .xdr_encode_func    = (xdrproc_t)xdr_READDIRPLUS3res,
+        .funcname           = "nfs3_readdirplus",
         .dispatch_behaviour = (NEEDS_CRED | SUPPORTS_GSS)
     },
     {
-        .service_function = nfs3_fsstat,
-        .free_function = nfs3_fsstat_free,
-        .xdr_decode_func = (xdrproc_t)xdr_FSSTAT3args,
-        .xdr_encode_func = (xdrproc_t)xdr_FSSTAT3res,
-        .funcname = "nfs3_fsstat",
+        .service_function   = nfs3_fsstat,
+        .free_function      = nfs3_fsstat_free,
+        .xdr_decode_func    = (xdrproc_t)xdr_FSSTAT3args,
+        .xdr_encode_func    = (xdrproc_t)xdr_FSSTAT3res,
+        .funcname           = "nfs3_fsstat",
         .dispatch_behaviour = (NEEDS_CRED | SUPPORTS_GSS)
     },
     {
-        .service_function = nfs3_fsinfo,
-        .free_function = nfs3_fsinfo_free,
-        .xdr_decode_func = (xdrproc_t)xdr_FSINFO3args,
-        .xdr_encode_func = (xdrproc_t)xdr_FSINFO3res,
-        .funcname = "nfs3_fsinfo",
+        .service_function   = nfs3_fsinfo,
+        .free_function      = nfs3_fsinfo_free,
+        .xdr_decode_func    = (xdrproc_t)xdr_FSINFO3args,
+        .xdr_encode_func    = (xdrproc_t)xdr_FSINFO3res,
+        .funcname           = "nfs3_fsinfo",
         .dispatch_behaviour = (NEEDS_CRED)
     },
     {
-        .service_function = nfs3_pathconf,
-        .free_function = nfs3_pathconf_free,
-        .xdr_decode_func = (xdrproc_t)xdr_PATHCONF3args,
-        .xdr_encode_func = (xdrproc_t)xdr_PATHCONF3res,
-        .funcname = "nfs3_pathconf",
+        .service_function   = nfs3_pathconf,
+        .free_function      = nfs3_pathconf_free,
+        .xdr_decode_func    = (xdrproc_t)xdr_PATHCONF3args,
+        .xdr_encode_func    = (xdrproc_t)xdr_PATHCONF3res,
+        .funcname           = "nfs3_pathconf",
         .dispatch_behaviour = (NEEDS_CRED | SUPPORTS_GSS)
     },
     {
-        .service_function = nfs3_commit,
-        .free_function = nfs3_commit_free,
-        .xdr_decode_func = (xdrproc_t)xdr_COMMIT3args,
-        .xdr_encode_func = (xdrproc_t)xdr_COMMIT3res,
-        .funcname = "nfs3_commit",
+        .service_function   = nfs3_commit,
+        .free_function      = nfs3_commit_free,
+        .xdr_decode_func    = (xdrproc_t)xdr_COMMIT3args,
+        .xdr_encode_func    = (xdrproc_t)xdr_COMMIT3res,
+        .funcname           = "nfs3_commit",
         .dispatch_behaviour =
         (MAKES_WRITE | NEEDS_CRED | SUPPORTS_GSS)
     }
@@ -279,123 +280,126 @@ const nfs_function_desc_t nfs3_func_desc[] = {
 
 /* Remeber that NFSv4 manages authentication though junction crossing, and
  * so does it for RO FS management (for each operation) */
-const nfs_function_desc_t nfs4_func_desc[] = {
+const nfs_function_desc_t nfs4_func_desc[] = 
+{
     {
-        .service_function = nfs_null,
-        .free_function = nfs_null_free,
-        .xdr_decode_func = (xdrproc_t)xdr_void,
-        .xdr_encode_func = (xdrproc_t)xdr_void,
-        .funcname = "nfs_null",
+        .service_function   = nfs_null,
+        .free_function      = nfs_null_free,
+        .xdr_decode_func    = (xdrproc_t)xdr_void,
+        .xdr_encode_func    = (xdrproc_t)xdr_void,
+        .funcname           = "nfs_null",
         .dispatch_behaviour = NOTHING_SPECIAL
     },
     {
-        .service_function = nfs4_Compound,
-        .free_function = nfs4_Compound_Free,
-        .xdr_decode_func = (xdrproc_t)xdr_COMPOUND4args,
-        .xdr_encode_func = (xdrproc_t)xdr_COMPOUND4res,
-        .funcname = "nfs4_Comp",
+        .service_function   = nfs4_Compound,
+        .free_function      = nfs4_Compound_Free,
+        .xdr_decode_func    = (xdrproc_t)xdr_COMPOUND4args,
+        .xdr_encode_func    = (xdrproc_t)xdr_COMPOUND4res,
+        .funcname           = "nfs4_Comp",
         .dispatch_behaviour = CAN_BE_DUP
     }
 };
 
-const nfs_function_desc_t mnt1_func_desc[] = {
+const nfs_function_desc_t mnt1_func_desc[] = 
+{
     {
-        .service_function = mnt_Null,
-        .free_function = mnt_Null_Free,
-        .xdr_decode_func = (xdrproc_t)xdr_void,
-        .xdr_encode_func = (xdrproc_t)xdr_void,
-        .funcname = "mnt_Null",
+        .service_function   = mnt_Null,
+        .free_function      = mnt_Null_Free,
+        .xdr_decode_func    = (xdrproc_t)xdr_void,
+        .xdr_encode_func    = (xdrproc_t)xdr_void,
+        .funcname           = "mnt_Null",
         .dispatch_behaviour = NOTHING_SPECIAL
     },
     {
-        .service_function = mnt_Mnt,
-        .free_function = mnt1_Mnt_Free,
-        .xdr_decode_func = (xdrproc_t)xdr_dirpath,
-        .xdr_encode_func = (xdrproc_t)xdr_fhstatus2,
-        .funcname = "mnt_Mnt",
+        .service_function   = mnt_Mnt,
+        .free_function      = mnt1_Mnt_Free,
+        .xdr_decode_func    = (xdrproc_t)xdr_dirpath,
+        .xdr_encode_func    = (xdrproc_t)xdr_fhstatus2,
+        .funcname           = "mnt_Mnt",
         .dispatch_behaviour = NEEDS_CRED
     },
     {
-        .service_function = mnt_Dump,
-        .free_function = mnt_Dump_Free,
-        .xdr_decode_func = (xdrproc_t)xdr_void,
-        .xdr_encode_func = (xdrproc_t)xdr_mountlist,
-        .funcname = "mnt_Dump",
+        .service_function   = mnt_Dump,
+        .free_function      = mnt_Dump_Free,
+        .xdr_decode_func    = (xdrproc_t)xdr_void,
+        .xdr_encode_func    = (xdrproc_t)xdr_mountlist,
+        .funcname           = "mnt_Dump",
         .dispatch_behaviour = NOTHING_SPECIAL
     },
     {
-        .service_function = mnt_Umnt,
-        .free_function = mnt_Umnt_Free,
-        .xdr_decode_func = (xdrproc_t)xdr_dirpath,
-        .xdr_encode_func = (xdrproc_t)xdr_void,
-        .funcname = "mnt_Umnt",
+        .service_function   = mnt_Umnt,
+        .free_function      = mnt_Umnt_Free,
+        .xdr_decode_func    = (xdrproc_t)xdr_dirpath,
+        .xdr_encode_func    = (xdrproc_t)xdr_void,
+        .funcname           = "mnt_Umnt",
         .dispatch_behaviour = NOTHING_SPECIAL
     },
     {
-        .service_function = mnt_UmntAll,
-        .free_function = mnt_UmntAll_Free,
-        .xdr_decode_func = (xdrproc_t)xdr_void,
-        .xdr_encode_func = (xdrproc_t)xdr_void,
-        .funcname = "mnt_UmntAll",
+        .service_function   = mnt_UmntAll,
+        .free_function      = mnt_UmntAll_Free,
+        .xdr_decode_func    = (xdrproc_t)xdr_void,
+        .xdr_encode_func    = (xdrproc_t)xdr_void,
+        .funcname           = "mnt_UmntAll",
         .dispatch_behaviour = NOTHING_SPECIAL
     },
     {
-        .service_function = mnt_Export,
-        .free_function = mnt_Export_Free,
-        .xdr_decode_func = (xdrproc_t)xdr_void,
-        .xdr_encode_func = (xdrproc_t)xdr_exports,
-        .funcname = "mnt_Export",
+        .service_function   = mnt_Export,
+        .free_function      = mnt_Export_Free,
+        .xdr_decode_func    = (xdrproc_t)xdr_void,
+        .xdr_encode_func    = (xdrproc_t)xdr_exports,
+        .funcname           = "mnt_Export",
         .dispatch_behaviour = NOTHING_SPECIAL
     }
 };
 
-const nfs_function_desc_t mnt3_func_desc[] = {
+const nfs_function_desc_t mnt3_func_desc[] = 
+{
     {
-        .service_function = mnt_Null,
-        .free_function = mnt_Null_Free,
-        .xdr_decode_func = (xdrproc_t)xdr_void,
-        .xdr_encode_func = (xdrproc_t)xdr_void,
-        .funcname = "mnt_Null",
+        .service_function   = mnt_Null,
+        .free_function      = mnt_Null_Free,
+        .xdr_decode_func    = (xdrproc_t)xdr_void,
+        .xdr_encode_func    = (xdrproc_t)xdr_void,
+        .funcname           = "mnt_Null",
         .dispatch_behaviour = NOTHING_SPECIAL
     },
     {
-        .service_function = mnt_Mnt,
-        .free_function = mnt3_Mnt_Free,
-        .xdr_decode_func = (xdrproc_t)xdr_dirpath,
-        .xdr_encode_func = (xdrproc_t)xdr_mountres3,
-        .funcname = "mnt_Mnt",
+        .service_function   = mnt_Mnt,
+        .free_function      = mnt3_Mnt_Free,
+        .xdr_decode_func    = (xdrproc_t)xdr_dirpath,
+        .xdr_encode_func    = (xdrproc_t)xdr_mountres3,
+        .funcname           = "mnt_Mnt",
         .dispatch_behaviour = NOTHING_SPECIAL
     },
     {
-        .service_function = mnt_Dump,
-        .free_function = mnt_Dump_Free,
-        .xdr_decode_func = (xdrproc_t)xdr_void,
-        .xdr_encode_func = (xdrproc_t)xdr_mountlist,
-        .funcname = "mnt_Dump",
+        .service_function   = mnt_Dump,
+        .free_function      = mnt_Dump_Free,
+        .xdr_decode_func    = (xdrproc_t)xdr_void,
+        .xdr_encode_func    = (xdrproc_t)xdr_mountlist,
+        .funcname           = "mnt_Dump",
         .dispatch_behaviour = NOTHING_SPECIAL
     },
     {
-        .service_function = mnt_Umnt,
-        .free_function = mnt_Umnt_Free,
-        .xdr_decode_func = (xdrproc_t)xdr_dirpath,
-        .xdr_encode_func = (xdrproc_t)xdr_void,
-        .funcname = "mnt_Umnt",
+        .service_function   = mnt_Umnt,
+        .free_function      = mnt_Umnt_Free,
+        .xdr_decode_func    = (xdrproc_t)xdr_dirpath,
+        .xdr_encode_func    = (xdrproc_t)xdr_void,
+        .funcname           = "mnt_Umnt",
         .dispatch_behaviour = NOTHING_SPECIAL
     },
     {
-        .service_function = mnt_UmntAll,
-        .free_function = mnt_UmntAll_Free,
-        .xdr_decode_func = (xdrproc_t)xdr_void,
-        .xdr_encode_func = (xdrproc_t)xdr_void,
-        .funcname = "mnt_UmntAll",
+        .service_function   = mnt_UmntAll,
+        .free_function      = mnt_UmntAll_Free,
+        .xdr_decode_func    = (xdrproc_t)xdr_void,
+        .xdr_encode_func    = (xdrproc_t)xdr_void,
+        .funcname           = "mnt_UmntAll",
         .dispatch_behaviour = NOTHING_SPECIAL
     },
     {
-        .service_function = mnt_Export,
-        .free_function = mnt_Export_Free,
-        .xdr_decode_func = (xdrproc_t)xdr_void,
-        .xdr_encode_func = (xdrproc_t)xdr_exports,
-        .funcname = "mnt_Export",
+        .service_function   = mnt_Export,
+        .free_function      = mnt_Export_Free,
+        .xdr_decode_func    = (xdrproc_t)xdr_void,
+        .xdr_encode_func    = (xdrproc_t)xdr_exports,
+        .funcname           = "mnt_Export",
         .dispatch_behaviour = NOTHING_SPECIAL
     }
 };
@@ -406,205 +410,201 @@ const nfs_function_desc_t mnt3_func_desc[] = {
 #ifdef _USE_NLM
 const nfs_function_desc_t nlm4_func_desc[] = {
     [NLMPROC4_NULL] = {
-        .service_function = nlm_Null,
-        .free_function = nlm_Null_Free,
-        .xdr_decode_func = (xdrproc_t)xdr_void,
-        .xdr_encode_func = (xdrproc_t)xdr_void,
-        .funcname = "nlm_Null",
+        .service_function   = nlm_Null,
+        .free_function      = nlm_Null_Free,
+        .xdr_decode_func    = (xdrproc_t)xdr_void,
+        .xdr_encode_func    = (xdrproc_t)xdr_void,
+        .funcname           = "nlm_Null",
         .dispatch_behaviour = NOTHING_SPECIAL
     },
     [NLMPROC4_TEST] = {
-        .service_function = nlm4_Test,
-        .free_function = nlm4_Test_Free,
-        .xdr_decode_func = (xdrproc_t)xdr_nlm4_testargs,
-        .xdr_encode_func = (xdrproc_t)xdr_nlm4_testres,
-        .funcname = "nlm4_Test",
+        .service_function   = nlm4_Test,
+        .free_function      = nlm4_Test_Free,
+        .xdr_decode_func    = (xdrproc_t)xdr_nlm4_testargs,
+        .xdr_encode_func    = (xdrproc_t)xdr_nlm4_testres,
+        .funcname           = "nlm4_Test",
         .dispatch_behaviour = NEEDS_CRED
     },
     [NLMPROC4_LOCK] = {
-        .service_function = nlm4_Lock,
-        .free_function = nlm4_Lock_Free,
-        .xdr_decode_func = (xdrproc_t)xdr_nlm4_lockargs,
-        .xdr_encode_func = (xdrproc_t)xdr_nlm4_res,
-        .funcname = "nlm4_Lock",
+        .service_function   = nlm4_Lock,
+        .free_function      = nlm4_Lock_Free,
+        .xdr_decode_func    = (xdrproc_t)xdr_nlm4_lockargs,
+        .xdr_encode_func    = (xdrproc_t)xdr_nlm4_res,
+        .funcname           = "nlm4_Lock",
         .dispatch_behaviour = NEEDS_CRED
     },
     [NLMPROC4_CANCEL] = {
-        .service_function = nlm4_Cancel,
-        .free_function = nlm4_Cancel_Free,
-        .xdr_decode_func = (xdrproc_t)xdr_nlm4_cancargs,
-        .xdr_encode_func = (xdrproc_t)xdr_nlm4_res,
-        .funcname = "nlm4_Cancel",
+        .service_function   = nlm4_Cancel,
+        .free_function      = nlm4_Cancel_Free,
+        .xdr_decode_func    = (xdrproc_t)xdr_nlm4_cancargs,
+        .xdr_encode_func    = (xdrproc_t)xdr_nlm4_res,
+        .funcname           = "nlm4_Cancel",
         .dispatch_behaviour = NEEDS_CRED
     },
     [NLMPROC4_UNLOCK] = {
-        .service_function = nlm4_Unlock,
-        .free_function = nlm4_Unlock_Free,
-        .xdr_decode_func = (xdrproc_t)xdr_nlm4_unlockargs,
-        .xdr_encode_func = (xdrproc_t)xdr_nlm4_res,
-        .funcname = "nlm4_Unlock",
+        .service_function   = nlm4_Unlock,
+        .free_function      = nlm4_Unlock_Free,
+        .xdr_decode_func    = (xdrproc_t)xdr_nlm4_unlockargs,
+        .xdr_encode_func    = (xdrproc_t)xdr_nlm4_res,
+        .funcname           = "nlm4_Unlock",
         .dispatch_behaviour = NEEDS_CRED
     },
     [NLMPROC4_GRANTED] = {
-        .service_function = nlm4_Unsupported,
-        .free_function = nlm4_Unsupported_Free,
-        .xdr_decode_func = (xdrproc_t)xdr_void,
-        .xdr_encode_func = (xdrproc_t)xdr_void,
-        .funcname = "nlm4_Granted",
+        .service_function   = nlm4_Unsupported,
+        .free_function      = nlm4_Unsupported_Free,
+        .xdr_decode_func    = (xdrproc_t)xdr_void,
+        .xdr_encode_func    = (xdrproc_t)xdr_void,
+        .funcname           = "nlm4_Granted",
         .dispatch_behaviour = NOTHING_SPECIAL
     },
     [NLMPROC4_TEST_MSG] = {
-        .service_function = nlm4_Test_Message,
-        .free_function = nlm4_Test_Free,
-        .xdr_decode_func = (xdrproc_t)xdr_nlm4_testargs,
-        .xdr_encode_func = (xdrproc_t)xdr_void,
-        .funcname = "nlm4_Test_msg",
+        .service_function   = nlm4_Test_Message,
+        .free_function      = nlm4_Test_Free,
+        .xdr_decode_func    = (xdrproc_t)xdr_nlm4_testargs,
+        .xdr_encode_func    = (xdrproc_t)xdr_void,
+        .funcname           = "nlm4_Test_msg",
         .dispatch_behaviour = NEEDS_CRED
     },
     [NLMPROC4_LOCK_MSG] = {
-        .service_function = nlm4_Lock_Message,
-        .free_function = nlm4_Lock_Free,
-        .xdr_decode_func = (xdrproc_t)xdr_nlm4_lockargs,
-        .xdr_encode_func = (xdrproc_t)xdr_void,
-        .funcname = "nlm4_Lock_msg",
+        .service_function   = nlm4_Lock_Message,
+        .free_function      = nlm4_Lock_Free,
+        .xdr_decode_func    = (xdrproc_t)xdr_nlm4_lockargs,
+        .xdr_encode_func    = (xdrproc_t)xdr_void,
+        .funcname           = "nlm4_Lock_msg",
         .dispatch_behaviour = NEEDS_CRED
     },
     [NLMPROC4_CANCEL_MSG] = {
-        .service_function = nlm4_Cancel_Message,
-        .free_function = nlm4_Cancel_Free,
-        .xdr_decode_func =
-        (xdrproc_t)xdr_nlm4_cancargs,
-        .xdr_encode_func = (xdrproc_t)xdr_void,
-        .funcname = "nlm4_Cancel_msg",
-        .dispatch_behaviour =
-        NEEDS_CRED
+        .service_function   = nlm4_Cancel_Message,
+        .free_function      = nlm4_Cancel_Free,
+        .xdr_decode_func    = (xdrproc_t)xdr_nlm4_cancargs,
+        .xdr_encode_func    = (xdrproc_t)xdr_void,
+        .funcname           = "nlm4_Cancel_msg",
+        .dispatch_behaviour = NEEDS_CRED
     },
     [NLMPROC4_UNLOCK_MSG] = {
-        .service_function = nlm4_Unlock_Message,
-        .free_function = nlm4_Unlock_Free,
-        .xdr_decode_func =
-        (xdrproc_t)xdr_nlm4_unlockargs,
-        .xdr_encode_func = (xdrproc_t)xdr_void,
-        .funcname = "nlm4_Unlock_msg",
-        .dispatch_behaviour =
-        NEEDS_CRED
+        .service_function   = nlm4_Unlock_Message,
+        .free_function      = nlm4_Unlock_Free,
+        .xdr_decode_func    = (xdrproc_t)xdr_nlm4_unlockargs,
+        .xdr_encode_func    = (xdrproc_t)xdr_void,
+        .funcname           = "nlm4_Unlock_msg",
+        .dispatch_behaviour = NEEDS_CRED
     },
     [NLMPROC4_GRANTED_MSG] = {
-        .service_function = nlm4_Unsupported,
-        .free_function = nlm4_Unsupported_Free,
-        .xdr_decode_func = (xdrproc_t)xdr_void,
-        .xdr_encode_func = (xdrproc_t)xdr_void,
-        .funcname = "nlm4_Granted_msg",
+        .service_function   = nlm4_Unsupported,
+        .free_function      = nlm4_Unsupported_Free,
+        .xdr_decode_func    = (xdrproc_t)xdr_void,
+        .xdr_encode_func    = (xdrproc_t)xdr_void,
+        .funcname           = "nlm4_Granted_msg",
         .dispatch_behaviour = NOTHING_SPECIAL
     },
     [NLMPROC4_TEST_RES] = {
-        .service_function = nlm4_Unsupported,
-        .free_function = nlm4_Unsupported_Free,
-        .xdr_decode_func = (xdrproc_t)xdr_void,
-        .xdr_encode_func = (xdrproc_t)xdr_void,
-        .funcname = "nlm4_Test_res",
+        .service_function   = nlm4_Unsupported,
+        .free_function      = nlm4_Unsupported_Free,
+        .xdr_decode_func    = (xdrproc_t)xdr_void,
+        .xdr_encode_func    = (xdrproc_t)xdr_void,
+        .funcname           = "nlm4_Test_res",
         .dispatch_behaviour = NOTHING_SPECIAL
     },
     [NLMPROC4_LOCK_RES] = {
-        .service_function = nlm4_Unsupported,
-        .free_function = nlm4_Unsupported_Free,
-        .xdr_decode_func = (xdrproc_t)xdr_void,
-        .xdr_encode_func = (xdrproc_t)xdr_void,
-        .funcname = "nlm4_Lock_res",
+        .service_function   = nlm4_Unsupported,
+        .free_function      = nlm4_Unsupported_Free,
+        .xdr_decode_func    = (xdrproc_t)xdr_void,
+        .xdr_encode_func    = (xdrproc_t)xdr_void,
+        .funcname           = "nlm4_Lock_res",
         .dispatch_behaviour = NOTHING_SPECIAL
     },
     [NLMPROC4_CANCEL_RES] = {
-        .service_function = nlm4_Unsupported,
-        .free_function = nlm4_Unsupported_Free,
-        .xdr_decode_func = (xdrproc_t)xdr_void,
-        .xdr_encode_func = (xdrproc_t)xdr_void,
-        .funcname = "nlm4_Cancel_res",
+        .service_function   = nlm4_Unsupported,
+        .free_function      = nlm4_Unsupported_Free,
+        .xdr_decode_func    = (xdrproc_t)xdr_void,
+        .xdr_encode_func    = (xdrproc_t)xdr_void,
+        .funcname           = "nlm4_Cancel_res",
         .dispatch_behaviour = NOTHING_SPECIAL
     },
     [NLMPROC4_UNLOCK_RES] = {
-        .service_function = nlm4_Unsupported,
-        .free_function = nlm4_Unsupported_Free,
-        .xdr_decode_func = (xdrproc_t)xdr_void,
-        .xdr_encode_func = (xdrproc_t)xdr_void,
-        .funcname = "nlm4_Unlock_res",
+        .service_function   = nlm4_Unsupported,
+        .free_function      = nlm4_Unsupported_Free,
+        .xdr_decode_func    = (xdrproc_t)xdr_void,
+        .xdr_encode_func    = (xdrproc_t)xdr_void,
+        .funcname           = "nlm4_Unlock_res",
         .dispatch_behaviour = NOTHING_SPECIAL
     },
     [NLMPROC4_GRANTED_RES] = {
-        .service_function = nlm4_Granted_Res,
-        .free_function = nlm4_Granted_Res_Free,
-        .xdr_decode_func = (xdrproc_t)xdr_nlm4_res,
-        .xdr_encode_func = (xdrproc_t)xdr_void,
-        .funcname = "nlm4_Granted_res",
+        .service_function   = nlm4_Granted_Res,
+        .free_function      = nlm4_Granted_Res_Free,
+        .xdr_decode_func    = (xdrproc_t)xdr_nlm4_res,
+        .xdr_encode_func    = (xdrproc_t)xdr_void,
+        .funcname           = "nlm4_Granted_res",
         .dispatch_behaviour = NOTHING_SPECIAL
     },
     [NLMPROC4_SM_NOTIFY] = {
-        .service_function = nlm4_Sm_Notify,
-        .free_function = nlm4_Sm_Notify_Free,
-        .xdr_decode_func =
-        (xdrproc_t)xdr_nlm4_sm_notifyargs,
-        .xdr_encode_func = (xdrproc_t)xdr_void,
-        .funcname = "nlm4_sm_notify",
+        .service_function   = nlm4_Sm_Notify,
+        .free_function      = nlm4_Sm_Notify_Free,
+        .xdr_decode_func    = (xdrproc_t)xdr_nlm4_sm_notifyargs,
+        .xdr_encode_func    = (xdrproc_t)xdr_void,
+        .funcname           = "nlm4_sm_notify",
         .dispatch_behaviour = NOTHING_SPECIAL
     },
     [17] = {
-        .service_function = nlm4_Unsupported,
-        .free_function = nlm4_Unsupported_Free,
-        .xdr_decode_func = (xdrproc_t)xdr_void,
-        .xdr_encode_func = (xdrproc_t)xdr_void,
-        .funcname = "nlm4_Granted_res",
+        .service_function   = nlm4_Unsupported,
+        .free_function      = nlm4_Unsupported_Free,
+        .xdr_decode_func    = (xdrproc_t)xdr_void,
+        .xdr_encode_func    = (xdrproc_t)xdr_void,
+        .funcname           = "nlm4_Granted_res",
         .dispatch_behaviour = NOTHING_SPECIAL
     },
     [18] = {
-        .service_function = nlm4_Unsupported,
-        .free_function = nlm4_Unsupported_Free,
-        .xdr_decode_func = (xdrproc_t)xdr_void,
-        .xdr_encode_func = (xdrproc_t)xdr_void,
-        .funcname = "nlm4_Granted_res",
+        .service_function   = nlm4_Unsupported,
+        .free_function      = nlm4_Unsupported_Free,
+        .xdr_decode_func    = (xdrproc_t)xdr_void,
+        .xdr_encode_func    = (xdrproc_t)xdr_void,
+        .funcname           = "nlm4_Granted_res",
         .dispatch_behaviour = NOTHING_SPECIAL
     },
     [19] = {
-        .service_function = nlm4_Unsupported,
-        .free_function = nlm4_Unsupported_Free,
-        .xdr_decode_func = (xdrproc_t)xdr_void,
-        .xdr_encode_func = (xdrproc_t)xdr_void,
-        .funcname = "nlm4_Granted_res",
+        .service_function   = nlm4_Unsupported,
+        .free_function      = nlm4_Unsupported_Free,
+        .xdr_decode_func    = (xdrproc_t)xdr_void,
+        .xdr_encode_func    = (xdrproc_t)xdr_void,
+        .funcname           = "nlm4_Granted_res",
         .dispatch_behaviour = NOTHING_SPECIAL
     },
     [NLMPROC4_SHARE] = {
-        .service_function = nlm4_Share,
-        .free_function = nlm4_Share_Free,
-        .xdr_decode_func = (xdrproc_t)xdr_nlm4_shareargs,
-        .xdr_encode_func = (xdrproc_t)xdr_nlm4_shareres,
-        .funcname = "nlm4_Share",
+        .service_function   = nlm4_Share,
+        .free_function      = nlm4_Share_Free,
+        .xdr_decode_func    = (xdrproc_t)xdr_nlm4_shareargs,
+        .xdr_encode_func    = (xdrproc_t)xdr_nlm4_shareres,
+        .funcname           = "nlm4_Share",
         .dispatch_behaviour = NEEDS_CRED
     },
     [NLMPROC4_UNSHARE] = {
-        .service_function = nlm4_Unshare,
-        .free_function = nlm4_Unshare_Free,
-        .xdr_decode_func = (xdrproc_t)xdr_nlm4_shareargs,
-        .xdr_encode_func = (xdrproc_t)xdr_nlm4_shareres,
-        .funcname = "nlm4_Unshare",
+        .service_function   = nlm4_Unshare,
+        .free_function      = nlm4_Unshare_Free,
+        .xdr_decode_func    = (xdrproc_t)xdr_nlm4_shareargs,
+        .xdr_encode_func    = (xdrproc_t)xdr_nlm4_shareres,
+        .funcname           = "nlm4_Unshare",
         .dispatch_behaviour = NEEDS_CRED
     },
-    [NLMPROC4_NM_LOCK] = {
+    [NLMPROC4_NM_LOCK] = 
+    {
         /* NLM_NM_LOCK uses the same handling as NLM_LOCK
          * except for monitoring, nlm4_Lock will make
          * that determination.
          */
-        .service_function = nlm4_Lock,
-        .free_function = nlm4_Lock_Free,
-        .xdr_decode_func = (xdrproc_t)xdr_nlm4_lockargs,
-        .xdr_encode_func = (xdrproc_t)xdr_nlm4_res,
-        .funcname = "nlm4_Nm_lock",
+        .service_function   = nlm4_Lock,
+        .free_function      = nlm4_Lock_Free,
+        .xdr_decode_func    = (xdrproc_t)xdr_nlm4_lockargs,
+        .xdr_encode_func    = (xdrproc_t)xdr_nlm4_res,
+        .funcname           = "nlm4_Nm_lock",
         .dispatch_behaviour = NEEDS_CRED
     },
-    [NLMPROC4_FREE_ALL] = {
-        .service_function = nlm4_Free_All,
-        .free_function = nlm4_Free_All_Free,
-        .xdr_decode_func =
-        (xdrproc_t)xdr_nlm4_free_allargs,
-        .xdr_encode_func = (xdrproc_t)xdr_void,
-        .funcname = "nlm4_Free_all",
+    [NLMPROC4_FREE_ALL] = 
+    {
+        .service_function   = nlm4_Free_All,
+        .free_function      = nlm4_Free_All_Free,
+        .xdr_decode_func    = (xdrproc_t)xdr_nlm4_free_allargs,
+        .xdr_encode_func    = (xdrproc_t)xdr_void,
+        .funcname           = "nlm4_Free_all",
         .dispatch_behaviour = NOTHING_SPECIAL
     },
 };
@@ -612,110 +612,95 @@ const nfs_function_desc_t nlm4_func_desc[] = {
 
 const nfs_function_desc_t rquota1_func_desc[] = {
     [0] = {
-        .service_function = rquota_Null,
-        .free_function = rquota_Null_Free,
-        .xdr_decode_func = (xdrproc_t)xdr_void,
-        .xdr_encode_func = (xdrproc_t)xdr_void,
-        .funcname = "rquota_Null",
+        .service_function   = rquota_Null,
+        .free_function      = rquota_Null_Free,
+        .xdr_decode_func    = (xdrproc_t)xdr_void,
+        .xdr_encode_func    = (xdrproc_t)xdr_void,
+        .funcname           = "rquota_Null",
         .dispatch_behaviour = NOTHING_SPECIAL
     },
     [RQUOTAPROC_GETQUOTA] = {
-        .service_function = rquota_getquota,
-        .free_function = rquota_getquota_Free,
-        .xdr_decode_func =
-        (xdrproc_t)xdr_getquota_args,
-        .xdr_encode_func =
-        (xdrproc_t)xdr_getquota_rslt,
-        .funcname = "rquota_Getquota",
+        .service_function   = rquota_getquota,
+        .free_function      = rquota_getquota_Free,
+        .xdr_decode_func    = (xdrproc_t)xdr_getquota_args,
+        .xdr_encode_func    = (xdrproc_t)xdr_getquota_rslt,
+        .funcname           = "rquota_Getquota",
         .dispatch_behaviour = NEEDS_CRED
     },
-    [RQUOTAPROC_GETACTIVEQUOTA] = {
-        .service_function =
-        rquota_getactivequota,
-        .free_function =
-        rquota_getactivequota_Free,
-        .xdr_decode_func =
-        (xdrproc_t)xdr_getquota_args,
-        .xdr_encode_func =
-        (xdrproc_t)xdr_getquota_rslt,
-        .funcname = "rquota_Getactivequota",
+    [RQUOTAPROC_GETACTIVEQUOTA] = 
+    {
+        .service_function   = rquota_getactivequota,
+        .free_function      = rquota_getactivequota_Free,
+        .xdr_decode_func    = (xdrproc_t)xdr_getquota_args,
+        .xdr_encode_func    = (xdrproc_t)xdr_getquota_rslt,
+        .funcname           = "rquota_Getactivequota",
         .dispatch_behaviour = NEEDS_CRED
     },
-    [RQUOTAPROC_SETQUOTA] = {
-        .service_function = rquota_setquota,
-        .free_function = rquota_setquota_Free,
-        .xdr_decode_func =
-        (xdrproc_t)xdr_setquota_args,
-        .xdr_encode_func =
-        (xdrproc_t)xdr_setquota_rslt,
-        .funcname = "rquota_Setactivequota",
+    [RQUOTAPROC_SETQUOTA] = 
+    {
+        .service_function   = rquota_setquota,
+        .free_function      = rquota_setquota_Free,
+        .xdr_decode_func    = (xdrproc_t)xdr_setquota_args,
+        .xdr_encode_func    = (xdrproc_t)xdr_setquota_rslt,
+        .funcname           = "rquota_Setactivequota",
         .dispatch_behaviour = NEEDS_CRED
     },
-    [RQUOTAPROC_SETACTIVEQUOTA] = {
-        .service_function =
-        rquota_setactivequota,
-        .free_function =
-        rquota_setactivequota_Free,
-        .xdr_decode_func =
-        (xdrproc_t)xdr_setquota_args,
-        .xdr_encode_func =
-        (xdrproc_t)xdr_setquota_rslt,
-        .funcname = "rquota_Getactivequota",
+    [RQUOTAPROC_SETACTIVEQUOTA] = 
+    {
+        .service_function   = rquota_setactivequota,
+        .free_function      = rquota_setactivequota_Free,
+        .xdr_decode_func    = (xdrproc_t)xdr_setquota_args,
+        .xdr_encode_func    = (xdrproc_t)xdr_setquota_rslt,
+        .funcname           = "rquota_Getactivequota",
         .dispatch_behaviour = NEEDS_CRED
     }
 };
 
-const nfs_function_desc_t rquota2_func_desc[] = {
-    [0] = {
-        .service_function = rquota_Null,
-        .free_function = rquota_Null_Free,
-        .xdr_decode_func = (xdrproc_t)xdr_void,
-        .xdr_encode_func = (xdrproc_t)xdr_void,
-        .funcname = "rquota_Null",
+const nfs_function_desc_t rquota2_func_desc[] = 
+{
+    [0] = 
+    {
+        .service_function   = rquota_Null,
+        .free_function      = rquota_Null_Free,
+        .xdr_decode_func    = (xdrproc_t)xdr_void,
+        .xdr_encode_func    = (xdrproc_t)xdr_void,
+        .funcname           = "rquota_Null",
         .dispatch_behaviour = NOTHING_SPECIAL
     },
-    [RQUOTAPROC_GETQUOTA] = {
-        .service_function = rquota_getquota,
-        .free_function = rquota_getquota_Free,
-        .xdr_decode_func =
-        (xdrproc_t)xdr_ext_getquota_args,
-        .xdr_encode_func =
-        (xdrproc_t)xdr_getquota_rslt,
-        .funcname = "rquota_Ext_Getquota",
+    [RQUOTAPROC_GETQUOTA] = 
+    {
+        .service_function   = rquota_getquota,
+        .free_function      = rquota_getquota_Free,
+        .xdr_decode_func    = (xdrproc_t)xdr_ext_getquota_args,
+        .xdr_encode_func    = (xdrproc_t)xdr_getquota_rslt,
+        .funcname           = "rquota_Ext_Getquota",
         .dispatch_behaviour = NEEDS_CRED
     },
-    [RQUOTAPROC_GETACTIVEQUOTA] = {
-        .service_function =
-        rquota_getactivequota,
-        .free_function =
-        rquota_getactivequota_Free,
-        .xdr_decode_func =
-        (xdrproc_t)xdr_ext_getquota_args,
-        .xdr_encode_func =
-        (xdrproc_t)xdr_getquota_rslt,
-        .funcname = "rquota_Ext_Getactivequota",
+    [RQUOTAPROC_GETACTIVEQUOTA] = 
+    {
+        .service_function   = rquota_getactivequota,
+        .free_function      = rquota_getactivequota_Free,
+        .xdr_decode_func    = (xdrproc_t)xdr_ext_getquota_args,
+        .xdr_encode_func    = (xdrproc_t)xdr_getquota_rslt,
+        .funcname           = "rquota_Ext_Getactivequota",
         .dispatch_behaviour = NEEDS_CRED
     },
-    [RQUOTAPROC_SETQUOTA] = {
-        .service_function = rquota_setquota,
-        .free_function = rquota_setquota_Free,
-        .xdr_decode_func =
-        (xdrproc_t)xdr_ext_setquota_args,
-        .xdr_encode_func =
-        (xdrproc_t)xdr_setquota_rslt,
-        .funcname = "rquota_Ext_Setactivequota",
+    [RQUOTAPROC_SETQUOTA] = 
+    {
+        .service_function   = rquota_setquota,
+        .free_function      = rquota_setquota_Free,
+        .xdr_decode_func    = (xdrproc_t)xdr_ext_setquota_args,
+        .xdr_encode_func    = (xdrproc_t)xdr_setquota_rslt,
+        .funcname           = "rquota_Ext_Setactivequota",
         .dispatch_behaviour = NEEDS_CRED
     },
-    [RQUOTAPROC_SETACTIVEQUOTA] = {
-        .service_function =
-        rquota_setactivequota,
-        .free_function =
-        rquota_setactivequota_Free,
-        .xdr_decode_func =
-        (xdrproc_t)xdr_ext_setquota_args,
-        .xdr_encode_func =
-        (xdrproc_t)xdr_setquota_rslt,
-        .funcname = "rquota_Ext_Getactivequota",
+    [RQUOTAPROC_SETACTIVEQUOTA] = 
+    {
+        .service_function   = rquota_setactivequota,
+        .free_function      = rquota_setactivequota_Free,
+        .xdr_decode_func    = (xdrproc_t)xdr_ext_setquota_args,
+        .xdr_encode_func    = (xdrproc_t)xdr_setquota_rslt,
+        .funcname           = "rquota_Ext_Getactivequota",
         .dispatch_behaviour = NEEDS_CRED
     }
 };
@@ -775,11 +760,11 @@ const nfs_function_desc_t* nfs_rpc_get_funcdesc(nfs_request_t* reqnfs)
  */
 void nfs_rpc_execute(request_data_t* reqdata)
 {
-    const char* client_ip = "<unknown client>";
-    const char* progname = "unknown";
+    const char* client_ip              = "<unknown client>";
+    const char* progname               = "unknown";
     const nfs_function_desc_t* reqdesc = reqdata->r_u.req.funcdesc;
-    nfs_arg_t* arg_nfs = &reqdata->r_u.req.arg_nfs;
-    SVCXPRT* xprt = reqdata->r_u.req.svc.rq_xprt;
+    nfs_arg_t* arg_nfs                 = &reqdata->r_u.req.arg_nfs;
+    SVCXPRT* xprt                      = reqdata->r_u.req.svc.rq_xprt;
     nfs_res_t* res_nfs;
     struct export_perms export_perms;
     struct user_cred user_credentials;
@@ -808,11 +793,11 @@ void nfs_rpc_execute(request_data_t* reqdata)
      */
     memset(&export_perms, 0, sizeof(export_perms));
     memset(&req_ctx, 0, sizeof(req_ctx));
-    op_ctx = &req_ctx;
-    op_ctx->creds = &user_credentials;
-    op_ctx->caller_addr = (sockaddr_t *)svc_getrpccaller(xprt);
-    op_ctx->nfs_vers = reqdata->r_u.req.svc.rq_msg.cb_vers;
-    op_ctx->req_type = reqdata->rtype;
+    op_ctx               = &req_ctx;
+    op_ctx->creds        = &user_credentials;
+    op_ctx->caller_addr  = (sockaddr_t *)svc_getrpccaller(xprt);
+    op_ctx->nfs_vers     = reqdata->r_u.req.svc.rq_msg.cb_vers;
+    op_ctx->req_type     = reqdata->rtype;
     op_ctx->export_perms = &export_perms;
 
     /* Set up initial export permissions that don't allow anything. */
@@ -929,15 +914,7 @@ void nfs_rpc_execute(request_data_t* reqdata)
                         reqdata->r_u.req.svc.rq_msg.cb_prog,
                         reqdata->r_u.req.svc.rq_msg.cb_vers,
                         reqdata->r_u.req.svc.rq_msg.cb_proc,
-                        errno)
-                         
-                         
-                         
-                         
-                         
-                         
-                    
-                    ;
+                        errno);
                     svcerr_systemerr(&reqdata->r_u.req.svc);
                 }
                 break;

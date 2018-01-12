@@ -372,5 +372,5 @@ ASALocalRun/
 # MSBuild Binary and Structured Log
 *.binlog
 # nfs-ganesha visual studio project for visualgdb folder
-nfs-ganesha/
+nfs-ganesha-vs2015/
 nfs-ganesha-vs2013/
