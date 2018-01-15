@@ -35,8 +35,8 @@
 #ifndef MDCACHE_LRU_H
 #define MDCACHE_LRU_H
 
-#include "config.h"
-#include "log.h"
+//#include "../../../include/config.h"
+//#include "../../../include/log.h"
 #include "mdcache_int.h"
 
 /**
@@ -65,23 +65,23 @@
  */
 
 struct lru_state {
-	uint64_t entries_hiwat;
-	uint64_t entries_used;
-	uint64_t chunks_hiwat;
-	uint64_t chunks_used;
-	uint32_t fds_system_imposed;
-	uint32_t fds_hard_limit;
-	uint32_t fds_hiwat;
-	uint32_t fds_lowat;
-	/** This is the actual counter of 'futile' attempts at reaping
-	    made  in a given time period.  When it reaches the futility
-	    count, we turn off caching of file descriptors. */
-	uint32_t futility;
-	uint32_t per_lane_work;
-	uint32_t biggest_window;
-	uint64_t prev_fd_count;	/* previous # of open fds */
-	time_t prev_time;	/* previous time the gc thread was run. */
-	bool caching_fds;
+    uint64_t entries_hiwat;
+    uint64_t entries_used;
+    uint64_t chunks_hiwat;
+    uint64_t chunks_used;
+    uint32_t fds_system_imposed;
+    uint32_t fds_hard_limit;
+    uint32_t fds_hiwat;
+    uint32_t fds_lowat;
+    /** This is the actual counter of 'futile' attempts at reaping
+        made  in a given time period.  When it reaches the futility
+        count, we turn off caching of file descriptors. */
+    uint32_t futility;
+    uint32_t per_lane_work;
+    uint32_t biggest_window;
+    uint64_t prev_fd_count;	/* previous # of open fds */
+    time_t prev_time;	/* previous time the gc thread was run. */
+    bool caching_fds;
 };
 
 extern struct lru_state lru_state;
@@ -144,7 +144,7 @@ mdcache_entry_t *mdcache_lru_get(void);
 void mdcache_lru_insert(mdcache_entry_t *entry);
 #define mdcache_lru_ref(e, f) _mdcache_lru_ref(e, f, __func__, __LINE__)
 fsal_status_t _mdcache_lru_ref(mdcache_entry_t *entry, uint32_t flags,
-			       const char *func, int line);
+                   const char *func, int line);
 
 /* XXX */
 void mdcache_lru_kill(mdcache_entry_t *entry);
@@ -152,9 +152,9 @@ void mdcache_lru_cleanup_push(mdcache_entry_t *entry);
 void mdcache_lru_cleanup_try_push(mdcache_entry_t *entry);
 
 #define mdcache_lru_unref(e) _mdcache_lru_unref(e, LRU_FLAG_NONE, \
-						__func__, __LINE__)
+                        __func__, __LINE__)
 bool _mdcache_lru_unref(mdcache_entry_t *entry, uint32_t flags,
-			const char *func, int line);
+            const char *func, int line);
 void lru_wake_thread(void);
 void mdcache_lru_kill_for_shutdown(mdcache_entry_t *entry);
 
@@ -166,7 +166,7 @@ void mdcache_lru_kill_for_shutdown(mdcache_entry_t *entry);
  */
 static inline fsal_status_t mdcache_get(mdcache_entry_t *entry)
 {
-	return mdcache_lru_ref(entry, LRU_FLAG_NONE);
+    return mdcache_lru_ref(entry, LRU_FLAG_NONE);
 }
 
 /**
@@ -187,7 +187,7 @@ static inline fsal_status_t mdcache_get(mdcache_entry_t *entry)
  */
 static inline void mdcache_put(mdcache_entry_t *entry)
 {
-	mdcache_lru_unref(entry);
+    mdcache_lru_unref(entry);
 }
 
 /**
@@ -196,7 +196,7 @@ static inline void mdcache_put(mdcache_entry_t *entry)
 
 static inline bool mdcache_lru_caching_fds(void)
 {
-	return lru_state.caching_fds;
+    return lru_state.caching_fds;
 }
 
 void lru_remove_chunk(struct dir_chunk *chunk);

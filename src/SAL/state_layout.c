@@ -96,7 +96,9 @@ state_status_t state_add_segment(state_t* state, struct pnfs_segment* segment,
        return_on_close, all segments should be treated as
        return_on_close. */
     if(return_on_close)
+    {
         state->state_data.layout.state_return_on_close = true;
+    }
 
     return STATE_SUCCESS;
 }

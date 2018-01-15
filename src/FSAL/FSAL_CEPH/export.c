@@ -285,13 +285,13 @@ static fsal_status_t get_fs_dynamic_info(struct fsal_export *export_pub,
 		return ceph2fsal_error(rc);
 
 	memset(info, 0, sizeof(fsal_dynamicfsinfo_t));
-	info->total_bytes = vfs_st.f_frsize * vfs_st.f_blocks;
-	info->free_bytes = vfs_st.f_frsize * vfs_st.f_bfree;
-	info->avail_bytes = vfs_st.f_frsize * vfs_st.f_bavail;
-	info->total_files = vfs_st.f_files;
-	info->free_files = vfs_st.f_ffree;
-	info->avail_files = vfs_st.f_favail;
-	info->time_delta.tv_sec = 1;
+	info->total_bytes        = vfs_st.f_frsize * vfs_st.f_blocks;
+	info->free_bytes         = vfs_st.f_frsize * vfs_st.f_bfree;
+	info->avail_bytes        = vfs_st.f_frsize * vfs_st.f_bavail;
+	info->total_files        = vfs_st.f_files;
+	info->free_files         = vfs_st.f_ffree;
+	info->avail_files        = vfs_st.f_favail;
+	info->time_delta.tv_sec  = 1;
 	info->time_delta.tv_nsec = 0;
 
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);

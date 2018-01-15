@@ -152,18 +152,18 @@ void glusterfs_init(void)
     }
 
     /* set up module operations */
-    myself->m_ops.create_export = glusterfs_create_export;
+    myself->m_ops.create_export    = glusterfs_create_export;
 
     /* setup global handle internals */
-    myself->m_ops.init_config = init_config;
+    myself->m_ops.init_config      = init_config;
 
     /* Enable extended fop support */
-    myself->m_ops.support_ex = glusterfs_support_ex;
+    myself->m_ops.support_ex       = glusterfs_support_ex;
     /*
      * Following inits needed for pNFS support
      * get device info will used by pnfs meta data server
      */
-    myself->m_ops.getdeviceinfo = getdeviceinfo;
+    myself->m_ops.getdeviceinfo    = getdeviceinfo;
     myself->m_ops.fsal_pnfs_ds_ops = pnfs_ds_ops_init;
 
     PTHREAD_MUTEX_init(&GlusterFS.lock, NULL);

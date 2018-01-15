@@ -260,9 +260,9 @@ static nfsstat4 ds_commit(struct fsal_ds_handle*const ds_pub,
 void dsh_ops_init(struct fsal_dsh_ops* ops)
 {
     ops->release = release;
-    ops->read = ds_read;
-    ops->write = ds_write;
-    ops->commit = ds_commit;
+    ops->read    = ds_read;
+    ops->write   = ds_write;
+    ops->commit  = ds_commit;
 };
 
 /**
@@ -289,9 +289,7 @@ static nfsstat4 make_ds_handle(struct fsal_pnfs_ds*const pds,
     unsigned char globjhdl[GFAPI_HANDLE_LENGTH] = { '\0' };
     struct stat sb;
     struct glusterfs_export* glfs_export =
-    container_of(pds->mds_fsal_export,
-                struct glusterfs_export, export)
-    ;
+    container_of(pds->mds_fsal_export, struct glusterfs_export, export);
 
     *handle = NULL;
 

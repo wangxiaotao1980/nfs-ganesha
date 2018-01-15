@@ -27,12 +27,12 @@
  * -------------
  */
 
-#include "config.h"
-#include "fsal.h"
-#include "fsal_internal.h"
-#include "fsal_convert.h"
-#include "gpfs_methods.h"
+#include "../../include/config.h"
+#include "../../include/fsal.h"
+#include "../../include/fsal_convert.h"
 #include <unistd.h>
+#include "fsal_internal.h"
+#include "gpfs_methods.h"
 
 /**
  *  @brief Remove a filesystem object .
@@ -47,37 +47,37 @@
  */
 fsal_status_t
 GPFSFSAL_unlink(struct fsal_obj_handle *dir_hdl, const char *object_name,
-		const struct req_op_context *op_ctx)
+        const struct req_op_context *op_ctx)
 {
 
-	fsal_status_t status;
-	gpfsfsal_xstat_t buffxstat;
-	struct gpfs_fsal_obj_handle *gpfs_hdl;
-	struct gpfs_fsal_export *exp = container_of(op_ctx->fsal_export,
-					struct gpfs_fsal_export, export);
-	int export_fd = exp->export_fd;
+    fsal_status_t status;
+    gpfsfsal_xstat_t buffxstat;
+    struct gpfs_fsal_obj_handle *gpfs_hdl;
+    struct gpfs_fsal_export *exp = container_of(op_ctx->fsal_export,
+                    struct gpfs_fsal_export, export);
+    int export_fd = exp->export_fd;
 
-	gpfs_hdl =
-	    container_of(dir_hdl, struct gpfs_fsal_obj_handle, obj_handle);
+    gpfs_hdl =
+        container_of(dir_hdl, struct gpfs_fsal_obj_handle, obj_handle);
 
-	/* get file metadata */
-	status = fsal_internal_stat_name(export_fd, gpfs_hdl->handle,
-					 object_name, &buffxstat.buffstat);
-	if (FSAL_IS_ERROR(status))
-		return status;
+    /* get file metadata */
+    status = fsal_internal_stat_name(export_fd, gpfs_hdl->handle,
+                     object_name, &buffxstat.buffstat);
+    if (FSAL_IS_ERROR(status))
+        return status;
 
   /******************************
    * DELETE FROM THE FILESYSTEM *
    ******************************/
-	fsal_set_credentials(op_ctx->creds);
+    fsal_set_credentials(op_ctx->creds);
 
-	status = fsal_internal_unlink(export_fd, gpfs_hdl->handle,
-				      object_name, &buffxstat.buffstat);
+    status = fsal_internal_unlink(export_fd, gpfs_hdl->handle,
+                      object_name, &buffxstat.buffstat);
 
-	fsal_restore_ganesha_credentials();
+    fsal_restore_ganesha_credentials();
 
-	if (FSAL_IS_ERROR(status))
-		return status;
+    if (FSAL_IS_ERROR(status))
+        return status;
 
-	return fsalstat(ERR_FSAL_NO_ERROR, 0);
+    return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }

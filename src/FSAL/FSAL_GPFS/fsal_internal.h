@@ -33,16 +33,16 @@
 #ifndef FSAL_INTERNAL_H
 #define FSAL_INTERNAL_H
 
-#include <sys/stat.h>
-#include "fsal.h"
-#include "gsh_list.h"
-#include "fsal_types.h"
+#include "../../include/fsal.h"
+//#include "../../include/gsh_list.h"
+#include "../../include/fsal_types.h"
+//#include "../../include/fsal_up.h"
+#include "../../include/gsh_config.h"
+#include "../../include/FSAL/fsal_commonlib.h"
+//#include <sys/stat.h>
 #include "fcntl.h"
 #include "include/gpfs_nfs.h"
 #include "include/gpfs.h"
-#include "fsal_up.h"
-#include "gsh_config.h"
-#include "FSAL/fsal_commonlib.h"
 
 struct gpfs_filesystem;
 

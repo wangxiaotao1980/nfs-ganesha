@@ -63,25 +63,25 @@ const char myname[] = "VFS";
 
 /* filesystem info for VFS */
 static struct fsal_staticfsinfo_t default_posix_info = {
-    .maxfilesize = UINT64_MAX,
-    .maxlink = _POSIX_LINK_MAX,
-    .maxnamelen = 1024,
-    .maxpathlen = 1024,
-    .no_trunc = true,
-    .chown_restricted = true,
-    .case_insensitive = false,
-    .case_preserving = true,
-    .lock_support = false,
-    .lock_support_owner = true,
-    .lock_support_async_block = false,
-    .named_attr = true,
-    .unique_handles = true,
-    .lease_time = { 10, 0 },
-    .acl_support = FSAL_ACLSUPPORT_ALLOW,
-    .homogenous = true,
-    .supported_attrs = VFS_SUPPORTED_ATTRIBUTES,
-    .maxread = FSAL_MAXIOSIZE,
-    .maxwrite = FSAL_MAXIOSIZE,
+    .maxfilesize                     = UINT64_MAX,
+    .maxlink                         = _POSIX_LINK_MAX,
+    .maxnamelen                      = 1024,
+    .maxpathlen                      = 1024,
+    .no_trunc                        = true,
+    .chown_restricted                = true,
+    .case_insensitive                = false,
+    .case_preserving                 = true,
+    .lock_support                    = false,
+    .lock_support_owner              = true,
+    .lock_support_async_block        = false,
+    .named_attr                      = true,
+    .unique_handles                  = true,
+    .lease_time                      = { 10, 0 },
+    .acl_support                     = FSAL_ACLSUPPORT_ALLOW,
+    .homogenous                      = true,
+    .supported_attrs                 = VFS_SUPPORTED_ATTRIBUTES,
+    .maxread                         = FSAL_MAXIOSIZE,
+    .maxwrite                        = FSAL_MAXIOSIZE,
     .link_supports_permission_checks = false,
 };
 
@@ -106,10 +106,10 @@ static struct config_item vfs_params[] = {
 };
 
 struct config_block vfs_param = {
-    .dbus_interface_name = "org.ganesha.nfsd.config.fsal.vfs",
-    .blk_desc.name = "VFS",
-    .blk_desc.type = CONFIG_BLOCK,
-    .blk_desc.u.blk.init = noop_conf_init,
+    .dbus_interface_name   = "org.ganesha.nfsd.config.fsal.vfs",
+    .blk_desc.name         = "VFS",
+    .blk_desc.type         = CONFIG_BLOCK,
+    .blk_desc.u.blk.init   = noop_conf_init,
     .blk_desc.u.blk.params = vfs_params,
     .blk_desc.u.blk.commit = noop_conf_commit
 };
@@ -121,8 +121,7 @@ struct fsal_staticfsinfo_t* vfs_staticinfo(struct fsal_module* hdl)
 {
     struct vfs_fsal_module* myself;
 
-    myself = container_of(hdl, struct vfs_fsal_module, fsal)
-        ;
+    myself = container_of(hdl, struct vfs_fsal_module, fsal);
     return &myself->fs_info;
 }
 
@@ -137,9 +136,7 @@ static fsal_status_t init_config(struct fsal_module* fsal_hdl,
                                  config_file_t config_struct,
                                  struct config_error_type* err_type)
 {
-    struct vfs_fsal_module* vfs_me =
-        container_of(fsal_hdl, struct vfs_fsal_module, fsal)
-        ;
+    struct vfs_fsal_module* vfs_me = container_of(fsal_hdl, struct vfs_fsal_module, fsal);
 #ifdef F_OFD_GETLK
     int fd, rc;
     struct flock lock;

@@ -126,15 +126,14 @@ void init_new_deleg_state(union state_data* deleg_state,
                           open_delegation_type4 deleg_type,
                           nfs_client_id_t* client)
 {
-    struct cf_deleg_stats* clfile_entry =
-        &deleg_state->deleg.sd_clfile_stats;
+    struct cf_deleg_stats* clfile_entry = &deleg_state->deleg.sd_clfile_stats;
 
-    deleg_state->deleg.sd_type = deleg_type;
-    deleg_state->deleg.sd_grant_time = time(NULL);
-    deleg_state->deleg.sd_state = DELEG_GRANTED;
+    deleg_state->deleg.sd_type          = deleg_type;
+    deleg_state->deleg.sd_grant_time    = time(NULL);
+    deleg_state->deleg.sd_state         = DELEG_GRANTED;
 
-    clfile_entry->cfd_rs_time = 0;
-    clfile_entry->cfd_r_time = 0;
+    clfile_entry->cfd_rs_time           = 0;
+    clfile_entry->cfd_r_time            = 0;
 }
 
 /**

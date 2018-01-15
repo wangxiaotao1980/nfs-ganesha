@@ -15,7 +15,7 @@ libzfswrap_vfs_t *tank_get_root_pvfs(struct fsal_export *exp_hdl);
  */
 
 fsal_status_t tank_lookup_path(struct fsal_export *exp_hdl,
-			       const char *path,
+		           const char *path,
 			       struct fsal_obj_handle **handle,
 			       struct attrlist *attrs_out);
 

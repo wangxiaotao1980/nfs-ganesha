@@ -7,7 +7,7 @@
  *
  */
 
-#include  "fsal.h"
+#include  "../../include/fsal.h"
 #include <libzfswrap.h>
 
 /* linkage to the exports and handle ops initializers
@@ -24,8 +24,8 @@ void ZFSFSAL_VFS_RDLock(void);
 void ZFSFSAL_VFS_Unlock(void);
 
 typedef struct zfs_file_handle {
-	inogen_t zfs_handle;
-	char i_snap;
+    inogen_t zfs_handle;
+    char i_snap;
 } zfs_file_handle_t;
 
 #define ZFS_SNAP_DIR ".zfs"
@@ -33,9 +33,9 @@ typedef struct zfs_file_handle {
 #define ZFS_SNAP_DIR_INODE 2
 
 typedef struct {
-	char *psz_name;
-	libzfswrap_vfs_t *p_vfs;
-	unsigned int index;
+    char *psz_name;
+    libzfswrap_vfs_t *p_vfs;
+    unsigned int index;
 } snapshot_t;
 
 /**
@@ -47,7 +47,7 @@ typedef struct {
 
 static inline size_t zfs_sizeof_handle(struct zfs_file_handle *hdl)
 {
-	return (size_t) sizeof(struct zfs_file_handle);
+    return (size_t) sizeof(struct zfs_file_handle);
 }
 
 /* the following variables must not be defined in fsal_internal.c */

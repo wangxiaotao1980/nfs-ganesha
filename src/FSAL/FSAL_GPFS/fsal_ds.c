@@ -33,17 +33,18 @@
  * Also, creating a data server handle -- now called via the DS itself.
  */
 
-#include "config.h"
+#include "../../include/config.h"
+#include "../../include/fsal_api.h"
+#include "../../include/FSAL/fsal_commonlib.h"
+#include "../../include/fsal_convert.h"
+#include "../../include/pnfs_utils.h"
+#include "../../include/nfs_creds.h"
 
 #include <fcntl.h>
-#include "fsal_api.h"
-#include "FSAL/fsal_commonlib.h"
+
 #include "../fsal_private.h"
-#include "fsal_convert.h"
 #include "fsal_internal.h"
 #include "gpfs_methods.h"
-#include "pnfs_utils.h"
-#include "nfs_creds.h"
 
 #define min(a, b)			\
 	({ typeof(a) _a = (a);		\

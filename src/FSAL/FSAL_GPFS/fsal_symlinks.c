@@ -28,13 +28,13 @@
  * -------------
  */
 
-#include "config.h"
-#include "fsal.h"
-#include "fsal_internal.h"
-#include "fsal_convert.h"
-#include "gpfs_methods.h"
-#include <string.h>
+#include "../../include/config.h"
+#include "../../include/fsal.h"
+#include "../../include/fsal_convert.h"
+//#include <string.h>
 #include <unistd.h>
+#include "fsal_internal.h"
+#include "gpfs_methods.h"
 
 /**
  *  @brief Read the content of a symbolic link.
@@ -50,20 +50,20 @@
  */
 fsal_status_t
 GPFSFSAL_readlink(struct fsal_obj_handle *dir_hdl,
-		  const struct req_op_context *op_ctx, char *link_content,
-		  size_t link_len)
+          const struct req_op_context *op_ctx, char *link_content,
+          size_t link_len)
 {
-	struct gpfs_fsal_obj_handle *gpfs_hdl;
-	struct gpfs_fsal_export *exp = container_of(op_ctx->fsal_export,
-					struct gpfs_fsal_export, export);
-	int export_fd = exp->export_fd;
+    struct gpfs_fsal_obj_handle *gpfs_hdl;
+    struct gpfs_fsal_export *exp = container_of(op_ctx->fsal_export,
+                    struct gpfs_fsal_export, export);
+    int export_fd = exp->export_fd;
 
-	gpfs_hdl =
-	    container_of(dir_hdl, struct gpfs_fsal_obj_handle, obj_handle);
+    gpfs_hdl =
+        container_of(dir_hdl, struct gpfs_fsal_obj_handle, obj_handle);
 
-	/* Read the link on the filesystem */
-	return fsal_readlink_by_handle(export_fd, gpfs_hdl->handle,
-				       link_content, link_len);
+    /* Read the link on the filesystem */
+    return fsal_readlink_by_handle(export_fd, gpfs_hdl->handle,
+                       link_content, link_len);
 }
 
 /**
@@ -89,80 +89,80 @@ GPFSFSAL_readlink(struct fsal_obj_handle *dir_hdl,
  */
 fsal_status_t
 GPFSFSAL_symlink(struct fsal_obj_handle *dir_hdl, const char *linkname,
-		 const char *linkcontent, const struct req_op_context *op_ctx,
-		 uint32_t accessmode, struct gpfs_file_handle *gpfs_fh,
-		 struct attrlist *link_attr)
+         const char *linkcontent, const struct req_op_context *op_ctx,
+         uint32_t accessmode, struct gpfs_file_handle *gpfs_fh,
+         struct attrlist *link_attr)
 {
 
-	int rc, errsv;
-	fsal_status_t status;
-	int fd;
-	struct gpfs_fsal_obj_handle *gpfs_hdl;
-	struct gpfs_filesystem *gpfs_fs;
-	struct gpfs_fsal_export *exp = container_of(op_ctx->fsal_export,
-					struct gpfs_fsal_export, export);
-	int export_fd = exp->export_fd;
+    int rc, errsv;
+    fsal_status_t status;
+    int fd;
+    struct gpfs_fsal_obj_handle *gpfs_hdl;
+    struct gpfs_filesystem *gpfs_fs;
+    struct gpfs_fsal_export *exp = container_of(op_ctx->fsal_export,
+                    struct gpfs_fsal_export, export);
+    int export_fd = exp->export_fd;
 
-	gpfs_hdl =
-	    container_of(dir_hdl, struct gpfs_fsal_obj_handle, obj_handle);
+    gpfs_hdl =
+        container_of(dir_hdl, struct gpfs_fsal_obj_handle, obj_handle);
 
-	gpfs_fs = dir_hdl->fs->private_data;
+    gpfs_fs = dir_hdl->fs->private_data;
 
-	/* Tests if symlinking is allowed by configuration. */
+    /* Tests if symlinking is allowed by configuration. */
 
-	if (!op_ctx->fsal_export->exp_ops.
-	    fs_supports(op_ctx->fsal_export,
-			fso_symlink_support))
-		return fsalstat(ERR_FSAL_NOTSUPP, 0);
+    if (!op_ctx->fsal_export->exp_ops.
+        fs_supports(op_ctx->fsal_export,
+            fso_symlink_support))
+        return fsalstat(ERR_FSAL_NOTSUPP, 0);
 
-	status = fsal_internal_handle2fd(export_fd, gpfs_hdl->handle,
-					 &fd, O_RDONLY | O_DIRECTORY);
+    status = fsal_internal_handle2fd(export_fd, gpfs_hdl->handle,
+                     &fd, O_RDONLY | O_DIRECTORY);
 
-	if (FSAL_IS_ERROR(status))
-		return status;
+    if (FSAL_IS_ERROR(status))
+        return status;
 
-	/* build symlink path */
+    /* build symlink path */
 
-	/* create the symlink on the filesystem using the credentials
-	 * for proper ownership assignment.
-	 */
+    /* create the symlink on the filesystem using the credentials
+     * for proper ownership assignment.
+     */
 
-	fsal_set_credentials(op_ctx->creds);
+    fsal_set_credentials(op_ctx->creds);
 
-	rc = symlinkat(linkcontent, fd, linkname);
-	errsv = errno;
+    rc = symlinkat(linkcontent, fd, linkname);
+    errsv = errno;
 
-	fsal_restore_ganesha_credentials();
+    fsal_restore_ganesha_credentials();
 
-	if (rc) {
-		close(fd);
-		return fsalstat(posix2fsal_error(errsv), errsv);
-	}
+    if (rc) {
+        close(fd);
+        return fsalstat(posix2fsal_error(errsv), errsv);
+    }
 
-	/* now get the associated handle, while there is a race, there is
-	   also a race lower down  */
-	status = fsal_internal_get_handle_at(fd, linkname, gpfs_fh,
-					     export_fd);
+    /* now get the associated handle, while there is a race, there is
+       also a race lower down  */
+    status = fsal_internal_get_handle_at(fd, linkname, gpfs_fh,
+                         export_fd);
 
-	if (FSAL_IS_ERROR(status)) {
-		close(fd);
-		return status;
-	}
+    if (FSAL_IS_ERROR(status)) {
+        close(fd);
+        return status;
+    }
 
-	/* get attributes */
-	status = GPFSFSAL_getattrs(op_ctx->fsal_export, gpfs_fs,
-				   op_ctx, gpfs_fh,
-				   link_attr);
+    /* get attributes */
+    status = GPFSFSAL_getattrs(op_ctx->fsal_export, gpfs_fs,
+                   op_ctx, gpfs_fh,
+                   link_attr);
 
-	if (!FSAL_IS_ERROR(status) && link_attr->type != SYMBOLIC_LINK) {
-		/* We could wind up not failing the creation of the symlink
-		 * and the only way we know is that the object type isn't
-		 * a symlink.
-		 */
-		fsal_release_attrs(link_attr);
-		status = fsalstat(ERR_FSAL_EXIST, 0);
-	}
+    if (!FSAL_IS_ERROR(status) && link_attr->type != SYMBOLIC_LINK) {
+        /* We could wind up not failing the creation of the symlink
+         * and the only way we know is that the object type isn't
+         * a symlink.
+         */
+        fsal_release_attrs(link_attr);
+        status = fsalstat(ERR_FSAL_EXIST, 0);
+    }
 
-	close(fd);
-	return status;
+    close(fd);
+    return status;
 }

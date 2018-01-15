@@ -61,31 +61,31 @@
  */
 
 void construct_handle(const struct ceph_statx *stx, struct Inode *i,
-		      struct export *export, struct handle **obj)
+              struct export *export, struct handle **obj)
 {
-	/* Pointer to the handle under construction */
-	struct handle *constructing = NULL;
+    /* Pointer to the handle under construction */
+    struct handle *constructing = NULL;
 
-	assert(i);
+    assert(i);
 
-	constructing = gsh_calloc(1, sizeof(struct handle));
+    constructing = gsh_calloc(1, sizeof(struct handle));
 
-	constructing->vi.ino.val = stx->stx_ino;
+    constructing->vi.ino.val = stx->stx_ino;
 #ifdef CEPH_NOSNAP
-	constructing->vi.snapid.val = stx->stx_dev;
+    constructing->vi.snapid.val = stx->stx_dev;
 #endif /* CEPH_NOSNAP */
-	constructing->i = i;
-	constructing->up_ops = export->export.up_ops;
+    constructing->i = i;
+    constructing->up_ops = export->export.up_ops;
 
-	fsal_obj_handle_init(&constructing->handle, &export->export,
-			     posix2fsal_type(stx->stx_mode));
-	handle_ops_init(&constructing->handle.obj_ops);
-	constructing->handle.fsid = posix2fsal_fsid(stx->stx_dev);
-	constructing->handle.fileid = stx->stx_ino;
+    fsal_obj_handle_init(&constructing->handle, &export->export,
+                 posix2fsal_type(stx->stx_mode));
+    handle_ops_init(&constructing->handle.obj_ops);
+    constructing->handle.fsid = posix2fsal_fsid(stx->stx_dev);
+    constructing->handle.fileid = stx->stx_ino;
 
-	constructing->export = export;
+    constructing->export = export;
 
-	*obj = constructing;
+    *obj = constructing;
 }
 
 /**
@@ -96,109 +96,109 @@ void construct_handle(const struct ceph_statx *stx, struct Inode *i,
 
 void deconstruct_handle(struct handle *obj)
 {
-	ceph_ll_put(obj->export->cmount, obj->i);
-	fsal_obj_handle_fini(&obj->handle);
-	gsh_free(obj);
+    ceph_ll_put(obj->export->cmount, obj->i);
+    fsal_obj_handle_fini(&obj->handle);
+    gsh_free(obj);
 }
 
 unsigned int
 attrmask2ceph_want(attrmask_t mask)
 {
-	unsigned int want = 0;
+    unsigned int want = 0;
 
-	if (mask & ATTR_MODE)
-		want |= CEPH_STATX_MODE;
-	if (mask & ATTR_OWNER)
-		want |= CEPH_STATX_UID;
-	if (mask & ATTR_GROUP)
-		want |= CEPH_STATX_GID;
-	if (mask & ATTR_SIZE)
-		want |= CEPH_STATX_SIZE;
-	if (mask & ATTR_NUMLINKS)
-		want |= CEPH_STATX_NLINK;
-	if (mask & ATTR_SPACEUSED)
-		want |= CEPH_STATX_BLOCKS;
-	if (mask & ATTR_ATIME)
-		want |= CEPH_STATX_ATIME;
-	if (mask & ATTR_CTIME)
-		want |= CEPH_STATX_CTIME;
-	if (mask & ATTR_MTIME)
-		want |= CEPH_STATX_MTIME;
-	if (mask & ATTR_CREATION)
-		want |= CEPH_STATX_BTIME;
-	if (mask & ATTR_CHANGE)
-		want |= CEPH_STATX_VERSION;
-	if (mask & ATTR_CHGTIME)
-		want |= (CEPH_STATX_CTIME|CEPH_STATX_MTIME);
+    if (mask & ATTR_MODE)
+        want |= CEPH_STATX_MODE;
+    if (mask & ATTR_OWNER)
+        want |= CEPH_STATX_UID;
+    if (mask & ATTR_GROUP)
+        want |= CEPH_STATX_GID;
+    if (mask & ATTR_SIZE)
+        want |= CEPH_STATX_SIZE;
+    if (mask & ATTR_NUMLINKS)
+        want |= CEPH_STATX_NLINK;
+    if (mask & ATTR_SPACEUSED)
+        want |= CEPH_STATX_BLOCKS;
+    if (mask & ATTR_ATIME)
+        want |= CEPH_STATX_ATIME;
+    if (mask & ATTR_CTIME)
+        want |= CEPH_STATX_CTIME;
+    if (mask & ATTR_MTIME)
+        want |= CEPH_STATX_MTIME;
+    if (mask & ATTR_CREATION)
+        want |= CEPH_STATX_BTIME;
+    if (mask & ATTR_CHANGE)
+        want |= CEPH_STATX_VERSION;
+    if (mask & ATTR_CHGTIME)
+        want |= (CEPH_STATX_CTIME|CEPH_STATX_MTIME);
 
-	return want;
+    return want;
 }
 
 void ceph2fsal_attributes(const struct ceph_statx *stx,
-			  struct attrlist *fsalattr)
+              struct attrlist *fsalattr)
 {
-	/* These are always considered to be available */
-	fsalattr->valid_mask |= ATTR_TYPE|ATTR_FSID|ATTR_RAWDEV|ATTR_FILEID;
-	fsalattr->supported = CEPH_SUPPORTED_ATTRS;
-	fsalattr->type = posix2fsal_type(stx->stx_mode);
-	fsalattr->rawdev = posix2fsal_devt(stx->stx_rdev);
-	fsalattr->fsid = posix2fsal_fsid(stx->stx_dev);
-	fsalattr->fileid = stx->stx_ino;
+    /* These are always considered to be available */
+    fsalattr->valid_mask |= ATTR_TYPE|ATTR_FSID|ATTR_RAWDEV|ATTR_FILEID;
+    fsalattr->supported = CEPH_SUPPORTED_ATTRS;
+    fsalattr->type = posix2fsal_type(stx->stx_mode);
+    fsalattr->rawdev = posix2fsal_devt(stx->stx_rdev);
+    fsalattr->fsid = posix2fsal_fsid(stx->stx_dev);
+    fsalattr->fileid = stx->stx_ino;
 
-	if (stx->stx_mask & CEPH_STATX_MODE) {
-		fsalattr->valid_mask |= ATTR_MODE;
-		fsalattr->mode = unix2fsal_mode(stx->stx_mode);
-	}
-	if (stx->stx_mask & CEPH_STATX_UID) {
-		fsalattr->valid_mask |= ATTR_OWNER;
-		fsalattr->owner = stx->stx_uid;
-	}
-	if (stx->stx_mask & CEPH_STATX_GID) {
-		fsalattr->valid_mask |= ATTR_GROUP;
-		fsalattr->group = stx->stx_gid;
-	}
-	if (stx->stx_mask & CEPH_STATX_SIZE) {
-		fsalattr->valid_mask |= ATTR_SIZE;
-		fsalattr->filesize = stx->stx_size;
-	}
-	if (stx->stx_mask & CEPH_STATX_NLINK) {
-		fsalattr->valid_mask |= ATTR_NUMLINKS;
-		fsalattr->numlinks = stx->stx_nlink;
-	}
+    if (stx->stx_mask & CEPH_STATX_MODE) {
+        fsalattr->valid_mask |= ATTR_MODE;
+        fsalattr->mode = unix2fsal_mode(stx->stx_mode);
+    }
+    if (stx->stx_mask & CEPH_STATX_UID) {
+        fsalattr->valid_mask |= ATTR_OWNER;
+        fsalattr->owner = stx->stx_uid;
+    }
+    if (stx->stx_mask & CEPH_STATX_GID) {
+        fsalattr->valid_mask |= ATTR_GROUP;
+        fsalattr->group = stx->stx_gid;
+    }
+    if (stx->stx_mask & CEPH_STATX_SIZE) {
+        fsalattr->valid_mask |= ATTR_SIZE;
+        fsalattr->filesize = stx->stx_size;
+    }
+    if (stx->stx_mask & CEPH_STATX_NLINK) {
+        fsalattr->valid_mask |= ATTR_NUMLINKS;
+        fsalattr->numlinks = stx->stx_nlink;
+    }
 
-	if (stx->stx_mask & CEPH_STATX_BLOCKS) {
-		fsalattr->valid_mask |= ATTR_SPACEUSED;
-		fsalattr->spaceused = stx->stx_blocks * S_BLKSIZE;
-	}
+    if (stx->stx_mask & CEPH_STATX_BLOCKS) {
+        fsalattr->valid_mask |= ATTR_SPACEUSED;
+        fsalattr->spaceused = stx->stx_blocks * S_BLKSIZE;
+    }
 
-	/* Use full timer resolution */
-	if (stx->stx_mask & CEPH_STATX_ATIME) {
-		fsalattr->valid_mask |= ATTR_ATIME;
-		fsalattr->atime = stx->stx_atime;
-	}
-	if (stx->stx_mask & CEPH_STATX_CTIME) {
-		fsalattr->valid_mask |= ATTR_CTIME;
-		fsalattr->ctime = stx->stx_ctime;
-	}
-	if (stx->stx_mask & CEPH_STATX_MTIME) {
-		fsalattr->valid_mask |= ATTR_MTIME;
-		fsalattr->mtime = stx->stx_mtime;
-	}
-	if (stx->stx_mask & CEPH_STATX_BTIME) {
-		fsalattr->valid_mask |= ATTR_CREATION;
-		fsalattr->creation = stx->stx_btime;
-	}
+    /* Use full timer resolution */
+    if (stx->stx_mask & CEPH_STATX_ATIME) {
+        fsalattr->valid_mask |= ATTR_ATIME;
+        fsalattr->atime = stx->stx_atime;
+    }
+    if (stx->stx_mask & CEPH_STATX_CTIME) {
+        fsalattr->valid_mask |= ATTR_CTIME;
+        fsalattr->ctime = stx->stx_ctime;
+    }
+    if (stx->stx_mask & CEPH_STATX_MTIME) {
+        fsalattr->valid_mask |= ATTR_MTIME;
+        fsalattr->mtime = stx->stx_mtime;
+    }
+    if (stx->stx_mask & CEPH_STATX_BTIME) {
+        fsalattr->valid_mask |= ATTR_CREATION;
+        fsalattr->creation = stx->stx_btime;
+    }
 
-	if (stx->stx_mask & CEPH_STATX_VERSION) {
-		fsalattr->valid_mask |= ATTR_CHANGE;
-		fsalattr->change = stx->stx_version;
-	}
+    if (stx->stx_mask & CEPH_STATX_VERSION) {
+        fsalattr->valid_mask |= ATTR_CHANGE;
+        fsalattr->change = stx->stx_version;
+    }
 
-	if ((stx->stx_mask & (CEPH_STATX_CTIME|CEPH_STATX_MTIME)) ==
-	     (CEPH_STATX_CTIME|CEPH_STATX_MTIME)) {
-		fsalattr->valid_mask |= ATTR_CHGTIME;
-		fsalattr->chgtime =
-		    (gsh_time_cmp(&fsalattr->mtime, &fsalattr->ctime) > 0) ?
-		    fsalattr->mtime : fsalattr->ctime;
-	}
+    if ((stx->stx_mask & (CEPH_STATX_CTIME|CEPH_STATX_MTIME)) ==
+         (CEPH_STATX_CTIME|CEPH_STATX_MTIME)) {
+        fsalattr->valid_mask |= ATTR_CHGTIME;
+        fsalattr->chgtime =
+            (gsh_time_cmp(&fsalattr->mtime, &fsalattr->ctime) > 0) ?
+            fsalattr->mtime : fsalattr->ctime;
+    }
 }
