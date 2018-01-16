@@ -1,9 +1,8 @@
-
 #undef TRACEPOINT_PROVIDER
 #define TRACEPOINT_PROVIDER mdcache
 
 #if !defined(GANESHA_LTTNG_MDCACHE_TP_H) || \
-	defined(TRACEPOINT_HEADER_MULTI_READ)
+    defined(TRACEPOINT_HEADER_MULTI_READ)
 #define GANESHA_LTTNG_MDCACHE_TP_H
 
 #include <lttng/tracepoint.h>
@@ -17,24 +16,24 @@
  * @param[in] refcnt	Refcount after increase
  */
 TRACEPOINT_EVENT(
-	mdcache,
-	mdc_lru_ref,
-	TP_ARGS(const char *, function,
-		int, line,
-		void *, entry,
-		int32_t, refcnt),
-	TP_FIELDS(
-		ctf_string(function, function)
-		ctf_integer(int, line, line)
-		ctf_integer_hex(void *, entry, entry)
-		ctf_integer(int32_t, refcnt, refcnt)
-	)
+    mdcache,
+    mdc_lru_ref,
+    TP_ARGS(const char *, function,
+        int, line,
+        void *, entry,
+        int32_t, refcnt),
+    TP_FIELDS(
+        ctf_string(function, function)
+        ctf_integer(int, line, line)
+        ctf_integer_hex(void *, entry, entry)
+        ctf_integer(int32_t, refcnt, refcnt)
+    )
 )
 
 TRACEPOINT_LOGLEVEL(
-	mdcache,
-	mdc_lru_ref,
-	TRACE_INFO)
+    mdcache,
+    mdc_lru_ref,
+    TRACE_INFO)
 
 /**
  * @brief Trace a decrease in refcount of an entry
@@ -45,24 +44,24 @@ TRACEPOINT_LOGLEVEL(
  * @param[in] refcnt	Refcount after decrease
  */
 TRACEPOINT_EVENT(
-	mdcache,
-	mdc_lru_unref,
-	TP_ARGS(const char *, function,
-		int, line,
-		void *, entry,
-		int32_t, refcnt),
-	TP_FIELDS(
-		ctf_string(function, function)
-		ctf_integer(int, line, line)
-		ctf_integer_hex(void *, entry, entry)
-		ctf_integer(int32_t, refcnt, refcnt)
-	)
+    mdcache,
+    mdc_lru_unref,
+    TP_ARGS(const char *, function,
+        int, line,
+        void *, entry,
+        int32_t, refcnt),
+    TP_FIELDS(
+        ctf_string(function, function)
+        ctf_integer(int, line, line)
+        ctf_integer_hex(void *, entry, entry)
+        ctf_integer(int32_t, refcnt, refcnt)
+    )
 )
 
 TRACEPOINT_LOGLEVEL(
-	mdcache,
-	mdc_lru_unref,
-	TRACE_INFO)
+    mdcache,
+    mdc_lru_unref,
+    TRACE_INFO)
 
 /**
  * @brief Trace a QLOCK event
@@ -71,22 +70,22 @@ TRACEPOINT_LOGLEVEL(
  * @param[in] line	Line number of call
  */
 TRACEPOINT_EVENT(
-	mdcache,
-	qlock,
-	TP_ARGS(const char *, function,
-		int, line,
-		void *, qlane),
-	TP_FIELDS(
-		ctf_string(function, function)
-		ctf_integer(int, line, line)
-		ctf_integer_hex(void *, qlane, qlane)
-	)
+    mdcache,
+    qlock,
+    TP_ARGS(const char *, function,
+        int, line,
+        void *, qlane),
+    TP_FIELDS(
+        ctf_string(function, function)
+        ctf_integer(int, line, line)
+        ctf_integer_hex(void *, qlane, qlane)
+    )
 )
 
 TRACEPOINT_LOGLEVEL(
-	mdcache,
-	qlock,
-	TRACE_INFO)
+    mdcache,
+    qlock,
+    TRACE_INFO)
 
 /**
  * @brief Trace a QUNLOCK event
@@ -95,22 +94,22 @@ TRACEPOINT_LOGLEVEL(
  * @param[in] line	Line number of call
  */
 TRACEPOINT_EVENT(
-	mdcache,
-	qunlock,
-	TP_ARGS(const char *, function,
-		int, line,
-		void *, qlane),
-	TP_FIELDS(
-		ctf_string(function, function)
-		ctf_integer(int, line, line)
-		ctf_integer_hex(void *, qlane, qlane)
-	)
+    mdcache,
+    qunlock,
+    TP_ARGS(const char *, function,
+        int, line,
+        void *, qlane),
+    TP_FIELDS(
+        ctf_string(function, function)
+        ctf_integer(int, line, line)
+        ctf_integer_hex(void *, qlane, qlane)
+    )
 )
 
 TRACEPOINT_LOGLEVEL(
-	mdcache,
-	qunlock,
-	TRACE_INFO)
+    mdcache,
+    qunlock,
+    TRACE_INFO)
 
 /**
  * @brief Trace a reap (reuse) of an entry
@@ -119,24 +118,24 @@ TRACEPOINT_LOGLEVEL(
  * @param[in] refcnt	Reference count of entry
  */
 TRACEPOINT_EVENT(
-	mdcache,
-	mdc_lru_reap,
-	TP_ARGS(const char *, function,
-		int, line,
-		void *, entry,
-		int32_t, refcnt),
-	TP_FIELDS(
-		ctf_string(function, function)
-		ctf_integer(int, line, line)
-		ctf_integer_hex(void *, entry, entry)
-		ctf_integer(int32_t, refcnt, refcnt)
-	)
+    mdcache,
+    mdc_lru_reap,
+    TP_ARGS(const char *, function,
+        int, line,
+        void *, entry,
+        int32_t, refcnt),
+    TP_FIELDS(
+        ctf_string(function, function)
+        ctf_integer(int, line, line)
+        ctf_integer_hex(void *, entry, entry)
+        ctf_integer(int32_t, refcnt, refcnt)
+    )
 )
 
 TRACEPOINT_LOGLEVEL(
-	mdcache,
-	mdc_lru_reap,
-	TRACE_INFO)
+    mdcache,
+    mdc_lru_reap,
+    TRACE_INFO)
 
 /**
  * @brief Trace a alloc of a new entry
@@ -144,18 +143,18 @@ TRACEPOINT_LOGLEVEL(
  * @param[in] entry	Address of entry
  */
 TRACEPOINT_EVENT(
-	mdcache,
-	mdc_lru_get,
-	TP_ARGS(const char *, function,
-		int, line,
-		void *, entry,
-		int32_t, refcnt),
-	TP_FIELDS(
-		ctf_string(function, function)
-		ctf_integer(int, line, line)
-		ctf_integer_hex(void *, entry, entry)
-		ctf_integer(int32_t, refcnt, refcnt)
-	)
+    mdcache,
+    mdc_lru_get,
+    TP_ARGS(const char *, function,
+        int, line,
+        void *, entry,
+        int32_t, refcnt),
+    TP_FIELDS(
+        ctf_string(function, function)
+        ctf_integer(int, line, line)
+        ctf_integer_hex(void *, entry, entry)
+        ctf_integer(int32_t, refcnt, refcnt)
+    )
 )
 
 /**
@@ -165,24 +164,24 @@ TRACEPOINT_EVENT(
  * @param[in] chunk	Address of chunk
  */
 TRACEPOINT_EVENT(
-	mdcache,
-	mdc_lru_reap_chunk,
-	TP_ARGS(const char *, function,
-		int, line,
-		void *, parent,
-		void *, chunk),
-	TP_FIELDS(
-		ctf_string(function, function)
-		ctf_integer(int, line, line)
-		ctf_integer_hex(void *, parent, parent)
-		ctf_integer_hex(void *, chunk, chunk)
-	)
+    mdcache,
+    mdc_lru_reap_chunk,
+    TP_ARGS(const char *, function,
+        int, line,
+        void *, parent,
+        void *, chunk),
+    TP_FIELDS(
+        ctf_string(function, function)
+        ctf_integer(int, line, line)
+        ctf_integer_hex(void *, parent, parent)
+        ctf_integer_hex(void *, chunk, chunk)
+    )
 )
 
 TRACEPOINT_LOGLEVEL(
-	mdcache,
-	mdc_lru_get,
-	TRACE_INFO)
+    mdcache,
+    mdc_lru_get,
+    TRACE_INFO)
 
 /**
  * @brief Trace insertion of an entry in the LRU
@@ -190,24 +189,24 @@ TRACEPOINT_LOGLEVEL(
  * @param[in] entry	Address of entry
  */
 TRACEPOINT_EVENT(
-	mdcache,
-	mdc_lru_insert,
-	TP_ARGS(const char *, function,
-		int, line,
-		void *, entry,
-		int32_t, refcnt),
-	TP_FIELDS(
-		ctf_string(function, function)
-		ctf_integer(int, line, line)
-		ctf_integer_hex(void *, entry, entry)
-		ctf_integer(int32_t, refcnt, refcnt)
-	)
+    mdcache,
+    mdc_lru_insert,
+    TP_ARGS(const char *, function,
+        int, line,
+        void *, entry,
+        int32_t, refcnt),
+    TP_FIELDS(
+        ctf_string(function, function)
+        ctf_integer(int, line, line)
+        ctf_integer_hex(void *, entry, entry)
+        ctf_integer(int32_t, refcnt, refcnt)
+    )
 )
 
 TRACEPOINT_LOGLEVEL(
-	mdcache,
-	mdc_lru_insert,
-	TRACE_INFO)
+    mdcache,
+    mdc_lru_insert,
+    TRACE_INFO)
 
 /**
  * @brief Trace removal of an entry from the LRU
@@ -215,24 +214,24 @@ TRACEPOINT_LOGLEVEL(
  * @param[in] entry	Address of entry
  */
 TRACEPOINT_EVENT(
-	mdcache,
-	mdc_lru_remove,
-	TP_ARGS(const char *, function,
-		int, line,
-		void *, entry,
-		int32_t, refcnt),
-	TP_FIELDS(
-		ctf_string(function, function)
-		ctf_integer(int, line, line)
-		ctf_integer_hex(void *, entry, entry)
-		ctf_integer(int32_t, refcnt, refcnt)
-	)
+    mdcache,
+    mdc_lru_remove,
+    TP_ARGS(const char *, function,
+        int, line,
+        void *, entry,
+        int32_t, refcnt),
+    TP_FIELDS(
+        ctf_string(function, function)
+        ctf_integer(int, line, line)
+        ctf_integer_hex(void *, entry, entry)
+        ctf_integer(int32_t, refcnt, refcnt)
+    )
 )
 
 TRACEPOINT_LOGLEVEL(
-	mdcache,
-	mdc_lru_remove,
-	TRACE_INFO)
+    mdcache,
+    mdc_lru_remove,
+    TRACE_INFO)
 
 /**
  * @brief Trace killing of entry
@@ -240,26 +239,26 @@ TRACEPOINT_LOGLEVEL(
  * @param[in] entry	Address of entry
  */
 TRACEPOINT_EVENT(
-	mdcache,
-	mdc_kill_entry,
-	TP_ARGS(const char *, function,
-		int, line,
-		void *, entry,
-		int32_t, refcnt,
-		int32_t, freed),
-	TP_FIELDS(
-		ctf_string(function, function)
-		ctf_integer(int, line, line)
-		ctf_integer_hex(void *, entry, entry)
-		ctf_integer(int32_t, refcnt, refcnt)
-		ctf_integer(int32_t, freed, freed)
-	)
+    mdcache,
+    mdc_kill_entry,
+    TP_ARGS(const char *, function,
+        int, line,
+        void *, entry,
+        int32_t, refcnt,
+        int32_t, freed),
+    TP_FIELDS(
+        ctf_string(function, function)
+        ctf_integer(int, line, line)
+        ctf_integer_hex(void *, entry, entry)
+        ctf_integer(int32_t, refcnt, refcnt)
+        ctf_integer(int32_t, freed, freed)
+    )
 )
 
 TRACEPOINT_LOGLEVEL(
-	mdcache,
-	mdc_kill_entry,
-	TRACE_INFO)
+    mdcache,
+    mdc_kill_entry,
+    TRACE_INFO)
 
 /**
  * @brief Trace readdir cache populate
@@ -267,24 +266,24 @@ TRACEPOINT_LOGLEVEL(
  * @param[in] entry	Address of entry
  */
 TRACEPOINT_EVENT(
-	mdcache,
-	mdc_readdir_populate,
-	TP_ARGS(const char *, function,
-		int, line,
-		void *, entry,
-		int32_t, refcnt),
-	TP_FIELDS(
-		ctf_string(function, function)
-		ctf_integer(int, line, line)
-		ctf_integer_hex(void *, entry, entry)
-		ctf_integer(int32_t, refcnt, refcnt)
-	)
+    mdcache,
+    mdc_readdir_populate,
+    TP_ARGS(const char *, function,
+        int, line,
+        void *, entry,
+        int32_t, refcnt),
+    TP_FIELDS(
+        ctf_string(function, function)
+        ctf_integer(int, line, line)
+        ctf_integer_hex(void *, entry, entry)
+        ctf_integer(int32_t, refcnt, refcnt)
+    )
 )
 
 TRACEPOINT_LOGLEVEL(
-	mdcache,
-	mdc_readdir_populate,
-	TRACE_INFO)
+    mdcache,
+    mdc_readdir_populate,
+    TRACE_INFO)
 
 /**
  * @brief Trace readdir
@@ -292,24 +291,24 @@ TRACEPOINT_LOGLEVEL(
  * @param[in] entry	Address of entry
  */
 TRACEPOINT_EVENT(
-	mdcache,
-	mdc_readdir,
-	TP_ARGS(const char *, function,
-		int, line,
-		void *, entry,
-		int32_t, refcnt),
-	TP_FIELDS(
-		ctf_string(function, function)
-		ctf_integer(int, line, line)
-		ctf_integer_hex(void *, entry, entry)
-		ctf_integer(int32_t, refcnt, refcnt)
-	)
+    mdcache,
+    mdc_readdir,
+    TP_ARGS(const char *, function,
+        int, line,
+        void *, entry,
+        int32_t, refcnt),
+    TP_FIELDS(
+        ctf_string(function, function)
+        ctf_integer(int, line, line)
+        ctf_integer_hex(void *, entry, entry)
+        ctf_integer(int32_t, refcnt, refcnt)
+    )
 )
 
 TRACEPOINT_LOGLEVEL(
-	mdcache,
-	mdc_readdir,
-	TRACE_INFO)
+    mdcache,
+    mdc_readdir,
+    TRACE_INFO)
 
 #endif /* GANESHA_LTTNG_MDCACHE_TP_H */
 

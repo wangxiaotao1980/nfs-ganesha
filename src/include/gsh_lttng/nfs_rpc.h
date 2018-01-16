@@ -1,4 +1,3 @@
-
 #undef TRACEPOINT_PROVIDER
 #define TRACEPOINT_PROVIDER nfs_rpc
 
@@ -14,18 +13,18 @@
  */
 
 TRACEPOINT_EVENT(
-	nfs_rpc,
-	start,
-	TP_ARGS(request_data_t *, req),
-	TP_FIELDS(
-		ctf_integer_hex(request_data_t *, req, req)
-	)
+    nfs_rpc,
+    start,
+    TP_ARGS(request_data_t *, req),
+    TP_FIELDS(
+        ctf_integer_hex(request_data_t *, req, req)
+    )
 )
 
 TRACEPOINT_LOGLEVEL(
-	nfs_rpc,
-	start,
-	TRACE_INFO)
+    nfs_rpc,
+    start,
+    TRACE_INFO)
 
 /**
  * @brief Trace the exit of the rpc_execute function
@@ -36,18 +35,18 @@ TRACEPOINT_LOGLEVEL(
  */
 
 TRACEPOINT_EVENT(
-	nfs_rpc,
-	end,
-	TP_ARGS(request_data_t *, req),
-	TP_FIELDS(
-		ctf_integer_hex(request_data_t *, req, req)
-	)
+    nfs_rpc,
+    end,
+    TP_ARGS(request_data_t *, req),
+    TP_FIELDS(
+        ctf_integer_hex(request_data_t *, req, req)
+    )
 )
 
 TRACEPOINT_LOGLEVEL(
-	nfs_rpc,
-	end,
-	TRACE_INFO)
+    nfs_rpc,
+    end,
+    TRACE_INFO)
 
 /**
  * @brief Trace the start of the rpc_execute function
@@ -56,22 +55,22 @@ TRACEPOINT_LOGLEVEL(
  */
 
 TRACEPOINT_EVENT(
-	nfs_rpc,
-	op_start,
-	TP_ARGS(request_data_t *, req,
-		const char *, op_name,
-		int, export_id),
-	TP_FIELDS(
-		ctf_integer_hex(request_data_t *, req, req)
-		ctf_string(op_name, op_name)
-		ctf_integer(int, export_id, export_id)
-	)
+    nfs_rpc,
+    op_start,
+    TP_ARGS(request_data_t *, req,
+        const char *, op_name,
+        int, export_id),
+    TP_FIELDS(
+        ctf_integer_hex(request_data_t *, req, req)
+        ctf_string(op_name, op_name)
+        ctf_integer(int, export_id, export_id)
+    )
 )
 
 TRACEPOINT_LOGLEVEL(
-	nfs_rpc,
-	op_start,
-	TRACE_INFO)
+    nfs_rpc,
+    op_start,
+    TRACE_INFO)
 
 /**
  * @brief Trace the exit of the rpc_execute function
@@ -82,18 +81,18 @@ TRACEPOINT_LOGLEVEL(
  */
 
 TRACEPOINT_EVENT(
-	nfs_rpc,
-	op_end,
-	TP_ARGS(request_data_t *, req),
-	TP_FIELDS(
-		ctf_integer_hex(request_data_t *, req, req)
-	)
+    nfs_rpc,
+    op_end,
+    TP_ARGS(request_data_t *, req),
+    TP_FIELDS(
+        ctf_integer_hex(request_data_t *, req, req)
+    )
 )
 
 TRACEPOINT_LOGLEVEL(
-	nfs_rpc,
-	op_end,
-	TRACE_INFO)
+    nfs_rpc,
+    op_end,
+    TRACE_INFO)
 
 /**
  * @brief Trace the start of the NFSv4 op function
@@ -104,22 +103,22 @@ TRACEPOINT_LOGLEVEL(
  */
 
 TRACEPOINT_EVENT(
-	nfs_rpc,
-	v4op_start,
-	TP_ARGS(int, op_num,
-		int, op_code,
-		const char *, op_name),
-	TP_FIELDS(
-		ctf_integer(int, op_num, op_num)
-		ctf_integer(int, op_code, op_code)
-		ctf_string(op_name, op_name)
-	)
+    nfs_rpc,
+    v4op_start,
+    TP_ARGS(int, op_num,
+        int, op_code,
+        const char *, op_name),
+    TP_FIELDS(
+        ctf_integer(int, op_num, op_num)
+        ctf_integer(int, op_code, op_code)
+        ctf_string(op_name, op_name)
+    )
 )
 
 TRACEPOINT_LOGLEVEL(
-	nfs_rpc,
-	v4op_start,
-	TRACE_INFO)
+    nfs_rpc,
+    v4op_start,
+    TRACE_INFO)
 
 /**
  * @brief Trace the exit of the NFSv4 op function
@@ -133,24 +132,24 @@ TRACEPOINT_LOGLEVEL(
  */
 
 TRACEPOINT_EVENT(
-	nfs_rpc,
-	v4op_end,
-	TP_ARGS(int, op_num,
-		int, op_code,
-		const char *, op_name,
-		const char *, status),
-	TP_FIELDS(
-		ctf_integer(int, op_num, op_num)
-		ctf_integer(int, op_code, op_code)
-		ctf_string(op_name, op_name)
-		ctf_string(status, status)
-	)
+    nfs_rpc,
+    v4op_end,
+    TP_ARGS(int, op_num,
+        int, op_code,
+        const char *, op_name,
+        const char *, status),
+    TP_FIELDS(
+        ctf_integer(int, op_num, op_num)
+        ctf_integer(int, op_code, op_code)
+        ctf_string(op_name, op_name)
+        ctf_string(status, status)
+    )
 )
 
 TRACEPOINT_LOGLEVEL(
-	nfs_rpc,
-	v4op_end,
-	TRACE_INFO)
+    nfs_rpc,
+    v4op_end,
+    TRACE_INFO)
 
 #endif /* GANESHA_LTTNG_NFS_RPC_H */
 
