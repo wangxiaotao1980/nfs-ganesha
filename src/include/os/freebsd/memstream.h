@@ -35,12 +35,13 @@
 #include <string.h>
 #include <sys/types.h>
 
-struct memstream {
-	char **cp;
-	size_t *lenp;
-	size_t offset;
+struct memstream
+{
+    char** cp;
+    size_t* lenp;
+    size_t offset;
 };
 
-FILE *open_memstream(char **cp, size_t *lenp);
+FILE* open_memstream(char** cp, size_t* lenp);
 
 #endif /* MEMSTREAM_FREEBSD_H */

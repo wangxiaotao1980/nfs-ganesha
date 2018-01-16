@@ -35,18 +35,19 @@
 
 #define MNTTYPE_NFS "nfs"
 
-struct mntent {
-	char *mnt_fsname;
-	char *mnt_dir;
-	char *mnt_type;
-	char *mnt_opts;
-	int mnt_freq;
-	int mnt_passno;
+struct mntent
+{
+    char* mnt_fsname;
+    char* mnt_dir;
+    char* mnt_type;
+    char* mnt_opts;
+    int mnt_freq;
+    int mnt_passno;
 };
 
 #define setmntent(x, y) ((FILE *)0x1)
-extern struct mntent *getmntent __P((FILE *fp));
-char *hasmntopt __P((const struct mntent *mnt, const char *option));
+extern struct mntent* getmntent __P((FILE *fp));
+char* hasmntopt __P((const struct mntent *mnt, const char *option));
 #define endmntent(x) ((void)(int)1)
 
 #endif				/* _MNTENT_FREEBSD_H */

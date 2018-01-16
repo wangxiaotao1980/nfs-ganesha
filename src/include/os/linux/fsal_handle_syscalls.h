@@ -47,10 +47,10 @@
 typedef unsigned int __u32;
 
 struct file_handle {
-	__u32 handle_bytes;
-	int handle_type;
-	/* file identifier */
-	unsigned char f_handle[0];
+    __u32 handle_bytes;
+    int handle_type;
+    /* file identifier */
+    unsigned char f_handle[0];
 };
 
 #if defined(__i386__)
@@ -65,17 +65,17 @@ struct file_handle {
 #endif
 
 static inline int name_to_handle_at(int mdirfd, const char *name,
-				    struct file_handle *handle, int *mnt_id,
-				    int flags)
+                    struct file_handle *handle, int *mnt_id,
+                    int flags)
 {
-	return syscall(__NR_name_to_handle_at, mdirfd, name, handle, mnt_id,
-		       flags);
+    return syscall(__NR_name_to_handle_at, mdirfd, name, handle, mnt_id,
+               flags);
 }
 
 static inline int open_by_handle_at(int mdirfd, struct file_handle *handle,
-				    int flags)
+                    int flags)
 {
-	return syscall(__NR_open_by_handle_at, mdirfd, handle, flags);
+    return syscall(__NR_open_by_handle_at, mdirfd, handle, flags);
 }
 #endif				/* MAX_HANDLE_SZ */
 
@@ -91,27 +91,27 @@ static inline int open_by_handle_at(int mdirfd, struct file_handle *handle,
 #define O_NOACCESS O_ACCMODE
 #endif
 
-static inline int vfs_stat_by_handle(int mountfd, struct stat *buf)
+static inline int vfs_stat_by_handle(int mountfd, struct stat* buf)
 {
-	/* Must use fstatat() even though fstat() seems like it might
-	 * work, the Linux version rejects the file descriptor we've
-	 * obtained with the O_NOACCESS flag */
-	return fstatat(mountfd, "", buf, AT_EMPTY_PATH);
+    /* Must use fstatat() even though fstat() seems like it might
+     * work, the Linux version rejects the file descriptor we've
+     * obtained with the O_NOACCESS flag */
+    return fstatat(mountfd, "", buf, AT_EMPTY_PATH);
 }
 
-static inline int vfs_link_by_handle(vfs_file_handle_t *fh,
-				     int srcfd,
-				     int destdirfd,
-				     const char *dname)
+static inline int vfs_link_by_handle(vfs_file_handle_t* fh,
+                                     int srcfd,
+                                     int destdirfd,
+                                     const char* dname)
 {
-	return linkat(srcfd, "", destdirfd, dname, AT_EMPTY_PATH);
+    return linkat(srcfd, "", destdirfd, dname, AT_EMPTY_PATH);
 }
 
-static inline int vfs_readlink_by_handle(vfs_file_handle_t *fh, int srcfd,
-					 const char *sname, char *buf,
-					 size_t bufsize)
+static inline int vfs_readlink_by_handle(vfs_file_handle_t* fh, int srcfd,
+                                         const char* sname, char* buf,
+                                         size_t bufsize)
 {
-	return readlinkat(srcfd, sname, buf, bufsize);
+    return readlinkat(srcfd, sname, buf, bufsize);
 }
 
 /* If not otherwise defined, define OFD locks */
