@@ -43,6 +43,7 @@
 #include "../include/nfs_core.h"
 #include "../include/config_parsing.h"
 #include "../include/pnfs_utils.h"
+#include "../include/common_utils.h"
 
 #include <stdint.h>
 #include <stddef.h>
@@ -396,8 +397,10 @@ struct fsal_module* lookup_fsal(const char* name)
 /** @todo implement api versioning and pass the major,minor here
  */
 
-int register_fsal(struct fsal_module* fsal_hdl, const char* name,
-                  uint32_t major_version, uint32_t minor_version,
+int register_fsal(struct fsal_module* fsal_hdl, 
+                  const char* name,
+                  uint32_t major_version, 
+                  uint32_t minor_version,
                   uint8_t fsal_id)
 {
     pthread_rwlockattr_t attrs;
@@ -426,7 +429,9 @@ int register_fsal(struct fsal_module* fsal_hdl, const char* name,
     }
     new_fsal = fsal_hdl;
     if(name != NULL)
+    {
         new_fsal->name = gsh_strdup(name);
+    }
 
     /* init ops vector to system wide defaults
      * from FSAL/default_methods.c
@@ -445,9 +450,15 @@ int register_fsal(struct fsal_module* fsal_hdl, const char* name,
     glist_init(&fsal_hdl->exports);
     glist_add_tail(&fsal_list, &fsal_hdl->fsals);
     if(load_state == loading)
+    {
         load_state = registered;
+    }
+
+    // 判断是否支持 pnfs（nfs4.1+）
     if(fsal_id != FSAL_ID_NO_PNFS && fsal_id < FSAL_ID_COUNT)
+    {
         pnfs_fsal[fsal_id] = fsal_hdl;
+    }
     PTHREAD_MUTEX_unlock(&fsal_lock);
     return 0;
 

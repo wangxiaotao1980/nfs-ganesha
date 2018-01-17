@@ -82,7 +82,7 @@ nfs_start_info_t my_nfs_start_info =
 };
 
 config_file_t config_struct;
-char* log_path = NULL;
+char* log_path  = NULL;
 char* exec_name = "nfs-ganesha";
 char* host_name = "localhost";
 int debug_level = -1;
@@ -379,6 +379,7 @@ int main(int argc, char* argv[])
 #ifdef _LINUX
     signal(SIGXFSZ, SIG_IGN);
 #endif
+    // PID 文件，标识此进程为唯一使用
 
     /* Echo PID into pidfile */
     pidfile = open(pidfile_path, O_CREAT | O_RDWR, 0644);
@@ -393,10 +394,10 @@ int main(int argc, char* argv[])
         struct flock lk;
 
         /* Try to obtain a lock on the file */
-        lk.l_type = F_WRLCK;
+        lk.l_type   = F_WRLCK;
         lk.l_whence = SEEK_SET;
-        lk.l_start = (off_t)0;
-        lk.l_len = (off_t)0;
+        lk.l_start  = (off_t)0;
+        lk.l_len    = (off_t)0;
         if(fcntl(pidfile, F_SETLK, &lk) == -1)
             LogFatal(COMPONENT_MAIN, "Ganesha already started");
 
@@ -478,7 +479,7 @@ int main(int argc, char* argv[])
     /* We need all the fsal modules loaded so we can have
      * the list available at exports parsing time.
      */
-    start_fsals();
+    start_fsals(); // 导入fsal模块（多个）
 
     /* parse configuration file */
 
@@ -515,15 +516,15 @@ int main(int argc, char* argv[])
     rc = ReadExports(config_struct, &err_type);
     if(rc < 0)
     {
-        LogCrit(COMPONENT_INIT,
-            "Error while parsing export entries");
+        LogCrit(COMPONENT_INIT, "Error while parsing export entries");
         goto fatal_die;
     }
+
     if(rc == 0 && dsc == 0)
     {
-        LogWarn(COMPONENT_INIT,
-            "No export entries found in configuration file !!!");
+        LogWarn(COMPONENT_INIT, "No export entries found in configuration file !!!");
     }
+    
     report_config_errors(&err_type, NULL, config_errs_to_log);
 
     /* freeing syntax tree : */

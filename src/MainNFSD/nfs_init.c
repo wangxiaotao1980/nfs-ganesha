@@ -675,18 +675,18 @@ static void nfs_Init(const nfs_start_info_t* p_start_info)
     /* acls cache may be needed by exports_pkginit */
     LogDebug(COMPONENT_INIT, "Now building NFSv4 ACL cache");
     if(nfs4_acls_init() != 0)
+    {
         LogFatal(COMPONENT_INIT, "Error while initializing NFSv4 ACLs");
+    }
     LogInfo(COMPONENT_INIT, "NFSv4 ACL cache successfully initialized");
 
     /* finish the job with exports by caching the root entries
      */
     exports_pkginit();
 
-    nfs41_session_pool =
-            pool_basic_init("NFSv4.1 session pool", sizeof(nfs41_session_t));
+    nfs41_session_pool = pool_basic_init("NFSv4.1 session pool", sizeof(nfs41_session_t));
 
-    request_pool =
-            pool_basic_init("Request pool", sizeof(request_data_t));
+    request_pool = pool_basic_init("Request pool", sizeof(request_data_t));
 
     /* If rpcsec_gss is used, set the path to the keytab */
 #ifdef _HAVE_GSSAPI
@@ -1018,7 +1018,9 @@ void nfs_start(nfs_start_info_t* p_start_info)
 
     /* if not in grace period, clean up the old state directory */
     if(!nfs_in_grace())
+    {
         nfs4_recovery_cleanup();
+    }
 
     Cleanup();
 

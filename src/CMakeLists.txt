@@ -174,7 +174,7 @@ if (LINUX)
 endif(LINUX)
 
 if (MSVC)
-   add_definitions(-D_CRT_SECURE_NO_WARNINGS)
+   add_definitions(-D_CRT_SECURE_NO_WARNINGS -DHAVE_DAEMON=1)
 endif(MSVC)
 
 # Library path name
