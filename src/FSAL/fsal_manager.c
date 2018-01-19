@@ -195,8 +195,7 @@ static const char* pathfmt = "%s/libfsal%s.so";
  * @retval other general dlopen errors are possible, all of them bad
  */
 
-int load_fsal(const char* name,
-              struct fsal_module** fsal_hdl_p)
+int load_fsal(const char* name, struct fsal_module** fsal_hdl_p)
 {
     void* dl = NULL;
     int retval = EBUSY; /* already loaded */
@@ -406,18 +405,14 @@ int register_fsal(struct fsal_module* fsal_hdl,
     pthread_rwlockattr_t attrs;
 
     PTHREAD_MUTEX_lock(&fsal_lock);
-    if((major_version != FSAL_MAJOR_VERSION)
-        || (minor_version > FSAL_MINOR_VERSION))
+    if((major_version != FSAL_MAJOR_VERSION) || (minor_version > FSAL_MINOR_VERSION))
     {
         so_error = EINVAL;
         LogCrit(COMPONENT_INIT,
             "FSAL \"%s\" failed to register because of version mismatch core = %d.%d, fsal = %d.%d",
             name,
             FSAL_MAJOR_VERSION, FSAL_MINOR_VERSION, major_version,
-            minor_version)
-             
-        
-        ;
+            minor_version);
         load_state = error;
         goto errout;
     }
@@ -468,8 +463,7 @@ errout:
     gsh_free(fsal_hdl->name);
     load_state = error;
     PTHREAD_MUTEX_unlock(&fsal_lock);
-    LogCrit(COMPONENT_INIT, "FSAL \"%s\" failed to register because: %s",
-        name, strerror(so_error));
+    LogCrit(COMPONENT_INIT, "FSAL \"%s\" failed to register because: %s", name, strerror(so_error));
     return so_error;
 }
 
@@ -573,7 +567,7 @@ int fsal_load_init(void* node, const char* name, struct fsal_module** fsal_hdl,
         int retval;
         config_file_t myconfig;
 
-        retval = load_fsal(name, fsal_hdl);
+        retval = load_fsal(name, fsal_hdl); // 加载动态模块
         if(retval != 0)
         {
             config_proc_error(node, err_type,
@@ -614,7 +608,9 @@ int subfsal_commit(void* node, void* link_mem, void* self_struct,
     int errcnt = fsal_load_init(node, subfsal->name, &fsal_next, err_type);
 
     if(errcnt == 0)
+    {
         subfsal->fsal_node = node;
+    }
 
     return errcnt;
 }

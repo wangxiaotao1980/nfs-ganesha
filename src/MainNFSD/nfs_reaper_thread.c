@@ -30,6 +30,7 @@
 #include "../include/sal_functions.h"
 #include "../include/nfs_proto_functions.h"
 #include "../include/nfs_core.h"
+#include "../include/rbt_tree.h"
 //#include "../include/log.h"
 #include "../include/fridgethr.h"
 #include <pthread.h>
@@ -85,8 +86,7 @@ static int reap_hash_table(hash_table_t* ht_reap)
             if(isDebug(COMPONENT_CLIENTID))
             {
                 display_client_id_rec(&dspbuf, client_id);
-                LogFullDebug(COMPONENT_CLIENTID,
-                    "Expire index %d %s", i, str);
+                LogFullDebug(COMPONENT_CLIENTID, "Expire index %d %s", i, str);
                 str_valid = true;
             }
 
@@ -122,11 +122,11 @@ static int reap_hash_table(hash_table_t* ht_reap)
             if(isFullDebug(COMPONENT_CLIENTID))
             {
                 if(!str_valid)
-                    display_printf(&dspbuf, "clientid %p",
-                                   client_id);
+                {
+                    display_printf(&dspbuf, "clientid %p", client_id);
+                }
 
-                LogFullDebug(COMPONENT_CLIENTID,
-                    "Reaper done, expired {%s}", str);
+                LogFullDebug(COMPONENT_CLIENTID, "Reaper done, expired {%s}", str);
             }
 
             /* drop our reference to the client_id */
@@ -178,12 +178,7 @@ static int reap_expired_open_owners(void)
 
                 display_owner(&dspbuf, owner);
 
-                LogFullDebug(COMPONENT_STATE,
-                    "Did not release CLOSE_PENDING %d seconds left for {%s}",
-                    (int) (texpire - tnow),
-                    str)
-                
-                ;
+                LogFullDebug(COMPONENT_STATE, "Did not release CLOSE_PENDING %d seconds left for {%s}", (int) (texpire - tnow), str);
             }
 
             /* Because entries are not moved on this list, and
@@ -240,8 +235,7 @@ static void reaper_run(struct fridgethr_context* ctx)
 
     if(isDebug(COMPONENT_CLIENTID) && ((rst->count > 0) || !rst->logged))
     {
-        LogDebug(COMPONENT_CLIENTID,
-            "Now checking NFS4 clients for expiration");
+        LogDebug(COMPONENT_CLIENTID, "Now checking NFS4 clients for expiration");
 
         rst->logged = (rst->count == 0);
 
@@ -279,17 +273,14 @@ int reaper_init(void)
     rc = fridgethr_init(&reaper_fridge, "reaper", &frp);
     if(rc != 0)
     {
-        LogMajor(COMPONENT_CLIENTID,
-            "Unable to initialize reaper fridge, error code %d.",
-            rc);
+        LogMajor(COMPONENT_CLIENTID, "Unable to initialize reaper fridge, error code %d.", rc);
         return rc;
     }
 
     rc = fridgethr_submit(reaper_fridge, reaper_run, &reaper_state);
     if(rc != 0)
     {
-        LogMajor(COMPONENT_CLIENTID,
-            "Unable to start reaper thread, error code %d.", rc);
+        LogMajor(COMPONENT_CLIENTID, "Unable to start reaper thread, error code %d.", rc);
         return rc;
     }
 
@@ -298,20 +289,16 @@ int reaper_init(void)
 
 int reaper_shutdown(void)
 {
-    int rc = fridgethr_sync_command(reaper_fridge,
-                                    fridgethr_comm_stop,
-                                    120);
+    int rc = fridgethr_sync_command(reaper_fridge, fridgethr_comm_stop, 120);
 
     if(rc == ETIMEDOUT)
     {
-        LogMajor(COMPONENT_CLIENTID,
-            "Shutdown timed out, cancelling threads.");
+        LogMajor(COMPONENT_CLIENTID, "Shutdown timed out, cancelling threads.");
         fridgethr_cancel(reaper_fridge);
     }
     else if(rc != 0)
     {
-        LogMajor(COMPONENT_CLIENTID,
-            "Failed shutting down reaper thread: %d", rc);
+        LogMajor(COMPONENT_CLIENTID, "Failed shutting down reaper thread: %d", rc);
     }
     return rc;
 }

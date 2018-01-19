@@ -408,8 +408,10 @@ const nfs_function_desc_t mnt3_func_desc[] =
 #define nlm4_Unsupported_Free nlm_Null_Free
 
 #ifdef _USE_NLM
-const nfs_function_desc_t nlm4_func_desc[] = {
-    [NLMPROC4_NULL] = {
+const nfs_function_desc_t nlm4_func_desc[] = 
+{
+    [NLMPROC4_NULL] = 
+    {
         .service_function   = nlm_Null,
         .free_function      = nlm_Null_Free,
         .xdr_decode_func    = (xdrproc_t)xdr_void,
@@ -417,7 +419,8 @@ const nfs_function_desc_t nlm4_func_desc[] = {
         .funcname           = "nlm_Null",
         .dispatch_behaviour = NOTHING_SPECIAL
     },
-    [NLMPROC4_TEST] = {
+    [NLMPROC4_TEST] = 
+    {
         .service_function   = nlm4_Test,
         .free_function      = nlm4_Test_Free,
         .xdr_decode_func    = (xdrproc_t)xdr_nlm4_testargs,
@@ -425,7 +428,8 @@ const nfs_function_desc_t nlm4_func_desc[] = {
         .funcname           = "nlm4_Test",
         .dispatch_behaviour = NEEDS_CRED
     },
-    [NLMPROC4_LOCK] = {
+    [NLMPROC4_LOCK] = 
+    {
         .service_function   = nlm4_Lock,
         .free_function      = nlm4_Lock_Free,
         .xdr_decode_func    = (xdrproc_t)xdr_nlm4_lockargs,

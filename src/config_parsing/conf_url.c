@@ -74,8 +74,7 @@ static void init_url_regex(void)
     r = regcomp(&url_regex, CONFIG_URL_REGEX, REG_EXTENDED);
     if(!!r)
     {
-        LogFatal(COMPONENT_INIT,
-            "Error initializing config url regex");
+        LogFatal(COMPONENT_INIT, "Error initializing config url regex");
     }
 }
 
@@ -99,10 +98,7 @@ void config_url_shutdown(void)
     struct gsh_url_provider* url_p;
 
     PTHREAD_RWLOCK_wrlock(&url_rwlock);
-    while((url_p = glist_first_entry(
-        &url_providers, struct gsh_url_provider, link)
-    )
-    )
+    while((url_p = glist_first_entry(&url_providers, struct gsh_url_provider, link)))
     {
         glist_del(&url_p->link);
         url_p->url_shutdown();

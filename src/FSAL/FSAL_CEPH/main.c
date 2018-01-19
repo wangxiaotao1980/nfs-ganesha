@@ -3,7 +3,7 @@
  * Author: Adam C. Emerson <aemerson@linuxbox.com>
  *
  * contributeur : William Allen Simpson <bill@cohortfs.com>
- *		  Marcus Watts <mdw@cohortfs.com>
+ *          Marcus Watts <mdw@cohortfs.com>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public License
@@ -35,8 +35,7 @@
  * initialization, teardown, configuration, and creation of exports.
  */
 
-#include <stdlib.h>
-#include <assert.h>
+
 #include "../../include/fsal.h"
 #include "../../include/fsal_types.h"
 #include "../../include/FSAL/fsal_init.h"
@@ -45,6 +44,8 @@
 #include "../../include/abstract_mem.h"
 #include "../../include/nfs_exports.h"
 #include "../../include/export_mgr.h"
+#include <stdlib.h>
+#include <assert.h>
 #include "internal.h"
 #include "statx_compat.h"
 
@@ -65,22 +66,23 @@ static fsal_staticfsinfo_t default_ceph_info = {
     .xattr_access_rights = 0,
 #endif
     /* fixed */
-    .symlink_support = true,
-    .link_support = true,
-    .cansettime = true,
-    .no_trunc = true,
-    .chown_restricted = true,
-    .case_preserving = true,
+    .symlink_support          = true,
+    .link_support             = true,
+    .cansettime               = true,
+    .no_trunc                 = true,
+    .chown_restricted         = true,
+    .case_preserving          = true,
 #ifdef USE_FSAL_CEPH_SETLK
-    .lock_support = true,
-    .lock_support_owner = true,
+    .lock_support             = true,
+    .lock_support_owner       = true,
     .lock_support_async_block = false,
 #endif
-    .unique_handles = true,
-    .homogenous = true,
+    .unique_handles           = true,
+    .homogenous               = true,
 };
 
-static struct config_item ceph_items[] = {
+static struct config_item ceph_items[] = 
+{
     CONF_ITEM_PATH("ceph_conf", 1, MAXPATHLEN, NULL,
         ceph_fsal_module, conf_path),
     CONF_ITEM_MODE("umask", 0,
@@ -90,11 +92,12 @@ static struct config_item ceph_items[] = {
     CONFIG_EOL
 };
 
-static struct config_block ceph_block = {
-    .dbus_interface_name = "org.ganesha.nfsd.config.fsal.ceph",
-    .blk_desc.name = "Ceph",
-    .blk_desc.type = CONFIG_BLOCK,
-    .blk_desc.u.blk.init = noop_conf_init,
+static struct config_block ceph_block = 
+{
+    .dbus_interface_name   = "org.ganesha.nfsd.config.fsal.ceph",
+    .blk_desc.name         = "Ceph",
+    .blk_desc.type         = CONFIG_BLOCK,
+    .blk_desc.u.blk.init   = noop_conf_init,
     .blk_desc.u.blk.params = ceph_items,
     .blk_desc.u.blk.commit = noop_conf_commit
 };
@@ -111,11 +114,9 @@ static fsal_status_t init_config(struct fsal_module* module_in,
                                  struct config_error_type* err_type)
 {
     struct ceph_fsal_module* myself =
-    container_of(module_in, struct ceph_fsal_module, fsal)
-    ;
+    container_of(module_in, struct ceph_fsal_module, fsal);
 
-    LogDebug(COMPONENT_FSAL,
-        "Ceph module setup.");
+    LogDebug(COMPONENT_FSAL, "Ceph module setup.");
 
     myself->fs_info = default_ceph_info;
     (void)load_config_from_parse(config_struct,
@@ -153,11 +154,12 @@ static struct config_item export_params[] = {
     CONFIG_EOL
 };
 
-static struct config_block export_param_block = {
-    .dbus_interface_name = "org.ganesha.nfsd.config.fsal.ceph-export%d",
-    .blk_desc.name = "FSAL",
-    .blk_desc.type = CONFIG_BLOCK,
-    .blk_desc.u.blk.init = noop_conf_init,
+static struct config_block export_param_block = 
+{
+    .dbus_interface_name   = "org.ganesha.nfsd.config.fsal.ceph-export%d",
+    .blk_desc.name         = "FSAL",
+    .blk_desc.type         = CONFIG_BLOCK,
+    .blk_desc.u.blk.init   = noop_conf_init,
     .blk_desc.u.blk.params = export_params,
     .blk_desc.u.blk.commit = noop_conf_commit
 };
@@ -189,13 +191,13 @@ static fsal_status_t create_export(struct fsal_module* module_in,
                                    const struct fsal_up_vector* up_ops)
 {
     /* The status code to return */
-    fsal_status_t status = { ERR_FSAL_NO_ERROR, 0 };
+    fsal_status_t status  = { ERR_FSAL_NO_ERROR, 0 };
     /* The internal export object */
     struct export* export = gsh_calloc(1, sizeof(struct export));
     /* The 'private' root handle */
     struct handle* handle = NULL;
     /* Root inode */
-    struct Inode* i = NULL;
+    struct Inode* i       = NULL;
     /* Stat for root */
     struct ceph_statx stx;
     /* Return code */
@@ -387,10 +389,10 @@ MODULE_INIT void init(void)
     /* Set up module operations */
 #ifdef CEPH_PNFS
     myself->m_ops.fsal_pnfs_ds_ops = pnfs_ds_ops_init;
-#endif				/* CEPH_PNFS */
+#endif                /* CEPH_PNFS */
     myself->m_ops.create_export = create_export;
-    myself->m_ops.init_config = init_config;
-    myself->m_ops.support_ex = ceph_support_ex;
+    myself->m_ops.init_config   = init_config;
+    myself->m_ops.support_ex    = ceph_support_ex;
 }
 
 /**
@@ -403,13 +405,11 @@ MODULE_INIT void init(void)
 
 MODULE_FINI void finish(void)
 {
-    LogDebug(COMPONENT_FSAL,
-        "Ceph module finishing.");
+    LogDebug(COMPONENT_FSAL, "Ceph module finishing.");
 
     if(unregister_fsal(&CephFSM.fsal) != 0)
     {
-        LogCrit(COMPONENT_FSAL,
-            "Unable to unload Ceph FSAL.  Dying with extreme prejudice.");
+        LogCrit(COMPONENT_FSAL, "Unable to unload Ceph FSAL.  Dying with extreme prejudice.");
         abort();
     }
 }

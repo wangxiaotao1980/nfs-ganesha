@@ -192,12 +192,10 @@ char* err_type_str(struct config_error_type* err_type)
 bool init_error_type(struct config_error_type* err_type)
 {
     memset(err_type, 0, sizeof(struct config_error_type));
-    err_type->fp = open_memstream(&err_type->diag_buf,
-                                  &err_type->diag_buf_size);
+    err_type->fp = open_memstream(&err_type->diag_buf, &err_type->diag_buf_size);
     if(err_type->fp == NULL)
     {
-        LogCrit(COMPONENT_MAIN,
-            "Could not open memory stream for parser errors");
+        LogCrit(COMPONENT_MAIN, "Could not open memory stream for parser errors");
         return false;
     }
     return true;
@@ -2067,10 +2065,10 @@ int load_config_from_parse(config_file_t config,
     struct config_root* tree = (struct config_root *)config;
     struct config_node* node = NULL;
     struct glist_head* ns;
-    char* blkname = conf_blk->blk_desc.name;
-    int found = 0;
-    int prev_errs = err_type->errors;
-    void* blk_mem = NULL;
+    char* blkname            = conf_blk->blk_desc.name;
+    int found                = 0;
+    int prev_errs            = err_type->errors;
+    void* blk_mem            = NULL;
 
     if(tree == NULL)
     {

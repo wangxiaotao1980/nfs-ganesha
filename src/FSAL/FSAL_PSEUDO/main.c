@@ -27,15 +27,14 @@
  * Module core functions
  */
 
-#include "config.h"
-
-#include "fsal.h"
-#include <libgen.h>		/* used for 'dirname' */
+#include "../../include/config.h"
+//#include "../../include/FSAL/fsal_init.h"
+#include "../../include/fsal.h"
+#include <libgen.h>        /* used for 'dirname' */
 #include <pthread.h>
 #include <string.h>
 #include <limits.h>
 #include <sys/types.h>
-#include "FSAL/fsal_init.h"
 #include "pseudofs_methods.h"
 #include "../fsal_private.h"
 
@@ -43,41 +42,42 @@
  */
 
 struct pseudo_fsal_module {
-	struct fsal_module fsal;
-	struct fsal_staticfsinfo_t fs_info;
-	/* pseudofsfs_specific_initinfo_t specific_info;  placeholder */
+    struct fsal_module fsal;
+    struct fsal_staticfsinfo_t fs_info;
+    /* pseudofsfs_specific_initinfo_t specific_info;  placeholder */
 };
 
 const char pseudoname[] = "PSEUDO";
 
 /* filesystem info for PSEUDOFS */
-static struct fsal_staticfsinfo_t default_posix_info = {
-	.maxfilesize = UINT64_MAX,
-	.maxlink = 0,
-	.maxnamelen = MAXNAMLEN,
-	.maxpathlen = MAXPATHLEN,
-	.no_trunc = true,
-	.chown_restricted = true,
-	.case_insensitive = false,
-	.case_preserving = true,
-	.link_support = false,
-	.symlink_support = false,
-	.lock_support = false,
-	.lock_support_owner = false,
-	.lock_support_async_block = false,
-	.named_attr = false,
-	.unique_handles = true,
-	.lease_time = {10, 0},
-	.acl_support = 0,
-	.cansettime = true,
-	.homogenous = true,
-	.supported_attrs = PSEUDO_SUPPORTED_ATTRS,
-	.maxread = FSAL_MAXIOSIZE,
-	.maxwrite = FSAL_MAXIOSIZE,
-	.umask = 0,
-	.auth_exportpath_xdev = false,
-	.xattr_access_rights = 0400,	/* root=RW, owner=R */
-	.link_supports_permission_checks = false,
+static struct fsal_staticfsinfo_t default_posix_info =
+{
+    .maxfilesize                     = UINT64_MAX,
+    .maxlink                         = 0,
+    .maxnamelen                      = MAXNAMLEN,
+    .maxpathlen                      = MAXPATHLEN,
+    .no_trunc                        = true,
+    .chown_restricted                = true,
+    .case_insensitive                = false,
+    .case_preserving                 = true,
+    .link_support                    = false,
+    .symlink_support                 = false,
+    .lock_support                    = false,
+    .lock_support_owner              = false,
+    .lock_support_async_block        = false,
+    .named_attr                      = false,
+    .unique_handles                  = true,
+    .lease_time                      = {10, 0},
+    .acl_support                     = 0,
+    .cansettime                      = true,
+    .homogenous                      = true,
+    .supported_attrs                 = PSEUDO_SUPPORTED_ATTRS,
+    .maxread                         = FSAL_MAXIOSIZE,
+    .maxwrite                        = FSAL_MAXIOSIZE,
+    .umask                           = 0,
+    .auth_exportpath_xdev            = false,
+    .xattr_access_rights             = 0400,    /* root=RW, owner=R */
+    .link_supports_permission_checks = false,
 };
 
 /* private helper for export object
@@ -85,33 +85,26 @@ static struct fsal_staticfsinfo_t default_posix_info = {
 
 struct fsal_staticfsinfo_t *pseudofs_staticinfo(struct fsal_module *hdl)
 {
-	struct pseudo_fsal_module *myself;
+    struct pseudo_fsal_module *myself;
 
-	myself = container_of(hdl, struct pseudo_fsal_module, fsal);
-	return &myself->fs_info;
+    myself = container_of(hdl, struct pseudo_fsal_module, fsal);
+    return &myself->fs_info;
 }
 
 /* Initialize pseudo fs info */
 static void init_config(struct fsal_module *fsal_hdl)
 {
-	struct pseudo_fsal_module *pseudofs_me =
-	    container_of(fsal_hdl, struct pseudo_fsal_module, fsal);
-
-	/* get a copy of the defaults */
-	pseudofs_me->fs_info = default_posix_info;
-
-	/* if we have fsal specific params, do them here
-	 * fsal_hdl->name is used to find the block containing the
-	 * params.
-	 */
-
-	display_fsinfo(&pseudofs_me->fs_info);
-	LogFullDebug(COMPONENT_FSAL,
-		     "Supported attributes default = 0x%" PRIx64,
-		     default_posix_info.supported_attrs);
-	LogDebug(COMPONENT_FSAL,
-		 "FSAL INIT: Supported attributes mask = 0x%" PRIx64,
-		 pseudofs_me->fs_info.supported_attrs);
+    struct pseudo_fsal_module *pseudofs_me = container_of(fsal_hdl, struct pseudo_fsal_module, fsal);
+    /* get a copy of the defaults */
+    pseudofs_me->fs_info = default_posix_info;
+    /**
+     * if we have fsal specific params, do them here
+     * fsal_hdl->name is used to find the block containing the
+     * params.
+     */
+    display_fsinfo(&pseudofs_me->fs_info);
+    LogFullDebug(COMPONENT_FSAL, "Supported attributes default = 0x%" PRIx64, default_posix_info.supported_attrs);
+    LogDebug(COMPONENT_FSAL, "FSAL INIT: Supported attributes mask = 0x%" PRIx64, pseudofs_me->fs_info.supported_attrs);
 }
 
 /**
@@ -122,7 +115,7 @@ static void init_config(struct fsal_module *fsal_hdl)
 
 bool pseudofs_support_ex(struct fsal_obj_handle *obj)
 {
-	return true;
+    return true;
 }
 
 /* Module initialization.
@@ -140,30 +133,32 @@ static struct pseudo_fsal_module PSEUDOFS;
 
 int unload_pseudo_fsal(struct fsal_module *fsal_hdl)
 {
-	int retval;
+    int retval;
 
-	retval = unregister_fsal(&PSEUDOFS.fsal);
-	if (retval != 0)
-		fprintf(stderr, "PSEUDO module failed to unregister");
+    retval = unregister_fsal(&PSEUDOFS.fsal);
+    if (retval != 0)
+    {
+        fprintf(stderr, "PSEUDO module failed to unregister");
+    }
 
-	return retval;
+    return retval;
 }
 
 void pseudo_fsal_init(void)
 {
-	int retval;
-	struct fsal_module *myself = &PSEUDOFS.fsal;
+    int retval;
+    struct fsal_module *myself = &PSEUDOFS.fsal;
 
-	retval = register_fsal(myself, pseudoname, FSAL_MAJOR_VERSION,
-			       FSAL_MINOR_VERSION, FSAL_ID_NO_PNFS);
-	if (retval != 0) {
-		fprintf(stderr, "PSEUDO module failed to register");
-		return;
-	}
-	myself->m_ops.create_export = pseudofs_create_export;
-	myself->m_ops.unload = unload_pseudo_fsal;
-	myself->m_ops.support_ex = pseudofs_support_ex;
+    retval = register_fsal(myself, pseudoname, FSAL_MAJOR_VERSION, FSAL_MINOR_VERSION, FSAL_ID_NO_PNFS);
+    if (retval != 0) 
+    {
+        fprintf(stderr, "PSEUDO module failed to register");
+        return;
+    }
+    myself->m_ops.create_export = pseudofs_create_export;
+    myself->m_ops.unload        = unload_pseudo_fsal;
+    myself->m_ops.support_ex    = pseudofs_support_ex;
 
-	/* initialize our config */
-	init_config(myself);
+    /* initialize our config */
+    init_config(myself);
 }
