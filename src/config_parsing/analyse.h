@@ -153,4 +153,4 @@ void print_parse_tree(FILE* output, struct config_root* tree);
  */
 void free_parse_tree(struct config_root* tree);
 
-#endif				/* CONFPARSER_H */
+#endif                /* CONFPARSER_H */

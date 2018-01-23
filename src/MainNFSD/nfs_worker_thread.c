@@ -759,7 +759,7 @@ const nfs_function_desc_t* nfs_rpc_get_funcdesc(nfs_request_t* reqnfs)
 /**
  * @brief Main RPC dispatcher routine
  *
- * @param[in,out] reqdata	NFS request
+ * @param[in,out] reqdata    NFS request
  *
  */
 void nfs_rpc_execute(request_data_t* reqdata)

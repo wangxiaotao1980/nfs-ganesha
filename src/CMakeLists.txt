@@ -216,7 +216,7 @@ option (USE_GSS "enable RPCSEC_GSS support" ON)
 option(TIRPC_EPOLL "platform supports EPOLL or emulation" ON)
 
 # Build configure options
-option(USE_DBUS "enable DBUS protocol support" ON)
+option(USE_DBUS "enable DBUS protocol support" OFF)
 
 # Various DBUS enabled features
 option(USE_CB_SIMULATOR "enable callback simulator thread" OFF)

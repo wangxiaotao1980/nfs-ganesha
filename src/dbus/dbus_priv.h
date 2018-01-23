@@ -12,4 +12,5 @@ int dbus_send_signal(DBusConnection *conn, char *obj_name, char *int_name,
                                              void *args),
              void *sig_args);
 
-#endif				/* DBUS_PRIV_H */
+#endif                /* DBUS_PRIV_H */
+ 

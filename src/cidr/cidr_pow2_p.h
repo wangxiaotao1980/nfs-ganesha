@@ -273,4 +273,4 @@ static const char* __cidr_pow2m2[] = {
     "340,282,366,920,938,463,463,374,607,431,768,211,454"
 };
 
-#endif				/* __LIBCIDR__POW2_P_H */
+#endif                /* __LIBCIDR__POW2_P_H */

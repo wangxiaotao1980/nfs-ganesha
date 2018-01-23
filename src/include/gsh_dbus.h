@@ -86,11 +86,11 @@
     .direction = "out"\
 }
 
-#define MESSAGE_REPLY		\
-{				\
-    .name = "message",	\
-    .type = "s",		\
-    .direction = "out"	\
+#define MESSAGE_REPLY        \
+{                \
+    .name = "message",    \
+    .type = "s",        \
+    .direction = "out"    \
 }
 
 #define END_ARG_LIST {NULL, NULL, NULL}
@@ -102,32 +102,32 @@
     .direction = "in"\
 }
 
-#define ID_ARG			\
-{				\
-    .name = "id",		\
-    .type = "q",		\
-    .direction = "in"	\
+#define ID_ARG            \
+{                \
+    .name = "id",        \
+    .type = "q",        \
+    .direction = "in"    \
 }
 
-#define PATH_ARG		\
-{				\
-    .name = "path",		\
-    .type = "s",		\
-    .direction = "in"	\
+#define PATH_ARG        \
+{                \
+    .name = "path",        \
+    .type = "s",        \
+    .direction = "in"    \
 }
 
-#define EXPR_ARG		\
-{				\
-    .name = "expr",		\
-    .type = "s",		\
-    .direction = "in"	\
+#define EXPR_ARG        \
+{                \
+    .name = "expr",        \
+    .type = "s",        \
+    .direction = "in"    \
 }
 
-#define FSAL_ARG		\
-{				\
-    .name = "fsal",		\
-    .type = "s",		\
-    .direction = "in"	\
+#define FSAL_ARG        \
+{                \
+    .name = "fsal",        \
+    .type = "s",        \
+    .direction = "in"    \
 }
 
 /* Properties list helper macros
@@ -236,4 +236,4 @@ int gsh_dbus_broadcast(char* obj_name, char* int_name,
 bool arg_9p_op(DBusMessageIter* args, u8* opcode, char** errormsg);
 #endif
 
-#endif				/* GSH_DBUS_H */
+#endif                /* GSH_DBUS_H */

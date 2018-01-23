@@ -780,9 +780,9 @@ int nfs_rpc_create_chan_v41(nfs41_session_t* session, int num_sec_parms,
     {
 #ifdef EBADFD
         code = EBADFD;
-#else				/* !EBADFD */
+#else                /* !EBADFD */
         code = EBADF;
-#endif				/* !EBADFD */
+#endif                /* !EBADFD */
     }
     else
     {

@@ -100,8 +100,8 @@ static enum load_state
  *
  * Start a FSAL that's statically linked in.
  *
- * @param[in] name	FSAL name
- * @param[in] init	Initialization function for FSAL
+ * @param[in] name    FSAL name
+ * @param[in] init    Initialization function for FSAL
  */
 
 static void load_fsal_static(const char* name, void (*init)(void))
@@ -244,7 +244,7 @@ int load_fsal(const char* name, struct fsal_module** fsal_hdl_p)
 #ifdef ELIBACC
         retval = ELIBACC; /* hand craft a meaningful error */
 #else
-        retval = EPERM;	/* ELIBACC does not exist on MacOS */
+        retval = EPERM;    /* ELIBACC does not exist on MacOS */
 #endif
         dl_error = gsh_strdup(dlerror());
         LogCrit(COMPONENT_INIT, "Could not dlopen module:%s Error:%s",

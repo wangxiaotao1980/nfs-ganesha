@@ -3,7 +3,7 @@
  * Author: Adam C. Emerson <aemerson@linuxbox.com>
  *
  * contributeur : William Allen Simpson <bill@cohortfs.com>
- *		  Marcus Watts <mdw@cohortfs.com>
+ *          Marcus Watts <mdw@cohortfs.com>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public License
@@ -38,21 +38,21 @@
 #ifndef FSAL_CEPH_INTERNAL_INTERNAL__
 #define FSAL_CEPH_INTERNAL_INTERNAL__
 
-#include <cephfs/libcephfs.h>
-#include "fsal.h"
-#include "fsal_types.h"
-#include "fsal_api.h"
-#include "fsal_convert.h"
+//#include "../../include/fsal.h"
+#include "../../include/fsal_types.h"
+#include "../../include/fsal_api.h"
+#include "../../include/FSAL/fsal_commonlib.h"
+#include "../../include/fsal_convert.h"
 #include <stdbool.h>
 #include <uuid/uuid.h>
 #include "statx_compat.h"
-#include "FSAL/fsal_commonlib.h"
+#include <cephfs/libcephfs.h>
 
 /* Max length of a user_id string that we pass to ceph_mount */
-#define MAXUIDLEN	(64)
+#define MAXUIDLEN    (64)
 
 /* Max length of a secret key for this user */
-#define MAXSECRETLEN	(88)
+#define MAXSECRETLEN    (88)
 
 /**
  * Ceph Main (global) module object
@@ -115,7 +115,7 @@ struct handle
     uint64_t rw_issued;
     uint64_t rw_serial;
     uint64_t rw_max_len;
-#endif				/* CEPH_PNFS */
+#endif                /* CEPH_PNFS */
 };
 
 #ifdef CEPH_PNFS
@@ -126,7 +126,7 @@ struct handle
 
 struct ds_wire {
     struct wire_handle wire; /*< All the information of a regualr handle */
-    struct ceph_file_layout layout;	/*< Layout information */
+    struct ceph_file_layout layout;    /*< Layout information */
     uint64_t snapseq; /*< And a single entry giving a degernate
                   snaprealm. */
 };
@@ -136,19 +136,19 @@ struct ds_wire {
  */
 
 struct ds {
-    struct fsal_ds_handle ds;	/*< Public DS handle */
-    struct ds_wire wire;	/*< Wire data */
-    bool connected;		/*< True if the handle has been connected
+    struct fsal_ds_handle ds;    /*< Public DS handle */
+    struct ds_wire wire;    /*< Wire data */
+    bool connected;        /*< True if the handle has been connected
                    (in Ceph) */
 };
 
-#endif				/* CEPH_PNFS */
+#endif                /* CEPH_PNFS */
 
 #define CEPH_SUPPORTED_ATTRS ((const attrmask_t) (ATTRS_POSIX))
 
-#define CEPH_SETTABLE_ATTRIBUTES ((const attrmask_t) (			\
-    ATTR_MODE  | ATTR_OWNER | ATTR_GROUP | ATTR_ATIME	 |	\
-    ATTR_CTIME | ATTR_MTIME | ATTR_SIZE  | ATTR_MTIME_SERVER |	\
+#define CEPH_SETTABLE_ATTRIBUTES ((const attrmask_t) (            \
+    ATTR_MODE  | ATTR_OWNER | ATTR_GROUP | ATTR_ATIME     |    \
+    ATTR_CTIME | ATTR_MTIME | ATTR_SIZE  | ATTR_MTIME_SERVER |    \
     ATTR_ATIME_SERVER))
 
 
@@ -193,7 +193,7 @@ void handle_ops_init(struct fsal_obj_ops* ops);
 void pnfs_ds_ops_init(struct fsal_pnfs_ds_ops *ops);
 void export_ops_pnfs(struct export_ops *ops);
 void handle_ops_pnfs(struct fsal_obj_ops *ops);
-#endif				/* CEPH_PNFS */
+#endif                /* CEPH_PNFS */
 
 struct state_t* ceph_alloc_state(struct fsal_export* exp_hdl,
                                  enum state_type state_type,
@@ -201,4 +201,4 @@ struct state_t* ceph_alloc_state(struct fsal_export* exp_hdl,
 
 void ceph_free_state(struct fsal_export* exp_hdl, struct state_t* state);
 
-#endif				/* !FSAL_CEPH_INTERNAL_INTERNAL__ */
+#endif                /* !FSAL_CEPH_INTERNAL_INTERNAL__ */

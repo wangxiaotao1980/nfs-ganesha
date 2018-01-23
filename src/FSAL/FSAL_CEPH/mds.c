@@ -468,7 +468,7 @@ static nfsstat4 layoutget(struct fsal_obj_handle *obj_pub,
             PTHREAD_RWLOCK_unlock(&handle->handle.obj_lock);
             return NFS4ERR_BADLAYOUT;
         }
-#if CLIENTS_WILL_ACCEPT_SEGMENTED_LAYOUTS	/* sigh */
+#if CLIENTS_WILL_ACCEPT_SEGMENTED_LAYOUTS    /* sigh */
         res->segment.length =
             (handle->rw_max_len - res->segment.offset);
 #endif
@@ -702,4 +702,4 @@ void handle_ops_pnfs(struct fsal_obj_ops *ops)
     ops->layoutcommit = layoutcommit;
 }
 
-#endif				/* CEPH_PNFS */
+#endif                /* CEPH_PNFS */

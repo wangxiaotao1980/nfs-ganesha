@@ -42,7 +42,7 @@ extern struct config_block *vfs_sub_export_param;
 void vfs_sub_fini(struct vfs_fsal_export *myself);
 
 void vfs_sub_init_export_ops(struct vfs_fsal_export *myself,
-			      const char *export_path);
+                  const char *export_path);
 
 int vfs_sub_init_export(struct vfs_fsal_export *myself);
 
@@ -59,6 +59,6 @@ int vfs_sub_init_export(struct vfs_fsal_export *myself);
 struct vfs_fsal_obj_handle *vfs_sub_alloc_handle(void);
 
 int vfs_sub_init_handle(struct vfs_fsal_export *myself,
-		struct vfs_fsal_obj_handle *hdl,
-		const char *path);
+        struct vfs_fsal_obj_handle *hdl,
+        const char *path);
 #endif /* SUBFSAL_H */
