@@ -375,7 +375,7 @@ void nfs_Init_admin_thread(void)
 }
 
 /**
- * @brief Signal the admin thread to shut down the system
+ * @brief Signal the admin thread to shut down the system （终止admin 线程）
  */
 
 void admin_halt(void)

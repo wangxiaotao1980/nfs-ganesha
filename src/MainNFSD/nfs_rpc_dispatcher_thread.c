@@ -1354,19 +1354,18 @@ void nfs_rpc_queue_init(void)
     /**
      * @todo Add a configuration parameter to set a max.
      */
-    reqparams.thr_max = 0;
-    reqparams.thr_min = 1;
-    reqparams.thread_delay =
-        nfs_param.core_param.decoder_fridge_expiration_delay;
-    reqparams.deferment = fridgethr_defer_block;
-    reqparams.block_delay =
-        nfs_param.core_param.decoder_fridge_block_timeout;
+    reqparams.thr_max      = 0;
+    reqparams.thr_min      = 1;
+    reqparams.thread_delay = nfs_param.core_param.decoder_fridge_expiration_delay;
+    reqparams.deferment    = fridgethr_defer_block;
+    reqparams.block_delay  = nfs_param.core_param.decoder_fridge_block_timeout;
 
     /* decoder thread pool */
     rc = fridgethr_init(&req_fridge, "decoder", &reqparams);
     if (rc != 0)
-        LogFatal(COMPONENT_DISPATCH,
-             "Unable to initialize decoder thread pool: %d", rc);
+    {
+        LogFatal(COMPONENT_DISPATCH, "Unable to initialize decoder thread pool: %d", rc);
+    }
 
     /* queues */
     pthread_spin_init(&nfs_req_st.reqs.sp, PTHREAD_PROCESS_PRIVATE);

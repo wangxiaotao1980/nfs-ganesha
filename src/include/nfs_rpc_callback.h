@@ -113,12 +113,6 @@ static inline void set_cb_chan_down(struct nfs_client_id_t* clid, bool down)
     clid->cid_cb.v40.cb_chan_down = down;
 }
 
-rpc_call_channel_t* nfs_rpc_get_chan(nfs_client_id_t* pclientid,
-                                     uint32_t flags);
-
-enum clnt_stat rpc_cb_null(rpc_call_channel_t* chan, struct timeval timeout,
-                           bool locked);
-
 static inline void nfs_rpc_init_call(void* ptr, void* parameters)
 {
     rpc_call_t* call = (rpc_call_t *)ptr;
@@ -126,6 +120,14 @@ static inline void nfs_rpc_init_call(void* ptr, void* parameters)
     memset(call, 0, sizeof(rpc_call_t));
     init_wait_entry(&call->we);
 }
+
+
+
+rpc_call_channel_t* nfs_rpc_get_chan(nfs_client_id_t* pclientid,
+                                     uint32_t flags);
+
+enum clnt_stat rpc_cb_null(rpc_call_channel_t* chan, struct timeval timeout,
+                           bool locked);
 
 void nfs_rpc_cb_pkginit(void);
 void nfs_rpc_cb_pkgshutdown(void);

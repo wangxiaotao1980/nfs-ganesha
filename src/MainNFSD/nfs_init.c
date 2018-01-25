@@ -478,12 +478,13 @@ int init_server_pkgs(void)
     state_status_t state_status;
 
     /* init uid2grp cache */
-    uid2grp_cache_init();
+    uid2grp_cache_init();           // uid 和 group cache
 
     ng_cache_init(); /* netgroup cache */
 
     /* MDCACHE Initialisation */
     fsal_status = mdcache_pkginit();
+
     if(FSAL_IS_ERROR(fsal_status))
     {
         LogCrit(COMPONENT_INIT,
@@ -714,9 +715,8 @@ static void nfs_Init(const nfs_start_info_t* p_start_info)
 #endif				/* HAVE_KRB5 */
 
         /* Set up principal to be use for GSSAPPI within GSSRPC/KRB5 */
-        gss_service_buf.value = nfs_param.krb5_param.svc.principal;
-        gss_service_buf.length =
-                strlen(nfs_param.krb5_param.svc.principal) + 1;
+        gss_service_buf.value  = nfs_param.krb5_param.svc.principal;
+        gss_service_buf.length = strlen(nfs_param.krb5_param.svc.principal) + 1;
         /* The '+1' is not to be forgotten, for the '\0' at the end */
 
         maj_stat = gss_import_name(&min_stat, &gss_service_buf,
@@ -731,8 +731,9 @@ static void nfs_Init(const nfs_start_info_t* p_start_info)
         }
 
         if(nfs_param.krb5_param.svc.gss_name == GSS_C_NO_NAME)
-            LogInfo(COMPONENT_INIT,
-            "Regression:  svc.gss_name == GSS_C_NO_NAME");
+        {
+            LogInfo(COMPONENT_INIT, "Regression:  svc.gss_name == GSS_C_NO_NAME");
+        }
 
         LogInfo(COMPONENT_INIT, "gss principal \"%s\" successfully set",
             nfs_param.krb5_param.svc.principal);
@@ -754,7 +755,7 @@ static void nfs_Init(const nfs_start_info_t* p_start_info)
 #endif				/* _HAVE_GSSAPI */
 
     /* RPC Initialisation - exits on failure */
-    nfs_Init_svc();
+    nfs_Init_svc(); // 初始化主服务
     LogInfo(COMPONENT_INIT, "RPC resources successfully initialized");
 
     /* Admin initialisation */
@@ -762,8 +763,7 @@ static void nfs_Init(const nfs_start_info_t* p_start_info)
 
     /* Init the NFSv4 Clientid cache */
     LogDebug(COMPONENT_INIT, "Now building NFSv4 clientid cache");
-    if(nfs_Init_client_id() !=
-        CLIENT_ID_SUCCESS)
+    if(nfs_Init_client_id() != CLIENT_ID_SUCCESS)
     {
         LogFatal(COMPONENT_INIT,
             "Error while initializing NFSv4 clientid cache");
@@ -773,28 +773,23 @@ static void nfs_Init(const nfs_start_info_t* p_start_info)
 
     /* Init duplicate request cache */
     dupreq2_pkginit();
-    LogInfo(COMPONENT_INIT,
-        "duplicate request hash table cache successfully initialized");
+    LogInfo(COMPONENT_INIT, "duplicate request hash table cache successfully initialized");
 
     /* Init The NFSv4 State id cache */
     LogDebug(COMPONENT_INIT, "Now building NFSv4 State Id cache");
     if(nfs4_Init_state_id() != 0)
     {
-        LogFatal(COMPONENT_INIT,
-            "Error while initializing NFSv4 State Id cache");
+        LogFatal(COMPONENT_INIT, "Error while initializing NFSv4 State Id cache");
     }
-    LogInfo(COMPONENT_INIT,
-        "NFSv4 State Id cache successfully initialized");
+    LogInfo(COMPONENT_INIT, "NFSv4 State Id cache successfully initialized");
 
     /* Init The NFSv4 Open Owner cache */
     LogDebug(COMPONENT_INIT, "Now building NFSv4 Owner cache");
     if(Init_nfs4_owner() != 0)
     {
-        LogFatal(COMPONENT_INIT,
-            "Error while initializing NFSv4 Owner cache");
+        LogFatal(COMPONENT_INIT, "Error while initializing NFSv4 Owner cache");
     }
-    LogInfo(COMPONENT_INIT,
-        "NFSv4 Open Owner cache successfully initialized");
+    LogInfo(COMPONENT_INIT, "NFSv4 Open Owner cache successfully initialized");
 
 #ifdef _USE_NLM
     if(nfs_param.core_param.enable_NLM)
@@ -874,7 +869,7 @@ static void nfs_Init(const nfs_start_info_t* p_start_info)
     nfs4_start_grace(NULL);
 
     /* callback dispatch */
-    nfs_rpc_cb_pkginit();
+    nfs_rpc_cb_pkginit();  // nfs call back package init....
 #ifdef _USE_CB_SIMULATOR
     nfs_rpc_cbsim_pkginit();
 #endif				/*  _USE_CB_SIMULATOR */
