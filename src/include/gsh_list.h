@@ -232,10 +232,10 @@ static inline void glist_split(struct glist_head* list1,
     element->prev = list2;
 }
 
-#define glist_for_each(node, head) \
+#define glist_for_each(node, head)                             \
     for (node = (head)->next; node != head; node = node->next)
 
-#define glist_for_each_next(start, node, head)				\
+#define glist_for_each_next(start, node, head)                 \
     for (node = (start)->next; node != head; node = node->next)
 
 static inline size_t glist_length(struct glist_head* head)
@@ -250,34 +250,34 @@ static inline size_t glist_length(struct glist_head* head)
     return length;
 }
 
-#define container_of(addr, type, member) ({			\
-    const typeof(((type *) 0)->member) * __mptr = (addr);	\
+#define container_of(addr, type, member) ({                    \
+    const typeof(((type *) 0)->member) * __mptr = (addr);      \
     (type *)((char *) __mptr - offsetof(type, member)); })
 
-#define glist_first_entry(head, type, member) \
-    ((head)->next != (head) ? \
+#define glist_first_entry(head, type, member)                  \
+    ((head)->next != (head) ?                                  \
     container_of((head)->next, type, member) : NULL)
 
-#define glist_last_entry(head, type, member) \
-    ((head)->prev != (head) ? \
+#define glist_last_entry(head, type, member)                   \
+    ((head)->prev != (head) ?                                  \
     container_of((head)->prev, type, member) : NULL)
 
-#define glist_entry(node, type, member) \
+#define glist_entry(node, type, member)                        \
     container_of(node, type, member)
 
-#define glist_for_each_safe(node, noden, head)		\
-    for (node = (head)->next, noden = node->next;	\
-         node != (head);				\
+#define glist_for_each_safe(node, noden, head)                 \
+    for (node = (head)->next, noden = node->next;              \
+         node != (head);                                       \
          node = noden, noden = node->next)
 
-#define glist_for_each_next_safe(start, node, noden, head)	\
-    for (node = (start)->next, noden = node->next;	\
-         node != (head);				\
+#define glist_for_each_next_safe(start, node, noden, head)     \
+    for (node = (start)->next, noden = node->next;             \
+         node != (head);                                       \
          node = noden, noden = node->next)
 
 /* Return the next entry in the list after node if any. */
-#define glist_next_entry(head, type, member, node) \
-    ((node)->next != (head) ? \
+#define glist_next_entry(head, type, member, node)             \
+    ((node)->next != (head) ?                                  \
     container_of((node)->next, type, member) : NULL)
 
 static inline void glist_insert_sorted(struct glist_head* head,
@@ -300,4 +300,4 @@ static inline void glist_insert_sorted(struct glist_head* head,
     __glist_add(next->prev, next, elt);
 }
 
-#endif				/* _GANESHA_LIST_H */
+#endif                /* _GANESHA_LIST_H */

@@ -35,16 +35,18 @@
 
   /* Export */
 
-static struct config_item export_params[] = {
+static struct config_item export_params[] = 
+{
     CONF_ITEM_NOOP("name"),
     CONFIG_EOL
 };
 
-static struct config_block export_param_block = {
-    .dbus_interface_name = "org.ganesha.nfsd.config.fsal.xfs-export%d",
-    .blk_desc.name = "FSAL",
-    .blk_desc.type = CONFIG_BLOCK,
-    .blk_desc.u.blk.init = noop_conf_init,
+static struct config_block export_param_block = 
+{
+    .dbus_interface_name   = "org.ganesha.nfsd.config.fsal.xfs-export%d",
+    .blk_desc.name         = "FSAL",
+    .blk_desc.type         = CONFIG_BLOCK,
+    .blk_desc.u.blk.init   = noop_conf_init,
     .blk_desc.u.blk.params = export_params,
     .blk_desc.u.blk.commit = noop_conf_commit
 };

@@ -157,24 +157,24 @@ int nfs3_mknod(nfs_arg_t *, struct svc_req *, nfs_res_t *);
 int nfs4_Compound(nfs_arg_t *, struct svc_req *, nfs_res_t *);
 
 int nfs4_op_access(struct nfs_argop4 *, compound_data_t *,
-		   struct nfs_resop4 *);
+           struct nfs_resop4 *);
 
 int nfs4_op_close(struct nfs_argop4 *, compound_data_t *, struct nfs_resop4 *);
 
 int nfs4_op_commit(struct nfs_argop4 *, compound_data_t *,
-		   struct nfs_resop4 *);
+           struct nfs_resop4 *);
 
 int nfs4_op_create(struct nfs_argop4 *, compound_data_t *,
-		   struct nfs_resop4 *);
+           struct nfs_resop4 *);
 
 int nfs4_op_delegpurge(struct nfs_argop4 *, compound_data_t *,
-		       struct nfs_resop4 *);
+               struct nfs_resop4 *);
 
 int nfs4_op_delegreturn(struct nfs_argop4 *, compound_data_t *,
-			struct nfs_resop4 *);
+            struct nfs_resop4 *);
 
 int nfs4_op_getattr(struct nfs_argop4 *, compound_data_t *,
-		    struct nfs_resop4 *);
+            struct nfs_resop4 *);
 
 int nfs4_op_getfh(struct nfs_argop4 *, compound_data_t *, struct nfs_resop4 *);
 
@@ -187,185 +187,185 @@ int nfs4_op_lockt(struct nfs_argop4 *, compound_data_t *, struct nfs_resop4 *);
 int nfs4_op_locku(struct nfs_argop4 *, compound_data_t *, struct nfs_resop4 *);
 
 int nfs4_op_lookup(struct nfs_argop4 *, compound_data_t *,
-		   struct nfs_resop4 *);
+           struct nfs_resop4 *);
 
 int nfs4_op_lookupp(struct nfs_argop4 *, compound_data_t *,
-		    struct nfs_resop4 *);
+            struct nfs_resop4 *);
 
 int nfs4_op_nverify(struct nfs_argop4 *, compound_data_t *,
-		    struct nfs_resop4 *);
+            struct nfs_resop4 *);
 
 int nfs4_op_open(struct nfs_argop4 *, compound_data_t *, struct nfs_resop4 *);
 
 int nfs4_op_open_confirm(struct nfs_argop4 *, compound_data_t *,
-			 struct nfs_resop4 *);
+             struct nfs_resop4 *);
 
 int nfs4_op_open_downgrade(struct nfs_argop4 *, compound_data_t *data,
-			   struct nfs_resop4 *);
+               struct nfs_resop4 *);
 
 int nfs4_op_openattr(struct nfs_argop4 *, compound_data_t *,
-		     struct nfs_resop4 *);
+             struct nfs_resop4 *);
 
 int nfs4_op_putfh(struct nfs_argop4 *, compound_data_t *, struct nfs_resop4 *);
 
 int nfs4_op_putpubfh(struct nfs_argop4 *, compound_data_t *,
-		     struct nfs_resop4 *);
+             struct nfs_resop4 *);
 int nfs4_op_putrootfh(struct nfs_argop4 *, compound_data_t *,
-		      struct nfs_resop4 *);
+              struct nfs_resop4 *);
 
 int nfs4_op_read(struct nfs_argop4 *, compound_data_t *, struct nfs_resop4 *);
 
 int nfs4_op_readdir(struct nfs_argop4 *, compound_data_t *,
-		    struct nfs_resop4 *);
+            struct nfs_resop4 *);
 
 int nfs4_op_remove(struct nfs_argop4 *, compound_data_t *,
-		   struct nfs_resop4 *);
+           struct nfs_resop4 *);
 
 int nfs4_op_renew(struct nfs_argop4 *, compound_data_t *,
-		  struct nfs_resop4 *);
+          struct nfs_resop4 *);
 
 int nfs4_op_rename(struct nfs_argop4 *, compound_data_t *,
-		   struct nfs_resop4 *);
+           struct nfs_resop4 *);
 
 int nfs4_op_restorefh(struct nfs_argop4 *, compound_data_t *,
-		      struct nfs_resop4 *);
+              struct nfs_resop4 *);
 
 int nfs4_op_readlink(struct nfs_argop4 *, compound_data_t *,
-		     struct nfs_resop4 *);
+             struct nfs_resop4 *);
 
 int nfs4_op_savefh(struct nfs_argop4 *, compound_data_t *,
-		   struct nfs_resop4 *);
+           struct nfs_resop4 *);
 
 int nfs4_op_secinfo(struct nfs_argop4 *, compound_data_t *,
-		    struct nfs_resop4 *);
+            struct nfs_resop4 *);
 
 int nfs4_op_secinfo_no_name(struct nfs_argop4 *, compound_data_t *,
-			    struct nfs_resop4 *);
+                struct nfs_resop4 *);
 
 int nfs4_op_setattr(struct nfs_argop4 *, compound_data_t *,
-		    struct nfs_resop4 *);
+            struct nfs_resop4 *);
 
 int nfs4_op_setclientid(struct nfs_argop4 *, compound_data_t *,
-			struct nfs_resop4 *);
+            struct nfs_resop4 *);
 
 int nfs4_op_setclientid_confirm(struct nfs_argop4 *, compound_data_t *,
-				struct nfs_resop4 *);
+                struct nfs_resop4 *);
 
 int nfs4_op_verify(struct nfs_argop4 *, compound_data_t *,
-		   struct nfs_resop4 *);
+           struct nfs_resop4 *);
 
 int nfs4_op_release_lockowner(struct nfs_argop4 *, compound_data_t *,
-			      struct nfs_resop4 *);
+                  struct nfs_resop4 *);
 
 int nfs4_op_illegal(struct nfs_argop4 *, compound_data_t *data,
-		    struct nfs_resop4 *);
+            struct nfs_resop4 *);
 
 int nfs4_op_notsupp(struct nfs_argop4 *, compound_data_t *data,
-		    struct nfs_resop4 *);
+            struct nfs_resop4 *);
 
 int nfs4_op_exchange_id(struct nfs_argop4 *, compound_data_t *,
-			struct nfs_resop4 *);
+            struct nfs_resop4 *);
 
 int nfs4_op_create_session(struct nfs_argop4 *, compound_data_t *,
-			   struct nfs_resop4 *);
+               struct nfs_resop4 *);
 
 int nfs4_op_getdevicelist(struct nfs_argop4 *, compound_data_t *,
-			  struct nfs_resop4 *);
+              struct nfs_resop4 *);
 
 int nfs4_op_free_stateid(struct nfs_argop4 *, compound_data_t *,
-			 struct nfs_resop4 *);
+             struct nfs_resop4 *);
 
 int nfs4_op_getdeviceinfo(struct nfs_argop4 *, compound_data_t *,
-			  struct nfs_resop4 *);
+              struct nfs_resop4 *);
 
 int nfs4_op_destroy_clientid(struct nfs_argop4 *, compound_data_t *,
-			     struct nfs_resop4 *);
+                 struct nfs_resop4 *);
 
 int nfs4_op_destroy_session(struct nfs_argop4 *, compound_data_t *,
-			    struct nfs_resop4 *);
+                struct nfs_resop4 *);
 
 int nfs4_op_layoutget(struct nfs_argop4 *, compound_data_t *,
-		      struct nfs_resop4 *);
+              struct nfs_resop4 *);
 
 int nfs4_op_layoutcommit(struct nfs_argop4 *, compound_data_t *,
-			 struct nfs_resop4 *);
+             struct nfs_resop4 *);
 
 int nfs4_op_layoutreturn(struct nfs_argop4 *, compound_data_t *,
-			 struct nfs_resop4 *);
+             struct nfs_resop4 *);
 
 int nfs4_op_reclaim_complete(struct nfs_argop4 *, compound_data_t *,
-			     struct nfs_resop4 *);
+                 struct nfs_resop4 *);
 
 int nfs4_op_sequence(struct nfs_argop4 *, compound_data_t *,
-		     struct nfs_resop4 *);
+             struct nfs_resop4 *);
 
 int nfs4_op_set_ssv(struct nfs_argop4 *, compound_data_t *,
-		    struct nfs_resop4 *);
+            struct nfs_resop4 *);
 
 int nfs4_op_test_stateid(struct nfs_argop4 *, compound_data_t *,
-			 struct nfs_resop4 *);
+             struct nfs_resop4 *);
 
 int nfs4_op_write(struct nfs_argop4 *, compound_data_t *, struct nfs_resop4 *);
 
 /* NFSv4.2 */
 int nfs4_op_write_same(struct nfs_argop4 *, compound_data_t *,
-		      struct nfs_resop4 *);
+              struct nfs_resop4 *);
 
 void nfs4_op_write_same_Free(nfs_resop4 *resp);
 
 int nfs4_op_read_plus(struct nfs_argop4 *, compound_data_t *,
-		      struct nfs_resop4 *);
+              struct nfs_resop4 *);
 
 void nfs4_op_read_plus_Free(nfs_resop4 *resp);
 
 int nfs4_op_allocate(struct nfs_argop4 *, compound_data_t *,
-		      struct nfs_resop4 *);
+              struct nfs_resop4 *);
 
 void nfs4_op_allocate_Free(nfs_resop4 *resp);
 
 int nfs4_op_deallocate(struct nfs_argop4 *, compound_data_t *,
-		      struct nfs_resop4 *);
+              struct nfs_resop4 *);
 
 void nfs4_op_deallocate_Free(nfs_resop4 *resp);
 
 int nfs4_op_seek(struct nfs_argop4 *, compound_data_t *,
-		      struct nfs_resop4 *);
+              struct nfs_resop4 *);
 
 void nfs4_op_seek_Free(nfs_resop4 *resp);
 
 int nfs4_op_io_advise(struct nfs_argop4 *, compound_data_t *,
-		      struct nfs_resop4 *);
+              struct nfs_resop4 *);
 
 void nfs4_op_io_advise_Free(nfs_resop4 *resp);
 
 int nfs4_op_layouterror(struct nfs_argop4 *, compound_data_t *,
-		      struct nfs_resop4 *);
+              struct nfs_resop4 *);
 
 void nfs4_op_layouterror_Free(nfs_resop4 *resp);
 
 int nfs4_op_layoutstats(struct nfs_argop4 *, compound_data_t *,
-		      struct nfs_resop4 *);
+              struct nfs_resop4 *);
 
 void nfs4_op_layoutstats_Free(nfs_resop4 *resp);
 
 /* NFSv4.3 */
 int nfs4_op_getxattr(struct nfs_argop4 *, compound_data_t *,
-		      struct nfs_resop4 *);
+              struct nfs_resop4 *);
 
 void nfs4_op_getxattr_Free(nfs_resop4 *resp);
 
 int nfs4_op_setxattr(struct nfs_argop4 *, compound_data_t *,
-		      struct nfs_resop4 *);
+              struct nfs_resop4 *);
 
 void nfs4_op_setxattr_Free(nfs_resop4 *resp);
 
 int nfs4_op_listxattr(struct nfs_argop4 *, compound_data_t *,
-		      struct nfs_resop4 *);
+              struct nfs_resop4 *);
 
 void nfs4_op_listxattr_Free(nfs_resop4 *resp);
 
 int nfs4_op_removexattr(struct nfs_argop4 *, compound_data_t *,
-		      struct nfs_resop4 *);
+              struct nfs_resop4 *);
 
 void nfs4_op_removexattr_Free(nfs_resop4 *resp);
 
@@ -480,9 +480,9 @@ void nfs4_op_lock_CopyRes(LOCK4res *, LOCK4res *);
 void nfs4_op_locku_CopyRes(LOCKU4res *, LOCKU4res *);
 void nfs4_op_open_CopyRes(OPEN4res *, OPEN4res *);
 void nfs4_op_open_confirm_CopyRes(OPEN_CONFIRM4res *,
-				  OPEN_CONFIRM4res *);
+                  OPEN_CONFIRM4res *);
 void nfs4_op_open_downgrade_CopyRes(OPEN_DOWNGRADE4res *,
-				    OPEN_DOWNGRADE4res *);
+                    OPEN_DOWNGRADE4res *);
 
 void nfs4_op_exchange_id_Free(nfs_resop4 *);
 void nfs4_op_close_Free(nfs_resop4 *);
@@ -509,4 +509,4 @@ bool pseudo_mount_export(struct gsh_export *exp);
 void create_pseudofs(void);
 void pseudo_unmount_export(struct gsh_export *exp);
 
-#endif	/* NFS_PROTO_FUNCTIONS_H */
+#endif    /* NFS_PROTO_FUNCTIONS_H */

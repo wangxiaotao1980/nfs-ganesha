@@ -60,11 +60,11 @@ struct nfs_request_lookahead
     uint16_t write;
 };
 
-#define NFS_LOOKAHEAD_HIGH_LATENCY(lkhd)		\
-    (((lkhd).flags & (NFS_LOOKAHEAD_READ |		\
-              NFS_LOOKAHEAD_WRITE |		\
-              NFS_LOOKAHEAD_COMMIT |	\
-              NFS_LOOKAHEAD_LAYOUTCOMMIT |	\
+#define NFS_LOOKAHEAD_HIGH_LATENCY(lkhd)        \
+    (((lkhd).flags & (NFS_LOOKAHEAD_READ |      \
+              NFS_LOOKAHEAD_WRITE |             \
+              NFS_LOOKAHEAD_COMMIT |            \
+              NFS_LOOKAHEAD_LAYOUTCOMMIT |      \
               NFS_LOOKAHEAD_READDIR)))
 
 

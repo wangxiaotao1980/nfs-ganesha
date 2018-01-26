@@ -62,15 +62,15 @@
 
 typedef enum exportlist_client_type__
 {
-    PROTO_CLIENT = 0,
-    HOSTIF_CLIENT = 1,
-    NETWORK_CLIENT = 2,
-    NETGROUP_CLIENT = 3,
+    PROTO_CLIENT        = 0,
+    HOSTIF_CLIENT       = 1,
+    NETWORK_CLIENT      = 2,
+    NETGROUP_CLIENT     = 3,
     WILDCARDHOST_CLIENT = 4,
     GSSPRINCIPAL_CLIENT = 5,
-    HOSTIF_CLIENT_V6 = 6,
-    MATCH_ANY_CLIENT = 7,
-    BAD_CLIENT = 8
+    HOSTIF_CLIENT_V6    = 6,
+    MATCH_ANY_CLIENT    = 7,
+    BAD_CLIENT          = 8
 } exportlist_client_type_t;
 
 struct global_export_perms

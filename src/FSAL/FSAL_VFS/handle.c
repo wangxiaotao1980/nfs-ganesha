@@ -76,7 +76,7 @@ int vfs_fsal_open(struct vfs_fsal_obj_handle* hdl,
  * @return VFS OBJ handle on success, NULL on failure
  */
 struct vfs_fsal_obj_handle* alloc_handle(int dirfd,
-    vfs_file_handle_t* fh,
+                                         vfs_file_handle_t* fh,
                                          struct fsal_filesystem* fs,
                                          struct stat* stat,
                                          vfs_file_handle_t* dir_fh,
@@ -271,13 +271,7 @@ static fsal_status_t lookup_with_fd(struct vfs_fsal_obj_handle* parent_hdl,
                      fs->fsal != NULL
                      ? fs->fsal->name
                      : "(none)",
-                     path)
-
-
-
-
-
-                ;
+                     path);
 
             retval = vfs_encode_dummy_handle(fh, fs);
 
@@ -1471,9 +1465,8 @@ static fsal_status_t renamefile(struct fsal_obj_handle* obj_hdl,
     fsal_errors_t fsal_error = ERR_FSAL_NO_ERROR;
     int retval = 0;
 
-    olddir =
-        container_of(olddir_hdl, struct vfs_fsal_obj_handle, obj_handle)
-        ;
+    olddir = container_of(olddir_hdl, struct vfs_fsal_obj_handle, obj_handle);
+
     if (olddir_hdl->fsal != olddir_hdl->fs->fsal)
     {
         LogDebug(COMPONENT_FSAL,
@@ -1481,11 +1474,8 @@ static fsal_status_t renamefile(struct fsal_obj_handle* obj_hdl,
                  olddir_hdl->fsal->name,
                  olddir_hdl->fs->fsal != NULL
                  ? olddir_hdl->fs->fsal->name
-                 : "(none)")
+                 : "(none)");
 
-
-
-            ;
         retval = EXDEV;
         fsal_error = posix2fsal_error(retval);
         goto out;
@@ -1506,11 +1496,8 @@ static fsal_status_t renamefile(struct fsal_obj_handle* obj_hdl,
                  newdir_hdl->fsal->name,
                  newdir_hdl->fs->fsal != NULL
                  ? newdir_hdl->fs->fsal->name
-                 : "(none)")
+                 : "(none)");
 
-
-
-            ;
         retval = EXDEV;
         fsal_error = posix2fsal_error(retval);
         goto out;

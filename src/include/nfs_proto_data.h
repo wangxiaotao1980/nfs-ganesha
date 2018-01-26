@@ -310,39 +310,30 @@ typedef struct nfs_client_cred__
   */
 typedef struct compound_data
 {
-    nfs_fh4 currentFH; /*< Current filehandle */
-    nfs_fh4 savedFH; /*< Saved filehandle */
-    stateid4 current_stateid; /*< Current stateid */
-    bool current_stateid_valid; /*< Current stateid is valid */
-    stateid4 saved_stateid; /*< Saved stateid */
-    bool saved_stateid_valid; /*< Saved stateid is valid */
-    unsigned int minorversion; /*< NFSv4 minor version */
-    struct fsal_obj_handle* current_obj; /*< Current object handle */
-    struct fsal_obj_handle* saved_obj; /*< saved object handle */
-    struct fsal_ds_handle* current_ds; /*< current ds handle */
-    struct fsal_ds_handle* saved_ds; /*< Saved DS handle */
-    object_file_type_t current_filetype; /*< File type of current obj */
-    object_file_type_t saved_filetype; /*< File type of saved entry */
-    struct gsh_export* saved_export; /*< Export entry related to the
-                         savedFH */
-    struct export_perms saved_export_perms; /*< Permissions for export for
-                           savedFH */
-    struct svc_req* req; /*< RPC Request related to the compound */
-    nfs_client_cred_t credential; /*< Raw RPC credentials */
-    nfs_client_id_t* preserved_clientid; /*< clientid that has lease
-                           reserved, if any */
-    struct COMPOUND4res_extended* cached_res; /*< NFv41: pointer to
-                               cached RPC result in
-                               a session's slot */
-    bool use_drc; /*< Set to true if session DRC is to be used */
-    uint32_t oppos; /*< Position of the operation within the
-                    request processed  */
-    nfs41_session_t* session; /*< Related session
-                       (found by OP_SEQUENCE) */
-    sequenceid4 sequence; /*< Sequence ID of the current compound
-                   (if applicable) */
-    slotid4 slot; /*< Slot ID of the current compound
-                   (if applicable) */
+    nfs_fh4 currentFH;                        /*< Current filehandle */
+    nfs_fh4 savedFH;                          /*< Saved filehandle */
+    stateid4 current_stateid;                 /*< Current stateid */
+    bool current_stateid_valid;               /*< Current stateid is valid */
+    stateid4 saved_stateid;                   /*< Saved stateid */
+    bool saved_stateid_valid;                 /*< Saved stateid is valid */
+    unsigned int minorversion;                /*< NFSv4 minor version */
+    struct fsal_obj_handle* current_obj;      /*< Current object handle */
+    struct fsal_obj_handle* saved_obj;        /*< saved object handle */
+    struct fsal_ds_handle* current_ds;        /*< current ds handle */
+    struct fsal_ds_handle* saved_ds;          /*< Saved DS handle */
+    object_file_type_t current_filetype;      /*< File type of current obj */
+    object_file_type_t saved_filetype;        /*< File type of saved entry */
+    struct gsh_export* saved_export;          /*< Export entry related to the savedFH */
+    struct export_perms saved_export_perms;   /*< Permissions for export for savedFH */
+    struct svc_req* req;                      /*< RPC Request related to the compound */
+    nfs_client_cred_t credential;             /*< Raw RPC credentials */
+    nfs_client_id_t* preserved_clientid;      /*< clientid that has lease reserved, if any */
+    struct COMPOUND4res_extended* cached_res; /*< NFv41: pointer to cached RPC result in a session's slot */
+    bool use_drc;                             /*< Set to true if session DRC is to be used */
+    uint32_t oppos;                           /*< Position of the operation within the request processed  */
+    nfs41_session_t* session;                 /*< Related session (found by OP_SEQUENCE) */
+    sequenceid4 sequence;                     /*< Sequence ID of the current compound (if applicable) */
+    slotid4 slot;                             /*< Slot ID of the current compound (if applicable) */
 } compound_data_t;
 
 typedef int(*nfs4_op_function_t)(struct nfs_argop4*, compound_data_t*,
