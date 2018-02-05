@@ -82,7 +82,7 @@
  * @brief init_complete used to indicate if ganesha is during
  * startup or not
  */
-struct nfs_init nfs_init;
+struct nfs_init nfs_init; //
 
 /* global information exported to all layers (as extern vars) */
 nfs_parameter_t nfs_param;
@@ -319,53 +319,56 @@ void nfs_print_param_config(void)
 {
     printf("NFS_Core_Param\n{\n");
 
-    printf("\tNFS_Port = %u ;\n", nfs_param.core_param.port[P_NFS]);
-    printf("\tMNT_Port = %u ;\n", nfs_param.core_param.port[P_MNT]);
-    printf("\tNFS_Program = %u ;\n", nfs_param.core_param.program[P_NFS]);
-    printf("\tMNT_Program = %u ;\n", nfs_param.core_param.program[P_NFS]);
-    printf("\tNb_Worker = %u ;\n", nfs_param.core_param.nb_worker);
-    printf("\tDRC_TCP_Npart = %u ;\n", nfs_param.core_param.drc.tcp.npart);
-    printf("\tDRC_TCP_Size = %u ;\n", nfs_param.core_param.drc.tcp.size);
-    printf("\tDRC_TCP_Cachesz = %u ;\n",
-           nfs_param.core_param.drc.tcp.cachesz);
-    printf("\tDRC_TCP_Hiwat = %u ;\n", nfs_param.core_param.drc.tcp.hiwat);
-    printf("\tDRC_TCP_Recycle_Npart = %u ;\n",
-           nfs_param.core_param.drc.tcp.recycle_npart);
-    printf("\tDRC_TCP_Recycle_Expire_S = %u ;\n",
-           nfs_param.core_param.drc.tcp.recycle_expire_s);
-    printf("\tDRC_TCP_Checksum = %u ;\n",
-           nfs_param.core_param.drc.tcp.checksum);
-    printf("\tDRC_UDP_Npart = %u ;\n", nfs_param.core_param.drc.udp.npart);
-    printf("\tDRC_UDP_Size = %u ;\n", nfs_param.core_param.drc.udp.size);
-    printf("\tDRC_UDP_Cachesz = %u ;\n",
-           nfs_param.core_param.drc.udp.cachesz);
-    printf("\tDRC_UDP_Hiwat = %u ;\n", nfs_param.core_param.drc.udp.hiwat);
-    printf("\tDRC_UDP_Checksum = %u ;\n",
-           nfs_param.core_param.drc.udp.checksum);
-    printf("\tDecoder_Fridge_Expiration_Delay = %" PRIu64 " ;\n",
-           (uint64_t)nfs_param.core_param.decoder_fridge_expiration_delay);
-    printf("\tDecoder_Fridge_Block_Timeout = %" PRIu64 " ;\n",
-           (uint64_t)nfs_param.core_param.decoder_fridge_block_timeout);
-    printf("\tBlocked_Lock_Poller_Interval = %" PRIu64 " ;\n",
-           (uint64_t)nfs_param.core_param.blocked_lock_poller_interval);
+    printf("\tNFS_Port = %u ;\n",                                           nfs_param.core_param.port[P_NFS]);
+    printf("\tMNT_Port = %u ;\n",                                           nfs_param.core_param.port[P_MNT]);
+    printf("\tNFS_Program = %u ;\n",                                        nfs_param.core_param.program[P_NFS]);
+    printf("\tMNT_Program = %u ;\n",                                        nfs_param.core_param.program[P_NFS]);
+    printf("\tNb_Worker = %u ;\n",                                          nfs_param.core_param.nb_worker);
+    printf("\tDRC_TCP_Npart = %u ;\n",                                      nfs_param.core_param.drc.tcp.npart);
+    printf("\tDRC_TCP_Size = %u ;\n",                                       nfs_param.core_param.drc.tcp.size);
+    printf("\tDRC_TCP_Cachesz = %u ;\n",                                    nfs_param.core_param.drc.tcp.cachesz);
+    printf("\tDRC_TCP_Hiwat = %u ;\n",                                      nfs_param.core_param.drc.tcp.hiwat);
+    printf("\tDRC_TCP_Recycle_Npart = %u ;\n",                              nfs_param.core_param.drc.tcp.recycle_npart);
+    printf("\tDRC_TCP_Recycle_Expire_S = %u ;\n",                           nfs_param.core_param.drc.tcp.recycle_expire_s);
+    printf("\tDRC_TCP_Checksum = %u ;\n",                                   nfs_param.core_param.drc.tcp.checksum);
+    printf("\tDRC_UDP_Npart = %u ;\n",                                      nfs_param.core_param.drc.udp.npart);
+    printf("\tDRC_UDP_Size = %u ;\n",                                       nfs_param.core_param.drc.udp.size);
+    printf("\tDRC_UDP_Cachesz = %u ;\n",                                    nfs_param.core_param.drc.udp.cachesz);
+    printf("\tDRC_UDP_Hiwat = %u ;\n",                                      nfs_param.core_param.drc.udp.hiwat);
+    printf("\tDRC_UDP_Checksum = %u ;\n",                                   nfs_param.core_param.drc.udp.checksum);
+    printf("\tDecoder_Fridge_Expiration_Delay = %" PRIu64 " ;\n", (uint64_t)nfs_param.core_param.decoder_fridge_expiration_delay);
+    printf("\tDecoder_Fridge_Block_Timeout = %" PRIu64 " ;\n",    (uint64_t)nfs_param.core_param.decoder_fridge_block_timeout);
+    printf("\tBlocked_Lock_Poller_Interval = %" PRIu64 " ;\n",    (uint64_t)nfs_param.core_param.blocked_lock_poller_interval);
 
     printf("\tManage_Gids_Expiration = %" PRIu64 " ;\n",
            (uint64_t)nfs_param.core_param.manage_gids_expiration);
 
     if(nfs_param.core_param.drop_io_errors)
+    {
         printf("\tDrop_IO_Errors = true ;\n");
+    }
     else
+    {
         printf("\tDrop_IO_Errors = false ;\n");
+    }
 
     if(nfs_param.core_param.drop_inval_errors)
+    {
         printf("\tDrop_Inval_Errors = true ;\n");
+    }
     else
+    {
         printf("\tDrop_Inval_Errors = false ;\n");
+    }
 
     if(nfs_param.core_param.drop_delay_errors)
+    {
         printf("\tDrop_Delay_Errors = true ;\n");
+    }
     else
+    {
         printf("\tDrop_Delay_Errors = false ;\n");
+    }
 
     printf("}\n\n");
 }

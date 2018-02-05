@@ -303,17 +303,17 @@ __thread
 char* clientip = NULL;
 
 /* threads keys */
-#define LogChanges(format, args...) \
-    do { \
-        if (component_log_level[COMPONENT_LOG] == \
-            NIV_FULL_DEBUG) \
+#define LogChanges(format, args...)                 \
+    do {                                            \
+        if (component_log_level[COMPONENT_LOG] ==   \
+            NIV_FULL_DEBUG)                         \
             DisplayLogComponentLevel(COMPONENT_LOG, \
-                         __FILE__, \
-                         __LINE__, \
-                         __func__, \
-                         NIV_NULL, \
-                         "LOG: " format, \
-                         ## args); \
+                         __FILE__,                  \
+                         __LINE__,                  \
+                         __func__,                  \
+                         NIV_NULL,                  \
+                         "LOG: " format,            \
+                         ## args);                  \
     } while (0)
 
 cleanup_list_element* cleanup_list = NULL;

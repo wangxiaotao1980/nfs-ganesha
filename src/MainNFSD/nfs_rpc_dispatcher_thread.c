@@ -1342,7 +1342,7 @@ static bool nfs_rpc_cond_stall_xprt(SVCXPRT *xprt)
     /* stalled */
     return true;
 }
-
+//nfs rpc 队列的初始化，
 void nfs_rpc_queue_init(void)
 {
     struct fridgethr_params reqparams;
@@ -1356,9 +1356,9 @@ void nfs_rpc_queue_init(void)
      */
     reqparams.thr_max      = 0;
     reqparams.thr_min      = 1;
-    reqparams.thread_delay = nfs_param.core_param.decoder_fridge_expiration_delay;
+    reqparams.thread_delay = nfs_param.core_param.decoder_fridge_expiration_delay; // Decoder_Fridge_Expiration_Delay 设定
     reqparams.deferment    = fridgethr_defer_block;
-    reqparams.block_delay  = nfs_param.core_param.decoder_fridge_block_timeout;
+    reqparams.block_delay  = nfs_param.core_param.decoder_fridge_block_timeout;    // Decoder_Fridge_Block_Timeout    设定
 
     /* decoder thread pool */
     rc = fridgethr_init(&req_fridge, "decoder", &reqparams);
@@ -1370,7 +1370,8 @@ void nfs_rpc_queue_init(void)
     /* queues */
     pthread_spin_init(&nfs_req_st.reqs.sp, PTHREAD_PROCESS_PRIVATE);
     nfs_req_st.reqs.size = 0;
-    for (ix = 0; ix < N_REQ_QUEUES; ++ix) {
+    for (ix = 0; ix < N_REQ_QUEUES; ++ix) 
+    {
         qpair = &(nfs_req_st.reqs.nfs_request_q.qset[ix]);
         qpair->s = req_q_s[ix];
         nfs_rpc_q_init(&qpair->producer);

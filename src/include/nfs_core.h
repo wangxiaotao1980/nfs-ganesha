@@ -178,6 +178,7 @@ uint32_t get_enqueue_count(void);
 /* in nfs_worker_thread.c */
 
 void nfs_rpc_execute(request_data_t* req);
+
 const nfs_function_desc_t* nfs_rpc_get_funcdesc(nfs_request_t*);
 
 int worker_init(void);

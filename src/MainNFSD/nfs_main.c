@@ -266,8 +266,7 @@ int main(int argc, char* argv[])
     }
 
     /* initialize memory and logging */
-    nfs_prereq_init(exec_name, host_name, debug_level, log_path,
-                    dump_trace);
+    nfs_prereq_init(exec_name, host_name, debug_level, log_path, dump_trace);
 #if GANESHA_BUILD_RELEASE
     LogEvent(COMPONENT_MAIN, "%s Starting: Ganesha Version %s",
              exec_name, GANESHA_VERSION);

@@ -52,53 +52,53 @@
 
 typedef union nfs_arg__
 {
-    GETATTR3args arg_getattr3;
-    SETATTR3args arg_setattr3;
-    LOOKUP3args arg_lookup3;
-    ACCESS3args arg_access3;
-    READLINK3args arg_readlink3;
-    READ3args arg_read3;
-    WRITE3args arg_write3;
-    CREATE3args arg_create3;
-    MKDIR3args arg_mkdir3;
-    SYMLINK3args arg_symlink3;
-    MKNOD3args arg_mknod3;
-    REMOVE3args arg_remove3;
-    RMDIR3args arg_rmdir3;
-    RENAME3args arg_rename3;
-    LINK3args arg_link3;
-    READDIR3args arg_readdir3;
-    READDIRPLUS3args arg_readdirplus3;
-    FSSTAT3args arg_fsstat3;
-    FSINFO3args arg_fsinfo3;
-    PATHCONF3args arg_pathconf3;
-    COMMIT3args arg_commit3;
-    COMPOUND4args arg_compound4;
+    GETATTR3args       arg_getattr3;
+    SETATTR3args       arg_setattr3;
+    LOOKUP3args        arg_lookup3;
+    ACCESS3args        arg_access3;
+    READLINK3args      arg_readlink3;
+    READ3args          arg_read3;
+    WRITE3args         arg_write3;
+    CREATE3args        arg_create3;
+    MKDIR3args         arg_mkdir3;
+    SYMLINK3args       arg_symlink3;
+    MKNOD3args         arg_mknod3;
+    REMOVE3args        arg_remove3;
+    RMDIR3args         arg_rmdir3;
+    RENAME3args        arg_rename3;
+    LINK3args          arg_link3;
+    READDIR3args       arg_readdir3;
+    READDIRPLUS3args   arg_readdirplus3;
+    FSSTAT3args        arg_fsstat3;
+    FSINFO3args        arg_fsinfo3;
+    PATHCONF3args      arg_pathconf3;
+    COMMIT3args        arg_commit3;
+    COMPOUND4args      arg_compound4;
 
     /* mnt */
-    dirpath arg_mnt;
+    dirpath            arg_mnt;
 
     /* nlm */
-    nlm4_testargs arg_nlm4_test;
-    nlm4_lockargs arg_nlm4_lock;
-    nlm4_cancargs arg_nlm4_cancel;
-    nlm4_shareargs arg_nlm4_share;
-    nlm4_unlockargs arg_nlm4_unlock;
+    nlm4_testargs      arg_nlm4_test;
+    nlm4_lockargs      arg_nlm4_lock;
+    nlm4_cancargs      arg_nlm4_cancel;
+    nlm4_shareargs     arg_nlm4_share;
+    nlm4_unlockargs    arg_nlm4_unlock;
     nlm4_sm_notifyargs arg_nlm4_sm_notify;
-    nlm4_free_allargs arg_nlm4_free_allargs;
-    nlm4_res arg_nlm4_res;
+    nlm4_free_allargs  arg_nlm4_free_allargs;
+    nlm4_res           arg_nlm4_res;
 
     /* Rquota */
-    getquota_args arg_rquota_getquota;
-    getquota_args arg_rquota_getactivequota;
-    setquota_args arg_rquota_setquota;
-    setquota_args arg_rquota_setactivequota;
+    getquota_args      arg_rquota_getquota;
+    getquota_args      arg_rquota_getactivequota;
+    setquota_args      arg_rquota_setquota;
+    setquota_args      arg_rquota_setactivequota;
 
     /* Ext Rquota */
-    ext_getquota_args arg_ext_rquota_getquota;
-    ext_getquota_args arg_ext_rquota_getactivequota;
-    ext_setquota_args arg_ext_rquota_setquota;
-    ext_setquota_args arg_ext_rquota_setactivequota;
+    ext_getquota_args  arg_ext_rquota_getquota;
+    ext_getquota_args  arg_ext_rquota_getactivequota;
+    ext_setquota_args  arg_ext_rquota_setquota;
+    ext_setquota_args  arg_ext_rquota_setactivequota;
 } nfs_arg_t;
 
 struct COMPOUND4res_extended
@@ -109,52 +109,52 @@ struct COMPOUND4res_extended
 
 typedef union nfs_res__
 {
-    GETATTR3res res_getattr3;
-    SETATTR3res res_setattr3;
-    LOOKUP3res res_lookup3;
-    ACCESS3res res_access3;
-    READLINK3res res_readlink3;
-    READ3res res_read3;
-    WRITE3res res_write3;
-    CREATE3res res_create3;
-    MKDIR3res res_mkdir3;
-    SYMLINK3res res_symlink3;
-    MKNOD3res res_mknod3;
-    REMOVE3res res_remove3;
-    RMDIR3res res_rmdir3;
-    RENAME3res res_rename3;
-    LINK3res res_link3;
-    READDIR3res res_readdir3;
+    GETATTR3res     res_getattr3;
+    SETATTR3res     res_setattr3;
+    LOOKUP3res      res_lookup3;
+    ACCESS3res      res_access3;
+    READLINK3res    res_readlink3;
+    READ3res        res_read3;
+    WRITE3res       res_write3;
+    CREATE3res      res_create3;
+    MKDIR3res       res_mkdir3;
+    SYMLINK3res     res_symlink3;
+    MKNOD3res       res_mknod3;
+    REMOVE3res      res_remove3;
+    RMDIR3res       res_rmdir3;
+    RENAME3res      res_rename3;
+    LINK3res        res_link3;
+    READDIR3res     res_readdir3;
     READDIRPLUS3res res_readdirplus3;
-    FSSTAT3res res_fsstat3;
-    FSINFO3res res_fsinfo3;
-    PATHCONF3res res_pathconf3;
-    COMMIT3res res_commit3;
-    COMPOUND4res res_compound4;
+    FSSTAT3res      res_fsstat3;
+    FSINFO3res      res_fsinfo3;
+    PATHCONF3res    res_pathconf3;
+    COMMIT3res      res_commit3;
+    COMPOUND4res    res_compound4;
     struct COMPOUND4res_extended res_compound4_extended;
 
     /* mount */
-    fhstatus2 res_mnt1;
-    exports res_mntexport;
-    mountres3 res_mnt3;
-    mountlist res_dump;
+    fhstatus2       res_mnt1;
+    exports         res_mntexport;
+    mountres3       res_mnt3;
+    mountlist       res_dump;
 
     /* nlm4 */
-    nlm4_testres res_nlm4test;
-    nlm4_res res_nlm4;
-    nlm4_shareres res_nlm4share;
+    nlm4_testres    res_nlm4test;
+    nlm4_res        res_nlm4;
+    nlm4_shareres   res_nlm4share;
 
     /* Rquota */
-    getquota_rslt res_rquota_getquota;
-    getquota_rslt res_rquota_getactivequota;
-    setquota_rslt res_rquota_setquota;
-    setquota_rslt res_rquota_setactivequota;
+    getquota_rslt   res_rquota_getquota;
+    getquota_rslt   res_rquota_getactivequota;
+    setquota_rslt   res_rquota_setquota;
+    setquota_rslt   res_rquota_setactivequota;
 
     /* Ext Rquota */
-    getquota_rslt res_ext_rquota_getquota;
-    getquota_rslt res_ext_rquota_getactivequota;
-    setquota_rslt res_ext_rquota_setquota;
-    setquota_rslt res_ext_rquota_setactivequota;
+    getquota_rslt   res_ext_rquota_getquota;
+    getquota_rslt   res_ext_rquota_getactivequota;
+    setquota_rslt   res_ext_rquota_setquota;
+    setquota_rslt   res_ext_rquota_setactivequota;
 } nfs_res_t;
 
 /* flags related to the behaviour of the requests
@@ -195,10 +195,12 @@ typedef struct nfs_function_desc__
 typedef struct nfs_request
 {
     struct svc_req svc;
+
     struct nfs_request_lookahead lookahead;
     nfs_arg_t arg_nfs;
     nfs_res_t* res_nfs;
     const nfs_function_desc_t* funcdesc;
+
 } nfs_request_t;
 
 enum rpc_chan_type

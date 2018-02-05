@@ -110,7 +110,7 @@ static inline void nfs_check_malloc(void)
 }
 
 /* in nfs_rpc_dispatcher_thread.c */
-
+/*解析RPC请求*/
 enum xprt_stat thr_decode_rpc_request(void* context, SVCXPRT* xprt);
 
 #ifdef _USE_NFS_RDMA

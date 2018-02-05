@@ -44,14 +44,16 @@
 #include "../include/log.h"
 #include "../include/avltree.h"
 #include "../include/gsh_types.h"
+
 #ifdef USE_DBUS
 #include "../include/gsh_dbus.h"
 #endif
+
 #include "../include/client_mgr.h"
-   //#include "../include/export_mgr.h"
 #include "../include/server_stats_private.h"
 #include "../include/abstract_atomic.h"
 #include "../include/gsh_intrinsic.h"
+//#include "../include/export_mgr.h"
 //#include "../include/server_stats.h"
 #include "../include/sal_functions.h"
 
@@ -1130,8 +1132,7 @@ void client_pkginit(void)
     PTHREAD_RWLOCK_init(&client_by_ip.lock, &rwlock_attr);
     avltree_init(&client_by_ip.t, client_ip_cmpf, 0);
     client_by_ip.cache_sz = 32767;
-    client_by_ip.cache =
-        gsh_calloc(client_by_ip.cache_sz, sizeof(struct avltree_node *));
+    client_by_ip.cache = gsh_calloc(client_by_ip.cache_sz, sizeof(struct avltree_node *));
 }
 
 /** @} */

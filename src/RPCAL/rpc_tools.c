@@ -33,12 +33,13 @@
 #include "../include/hashtable.h"
 #include "../include/log.h"
 #include "../include/nfs_core.h"
-  //#include "../include/nfs23.h"
-  //#include "../include/nfs4.h"
-  //#include "../include/fsal.h"
 #include "../include/nfs_exports.h"
 #include "../include/nfs_file_handle.h"
-#include "../include/nfs_dupreq.h"
+
+//#include "../include/nfs23.h"
+//#include "../include/nfs4.h"
+//#include "../include/fsal.h"
+//#include "../include/nfs_dupreq.h"
 
 #include <stdio.h>
 #include <sys/socket.h>

@@ -175,7 +175,7 @@ bool lock_owner_is_nlm(state_lock_entry_t* lock_entry)
 #ifdef _USE_NLM
     return lock_entry->sle_owner->so_type == STATE_LOCK_OWNER_NLM;
 #else /* _USE_NLM */
-	return false;
+    return false;
 #endif /* _USE_NLM */
 }
 
@@ -366,8 +366,8 @@ log_entry_ref_count(const char* reason, state_lock_entry_t* le,
 }
 
 #define LogEntryRefCount(reason, le, refcount) \
-	log_entry_ref_count(reason, le, refcount, \
-	(char *) __FILE__, __LINE__, (char *) __func__)
+    log_entry_ref_count(reason, le, refcount, \
+    (char *) __FILE__, __LINE__, (char *) __func__)
 
 /**
  * @brief Log a lock entry
@@ -376,9 +376,9 @@ log_entry_ref_count(const char* reason, state_lock_entry_t* le,
  * @param[in] le     Entry to log
  */
 #define LogEntry(reason, le) \
-	log_entry_ref_count(reason, le, \
-	atomic_fetch_int32_t(&le->sle_ref_count), \
-	(char *) __FILE__, __LINE__, (char *) __func__)
+    log_entry_ref_count(reason, le, \
+    atomic_fetch_int32_t(&le->sle_ref_count), \
+    (char *) __FILE__, __LINE__, (char *) __func__)
 
 /**
  * @brief Log a list of locks
@@ -560,8 +560,8 @@ void log_lock_desc(log_components_t component, log_levels_t debug,
 }
 
 #define LogLockDesc(component, debug, reason, obj, owner, lock) \
-	log_lock_desc(component, debug, reason, obj, owner, lock, \
-		      (char *) __FILE__, __LINE__, (char *) __func__)
+    log_lock_desc(component, debug, reason, obj, owner, lock, \
+              (char *) __FILE__, __LINE__, (char *) __func__)
 
 /**
  * @brief Log all locks
@@ -571,21 +571,21 @@ void log_lock_desc(log_components_t component, log_levels_t debug,
 void dump_all_locks(const char* label)
 {
 #ifdef DEBUG_SAL
-	struct glist_head *glist;
+    struct glist_head *glist;
 
-	PTHREAD_MUTEX_lock(&all_locks_mutex);
+    PTHREAD_MUTEX_lock(&all_locks_mutex);
 
-	if (glist_empty(&state_all_locks)) {
-		LogFullDebug(COMPONENT_STATE, "All Locks are freed");
-		PTHREAD_MUTEX_unlock(&all_locks_mutex);
-		return;
-	}
+    if (glist_empty(&state_all_locks)) {
+        LogFullDebug(COMPONENT_STATE, "All Locks are freed");
+        PTHREAD_MUTEX_unlock(&all_locks_mutex);
+        return;
+    }
 
-	glist_for_each(glist, &state_all_locks)
-	    LogEntry(label,
-		     glist_entry(glist, state_lock_entry_t, sle_all_locks));
+    glist_for_each(glist, &state_all_locks)
+        LogEntry(label,
+             glist_entry(glist, state_lock_entry_t, sle_all_locks));
 
-	PTHREAD_MUTEX_unlock(&all_locks_mutex);
+    PTHREAD_MUTEX_unlock(&all_locks_mutex);
 #else
     return;
 #endif
@@ -686,11 +686,11 @@ static state_lock_entry_t* create_state_lock_entry(struct fsal_obj_handle* obj,
     PTHREAD_MUTEX_unlock(&owner->so_mutex);
 
 #ifdef DEBUG_SAL
-	PTHREAD_MUTEX_lock(&all_locks_mutex);
+    PTHREAD_MUTEX_lock(&all_locks_mutex);
 
-	glist_add_tail(&state_all_locks, &new_entry->sle_all_locks);
+    glist_add_tail(&state_all_locks, &new_entry->sle_all_locks);
 
-	PTHREAD_MUTEX_unlock(&all_locks_mutex);
+    PTHREAD_MUTEX_unlock(&all_locks_mutex);
 #endif
 
     return new_entry;
@@ -752,9 +752,9 @@ static void lock_entry_dec_ref(state_lock_entry_t* lock_entry)
             gsh_free(lock_entry->sle_block_data);
         }
 #ifdef DEBUG_SAL
-		PTHREAD_MUTEX_lock(&all_locks_mutex);
-		glist_del(&lock_entry->sle_all_locks);
-		PTHREAD_MUTEX_unlock(&all_locks_mutex);
+        PTHREAD_MUTEX_lock(&all_locks_mutex);
+        glist_del(&lock_entry->sle_all_locks);
+        PTHREAD_MUTEX_unlock(&all_locks_mutex);
 #endif
 
         lock_entry->sle_obj->obj_ops.put_ref(lock_entry->sle_obj);

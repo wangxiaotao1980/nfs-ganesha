@@ -502,13 +502,12 @@ typedef struct nfs_version4_parameter
 
 typedef struct nfs_param
 {
-    /** NFS Core parameters, settable in the NFS_Core_Param
-        stanza. */
+    /** NFS Core parameters, settable in the NFS_Core_Param stanza. */
     nfs_core_parameter_t core_param;
-    /** NFSv4 specific parameters, settable in the NFSv4 stanza. */
+    /** NFSv4 specific parameters, settable in the NFSv4 stanza.    */
     nfs_version4_parameter_t nfsv4_param;
 #ifdef _HAVE_GSSAPI
-    /** kerberos configuration.  Settable in the NFS_KRB5 stanza. */
+    /** kerberos configuration.  Settable in the NFS_KRB5 stanza.   */
     nfs_krb5_parameter_t krb5_param;
 #endif				/* _HAVE_GSSAPI */
 } nfs_parameter_t;
