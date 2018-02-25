@@ -33,6 +33,8 @@ extern struct kodo_fsal_module g_kodoFileSystemModule;
 struct kodo_export
 {
     struct fsal_export export;  /*< The public export object  注意第一个成员必须是 fsal_export */
+    char *kodo_access_key;
+    char *kodo_secret_access_key;
 
 };
 
@@ -44,6 +46,15 @@ struct kodo_handle
 {
     struct fsal_obj_handle handle;  /*注意第一个成员必须是 fsal_obj_handle*/
 };
+
+
+
+/**
+ * The attributes this FSAL can interpret or supply.
+ * Currently FSAL_KODO uses posix2fsal_attributes, so we should indicate support
+ * for at least those attributes.
+ */
+#define KODO_SUPPORTED_ATTRIBUTES ((const attrmask_t) (ATTRS_POSIX))
 
 void kodo_export_ops_init(struct export_ops* ops);
 void kodo_handle_ops_init(struct fsal_obj_ops* ops);
