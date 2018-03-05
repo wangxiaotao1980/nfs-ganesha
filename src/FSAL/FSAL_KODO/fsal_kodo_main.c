@@ -185,11 +185,15 @@ static fsal_status_t kodo_fsal_ops_create_export(struct fsal_module* fsal_hdl,
         goto error;
     }
 
+    //1
+    fsal_export_init(&(pKODOExport->pub));
 
+    // init pKODOExport 的另外数据
+    //2
+    fsal_attach_export(fsal_hdl, &(pKODOExport->pub.exports));
 
-
-
-
+    //3
+    pKODOExport->pub.fsal = fsal_hdl;
 error:
     gsh_free(pKODOExport);
     return status;
@@ -215,6 +219,11 @@ error:
 //static void kodo_fsal_ops_fsal_pnfs_ds_ops(struct fsal_pnfs_ds_ops* ops)
 //{}
 
+/**
+ * @brief Indicate support for extended operations.
+ *
+ * @retval true if extended operations are supported.
+ */
 static bool kodo_fsal_ops_support_ex(struct fsal_obj_handle* obj)
 {
     return true;

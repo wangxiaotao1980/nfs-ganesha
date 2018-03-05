@@ -7,6 +7,119 @@
 
 
 
+
+
+
+/**
+ * @brief Finalize an export
+ *
+ * This function is called as part of cleanup when the last reference to
+ * an export is released and it is no longer part of the list.  It
+ * should clean up all private resources and destroy the object.
+ *
+ * @param[in] exp_hdl The export to release.
+ */
+static void kodo_release(struct fsal_export *exp_hdl)
+{
+    struct kodo_export* pKodoExport = container_of(exp_hdl, struct kodo_export, pub);
+
+    gsh_free(pKodoExport);
+    pKodoExport = NULL;
+}
+
+
+/**
+ * @brief Convert a wire handle to a host handle
+ *
+ * This function extracts a host handle from a wire handle.  That
+ * is, when given a handle as passed to a client, this method will
+ * extract the handle to create objects.
+ *
+ * @param[in]     exp_hdl Export handle
+ * @param[in]     in_type Protocol through which buffer was received.
+ * @param[in]     flags   Flags to describe the wire handle. Example, if
+ *			  the handle is a big endian handle.
+ * @param[in,out] fh_desc Buffer descriptor.  The address of the
+ *                        buffer is given in @c fh_desc->buf and must
+ *                        not be changed.  @c fh_desc->len is the
+ *                        length of the data contained in the buffer,
+ *                        @c fh_desc->len must be updated to the correct
+ *                        host handle size.
+ *
+ * @return FSAL type.
+ */
+static fsal_status_t kodo_wire_to_host
+    (
+        struct fsal_export*   exp_hdl,
+        fsal_digesttype_t     in_type,
+        struct gsh_buffdesc*  fh_desc,
+        int                   flags
+    )
+{
+    switch (in_type)
+    {
+        /* Digested Handles */
+        case FSAL_DIGEST_NFSV3:
+        case FSAL_DIGEST_NFSV4:
+            /* wire handles */
+            fh_desc->len = sizeof(struct rgw_fh_hk);
+            break;
+        default:
+            return fsalstat(ERR_FSAL_SERVERFAULT, 0);
+    }
+
+    return fsalstat(ERR_FSAL_NO_ERROR, 0);
+}
+
+/**
+ * @brief Create a FSAL object handle from a host handle
+ *
+ * This function creates a FSAL object handle from a host handle
+ * (when an object is no longer in cache but the client still remembers
+ * the handle).
+ *
+ * The caller will set the request_mask in attrs_out to indicate the attributes
+ * of interest. ATTR_ACL SHOULD NOT be requested and need not be provided. If
+ * not all the requested attributes can be provided, this method MUST return
+ * an error unless the ATTR_RDATTR_ERR bit was set in the request_mask.
+ *
+ * Since this method instantiates a new fsal_obj_handle, it will be forced
+ * to fetch at least some attributes in order to even know what the object
+ * type is (as well as it's fileid and fsid). For this reason, the operation
+ * as a whole can be expected to fail if the attributes were not able to be
+ * fetched.
+ *
+ * @param[in]     exp_hdl   The export in which to create the handle
+ * @param[in]     hdl_desc  Buffer descriptor for the host handle
+ * @param[out]    handle    FSAL object handle
+ * @param[in,out] attrs_out Optional attributes for newly created object
+ *
+ * @note On success, @a handle has been ref'd
+ *
+ * @return FSAL status.
+ */
+fsal_status_t kodo_create_handle
+    (
+        struct fsal_export*      exp_hdl,
+        struct gsh_buffdesc*     fh_desc,
+        struct fsal_obj_handle** handle,
+        struct attrlist*         attrs_out
+    )
+{
+    /* Full 'private' export structure */
+    struct kodo_export *pKodoExport 
+        = container_of(exp_hdl, struct kodo_export, pub);
+    /* FSAL status to return */
+    fsal_status_t status = { ERR_FSAL_NO_ERROR, 0 };
+
+
+
+
+    return status;
+}
+
+
+
 void kodo_export_ops_init(struct export_ops *ops)
 {
 
