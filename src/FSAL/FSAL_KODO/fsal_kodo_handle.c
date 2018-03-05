@@ -70,6 +70,86 @@ static fsal_status_t kodo_readdir(struct fsal_obj_handle *dir_pub,
     return fsal_status;
 }
 
+
+/**
+* @brief Manage closing a file when a state is no longer needed.
+*
+* When the upper layers are ready to dispense with a state, this method is
+* called to allow the FSAL to close any file descriptors or release any other
+* resources associated with the state. A call to free_state should be assumed
+* to follow soon.
+*
+* @param[in] obj_hdl    File on which to operate
+* @param[in] state      state_t to use for this operation
+*
+* @return FSAL status.
+*/
+static fsal_status_t kodo_close2(struct fsal_obj_handle* obj_hdl, struct state_t* state)
+{
+    int rc;
+    struct kodo_state_fd* open_state = NULL;
+
+    struct kodo_export* export = container_of(op_ctx->fsal_export, struct kodo_export, pub);
+    struct kodo_handle* handle = container_of(obj_hdl, struct kodo_handle, pub);
+
+    LogFullDebug(COMPONENT_FSAL, "%s enter obj_hdl %p state %p", __func__, obj_hdl, state);
+
+    if (state)
+    {
+        open_state = (struct kodo_state_fd *)state;
+
+        LogFullDebug(COMPONENT_FSAL, "%s called w/open_state %p", __func__, open_state);
+
+        if (state->state_type == STATE_TYPE_SHARE ||
+            state->state_type == STATE_TYPE_NLM_SHARE ||
+            state->state_type == STATE_TYPE_9P_FID)
+        {
+            /* This is a share state, we must update the share
+            * counters.  This can block over an I/O operation.
+            */
+            PTHREAD_RWLOCK_wrlock(&obj_hdl->obj_lock);
+
+            //update_share_counters(&handle->share,
+            //    handle->openflags,
+            //    FSAL_O_CLOSED);
+
+            PTHREAD_RWLOCK_unlock(&obj_hdl->obj_lock);
+        }
+    }
+    //else if (handle->openflags == FSAL_O_CLOSED)
+    //{
+    //    return fsalstat(ERR_FSAL_NOT_OPENED, 0);
+    //}
+
+    //rc = rgw_close(export->rgw_fs, handle->rgw_fh, RGW_CLOSE_FLAG_NONE);
+    //if (rc < 0)
+    //{
+    //    return rgw2fsal_error(rc);
+    //}
+    //handle->openflags = FSAL_O_CLOSED;
+
+    return fsalstat(ERR_FSAL_NO_ERROR, 0);
+}
+
+
+/**
+* @brief Close a file
+*
+* This function closes a file.  It is protected by the Cache inode
+* content lock.  This should return ERR_FSAL_NOT_OPENED if the global FD for
+* this obj was not open.
+*
+* @param[in] obj_hdl File to close
+*
+* @return FSAL status.
+*/
+static fsal_status_t kodo_close(struct fsal_obj_handle* obj_hdl)
+{
+    return kodo_close2(obj_hdl, NULL);
+}
+
+
+
 /**
 * @brief Override functions in ops vector
 *

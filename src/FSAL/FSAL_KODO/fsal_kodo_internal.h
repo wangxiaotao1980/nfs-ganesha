@@ -38,10 +38,21 @@ struct kodo_export
 
 };
 
+struct kodo_fs_fd
+{
+    
+};
+
+
+struct kodo_state_fd
+{
+    struct state_t    state;
+    struct kodo_fs_fd kodo_fs_fd;
+};
+
 /**
  * The 'private' KODO FASL handle
  */
-
 struct kodo_handle
 {
     struct fsal_obj_handle pub;  /*注意第一个成员必须是 fsal_obj_handle*/

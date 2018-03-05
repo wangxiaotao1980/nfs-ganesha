@@ -37,6 +37,7 @@
 #include "../../include/export_mgr.h"
 #include "../../include/pnfs_utils.h"
 #include "../../include/sal_data.h"
+#include "../../include/FSAL/fsal_commonlib.h"
 
 #include <fcntl.h>
 #include <unistd.h>
@@ -404,9 +405,7 @@ struct state_t* glusterfs_alloc_state(struct fsal_export* exp_hdl,
                        exp_hdl, state_type, related_state);
 
     my_fd = &container_of(state, struct glusterfs_state_fd,
-        state)
-    ->
-    glusterfs_fd;
+        state)->glusterfs_fd;
 
     my_fd->glfd = NULL;
 
@@ -422,9 +421,7 @@ struct state_t* glusterfs_alloc_state(struct fsal_export* exp_hdl,
  */
 void glusterfs_free_state(struct fsal_export* exp_hdl, struct state_t* state)
 {
-    struct glusterfs_state_fd* state_fd =
-    container_of(state, struct glusterfs_state_fd, state)
-    ;
+    struct glusterfs_state_fd* state_fd = container_of(state, struct glusterfs_state_fd, state);
 
     gsh_free(state_fd);
 }

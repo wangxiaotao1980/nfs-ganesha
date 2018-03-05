@@ -3,11 +3,7 @@
  *  @author    Wang Xiaotao<wangxiaotao1980@gmail.com> (中文编码测试)
  *******************************************************************************************/
 #include "fsal_kodo_internal.h"
-
-
-
-
-
+#include "../../include/FSAL/fsal_commonlib.h"
 
 
 /**
@@ -23,6 +19,7 @@ static void kodo_release(struct fsal_export *exp_hdl)
 {
     struct kodo_export* pKodoExport = container_of(exp_hdl, struct kodo_export, pub);
 
+    //todo: 内部数据的操作，释放自己的数据
     gsh_free(pKodoExport);
     pKodoExport = NULL;
 }
@@ -98,7 +95,7 @@ static fsal_status_t kodo_wire_to_host
  *
  * @return FSAL status.
  */
-fsal_status_t kodo_create_handle
+static fsal_status_t kodo_create_handle
     (
         struct fsal_export*      exp_hdl,
         struct gsh_buffdesc*     fh_desc,
@@ -119,6 +116,54 @@ fsal_status_t kodo_create_handle
 }
 
 
+/**
+* @brief Allocate a state_t structure
+*
+* Note that this is not expected to fail since memory allocation is
+* expected to abort on failure.
+*
+* @param[in] exp_hdl               Export state_t will be associated with
+* @param[in] state_type            Type of state to allocate
+* @param[in] related_state         Related state if appropriate
+*
+* @returns a state structure.
+*/
+
+static struct state_t* kodo_alloc_state
+    (
+        struct fsal_export* exp_hdl,
+        enum state_type state_type,
+        struct state_t* related_state
+    )
+{
+    struct state_t*    state;
+    struct kodo_fs_fd* my_fd;
+
+    state = init_state(gsh_calloc(1, sizeof(struct kodo_state_fd)), exp_hdl, state_type, related_state);
+
+    my_fd = &container_of(state, struct kodo_state_fd, state)->kodo_fs_fd;
+
+    //todo : 设定自己的 kodo_fs_fd
+
+    return state;
+}
+
+/**
+* @brief Free a state_t structure
+*
+* @param[in] exp_hdl               Export state_t is associated with
+* @param[in] state                 state_t structure to free.
+*
+* @returns NULL on failure otherwise a state structure.
+*/
+static void kodo_free_state(struct fsal_export* exp_hdl, struct state_t* state)
+{
+    struct kodo_state_fd* state_fd = container_of(state, struct kodo_state_fd, state);
+
+    gsh_free(state_fd);
+}
+
+
 
 void kodo_export_ops_init(struct export_ops *ops)
 {
@@ -128,14 +173,14 @@ void kodo_export_ops_init(struct export_ops *ops)
 
                                                         /** Export lifecycle management.*/
                                                         /* unexport               //02 */
-                                                        /* release                //03 */
+    ops->release = kodo_release;                        /* release                //03 */
 
                                                         /* /** Create an object handles within this export */
                                                         /* lookup_path            //04 */
                                                         /* lookup_junction        //05 */
-                                                        /* wire_to_host           //06 */
+    ops->wire_to_host = kodo_wire_to_host;              /* wire_to_host           //06 */
                                                         /* host_to_key            //07 */
-                                                        /* create_handle          //08 */
+    ops->create_handle = kodo_create_handle;            /* create_handle          //08 */
 
                                                         /** Statistics and configuration for this filesystem */
                                                         /* get_fs_dynamic_info    //09 */
@@ -165,8 +210,8 @@ void kodo_export_ops_init(struct export_ops *ops)
                                                         /* fs_loc_body_size       //29 */
                                                         /* get_write_verifier     //30 */
 
-                                                        /* alloc_state            //31 */
-                                                        /* free_state             //32 */
+    ops->alloc_state = kodo_alloc_state;                /* alloc_state            //31 */
+    ops->free_state  = kodo_free_state;                 /* free_state             //32 */
                                                         /* is_superuser           //33 */
 }
 // 

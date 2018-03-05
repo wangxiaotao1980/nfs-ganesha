@@ -28,9 +28,10 @@
 #ifndef VFS_METHODS_H
 #define VFS_METHODS_H
 
-#include "fsal_handle_syscalls.h"
-#include "fsal_api.h"
-#include "FSAL/fsal_commonlib.h"
+#include "../../include/fsal_handle_syscalls.h"
+#include "../../include/fsal_api.h"
+#include "../../include/FSAL/fsal_commonlib.h"
+
 
 struct vfs_fsal_obj_handle;
 struct vfs_fsal_export;
