@@ -46,7 +46,7 @@
 #include <stdbool.h>
 #include <uuid/uuid.h>
 #include "statx_compat.h"
-#include <cephfs/libcephfs.h>
+#include "cephfs/libcephfs.h"
 
 /* Max length of a user_id string that we pass to ceph_mount */
 #define MAXUIDLEN    (64)

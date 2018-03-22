@@ -41,8 +41,8 @@
 #include "fsal_convert.h"
 #include "sal_data.h"
 
-#include <include/rados/librgw.h>
-#include <include/rados/rgw_file.h>
+#include "rados/librgw.h"
+#include "rados/rgw_file.h"
 
 
 #if ((LIBRGW_FILE_VER_MAJOR != 1) || (LIBRGW_FILE_VER_MINOR < 1) || \
